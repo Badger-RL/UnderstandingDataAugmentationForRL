@@ -11,6 +11,7 @@ import numpy as np
 import yaml
 
 from stable_baselines3 import A2C, DDPG, DQN, PPO, SAC, TD3
+from augment.rl.algs.ddpg import DDPG
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, BaseCallback
 from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise
 from stable_baselines3.common.vec_env import VecEnv
@@ -152,9 +153,7 @@ def _preprocess_hyperparams(
     return hyperparams, env_wrapper, callbacks, vec_env_wrapper
 
 
-def _preprocess_action_noise(
-    self, hyperparams: Dict[str, Any], saved_hyperparams: Dict[str, Any], env: VecEnv
-) -> Dict[str, Any]:
+def preprocess_action_noise(hyperparams: Dict[str, Any], env: VecEnv) -> Dict[str, Any]:
     # Parse noise string
     # Note: only off-policy algorithms are supported
     if hyperparams.get("noise_type") is not None:
@@ -162,17 +161,17 @@ def _preprocess_action_noise(
         noise_std = hyperparams["noise_std"]
 
         # Save for later (hyperparameter optimization)
-        self.n_actions = env.action_space.shape[0]
+        n_actions = env.action_space.shape[0]
 
         if "normal" in noise_type:
             hyperparams["action_noise"] = NormalActionNoise(
-                mean=np.zeros(self.n_actions),
-                sigma=noise_std * np.ones(self.n_actions),
+                mean=np.zeros(n_actions),
+                sigma=noise_std * np.ones(n_actions),
             )
         elif "ornstein-uhlenbeck" in noise_type:
             hyperparams["action_noise"] = OrnsteinUhlenbeckActionNoise(
-                mean=np.zeros(self.n_actions),
-                sigma=noise_std * np.ones(self.n_actions),
+                mean=np.zeros(n_actions),
+                sigma=noise_std * np.ones(n_actions),
             )
         else:
             raise RuntimeError(f'Unknown noise type "{noise_type}"')
