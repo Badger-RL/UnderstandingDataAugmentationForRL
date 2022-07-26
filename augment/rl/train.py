@@ -135,9 +135,9 @@ if __name__ == '__main__':
     print(f'Results saved to {save_dir}')
 
 
-    custom_objects = {}
-    algo_class = ALGOS[algo]
-    model_path = f'{save_dir}/best_model.zip'
-    model = algo_class.load(path=model_path, custom_objects=custom_objects, env=env)
-
-    evaluate_policy(model=model, env=env_eval, n_eval_episodes=10, deterministic=True, render=True)
+    # custom_objects = {}
+    # algo_class = ALGOS[algo]
+    # model_path = f'{save_dir}/best_model.zip'
+    # model = algo_class.load(path=model_path, custom_objects=custom_objects, env=env)
+    #
+    # evaluate_policy(model=model, env=env_eval, n_eval_episodes=10, deterministic=True, render=True)
