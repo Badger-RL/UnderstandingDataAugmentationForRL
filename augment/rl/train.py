@@ -6,12 +6,15 @@ import uuid
 import gym
 import numpy as np
 import torch
+import yaml
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
+from augment.rl.augmentation_functions import HorizontalTranslation
 from augment.rl.utils import get_latest_run_id, ALGOS, read_hyperparameters, StoreDict, preprocess_action_noise
 from stable_baselines3.common.utils import set_random_seed
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -19,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument("--env", type=str, default="InvertedPendulum-v2", help="environment ID")
     parser.add_argument("--run-id", help="Run id to append to env save directory", default=None, type=int)
     parser.add_argument("-i", "--trained-agent", help="Path to a pretrained agent to continue training", default="", type=str)
-    parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e4), type=int)
+    parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e5), type=int)
     parser.add_argument(
         "--eval-freq",
         help="Evaluate the agent every n steps (if negative, no evaluation). "
@@ -46,6 +49,9 @@ if __name__ == '__main__':
         "--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional ADDITIONAL keyword argument to pass to the policy constructor"
     )
     parser.add_argument("-uuid", "--uuid", action="store_true", default=False, help="Ensure that the run has a unique ID")
+
+    parser.add_argument("-aug-kwargs", "--augmentation-kwargs", type=str, nargs="*", action=StoreDict, default={})
+
     args = parser.parse_args()
 
     ###################################################################################################################
@@ -102,7 +108,22 @@ if __name__ == '__main__':
         n_timesteps = int(hyperparams.pop("n_timesteps"))
     # n_timesteps = int(hyperparams.pop("n_timesteps"))
 
+    print('Automatically scaling replay buffer to account for augmentation')
+    try:
+        num_aug = args.augmentation_kwargs['n']
+    except:
+        num_aug = 1
+
+    hyperparams['buffer_size'] *= (num_aug+1)
+
+
     model = algo_class(env=env, **hyperparams)
+
+    augmentation_function = HorizontalTranslation(**args.augmentation_kwargs)
+    model.set_augmentation_function(augmentation_function)
+
+    with open(os.path.join(save_dir, "config.yml"), "w") as f:
+        yaml.dump(hyperparams, f)
 
     # Setting num threads to 1 makes things run faster on cpu
     torch.set_num_threads(1)

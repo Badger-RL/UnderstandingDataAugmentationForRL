@@ -1,5 +1,14 @@
 # RL-Augment
 
+Install
+```commandline
+git clone 
+cd RL-augment
+pip install -e .
+conda install -c conda-forge stable-baselines3
+conda install pyyaml
+```
+
 Install MuJoCo for Apple M1 Mac (see https://github.com/openai/mujoco-py/issues/662)
 ```commandline
 pip install mujoco_py

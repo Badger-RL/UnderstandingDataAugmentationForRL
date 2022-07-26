@@ -9,16 +9,11 @@ import gym
 import numpy as np
 import torch as th
 
-from stable_baselines3.common.buffers import DictReplayBuffer, ReplayBuffer
-from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.noise import ActionNoise, VectorizedActionNoise
+from stable_baselines3.common.buffers import ReplayBuffer
+from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy
-from stable_baselines3.common.save_util import load_from_pkl, save_to_pkl
-from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, RolloutReturn, Schedule, TrainFreq, TrainFrequencyUnit
-from stable_baselines3.common.utils import safe_mean, should_collect_more_steps
-from stable_baselines3.common.vec_env import VecEnv
-from stable_baselines3.her.her_replay_buffer import HerReplayBuffer
+from stable_baselines3.common.type_aliases import GymEnv, Schedule
 
 
 class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
@@ -100,6 +95,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         use_sde_at_warmup: bool = False,
         sde_support: bool = True,
         supported_action_spaces: Optional[Tuple[gym.spaces.Space, ...]] = None,
+        # augmentation_function: Optional = None
     ):
 
         super().__init__(
@@ -131,6 +127,10 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             sde_support=sde_support,
             supported_action_spaces=supported_action_spaces,
         )
+
+        # self.augmentation_function = augmentation_function
+        # self.use_augmentation = self.augmentation_function is not None
+        self.use_augmentation = False
 
     def _store_transition(
         self,
@@ -191,48 +191,24 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             dones,
             infos,
         )
-        self._augment_transition(
-            replay_buffer,
-            self._last_original_obs,
-            next_obs,
-            buffer_action,
-            reward_,
-            dones,
-            infos,
-        )
+
+        if self.use_augmentation:
+            aug_transition = self.augmentation_function.augment(
+                replay_buffer,
+                self._last_original_obs,
+                next_obs,
+                buffer_action,
+                reward_,
+                dones,
+                infos,
+            )
+            # replay_buffer.add(*aug_transition)
 
         self._last_obs = new_obs
         # Save the unnormalized observation
         if self._vec_normalize_env is not None:
             self._last_original_obs = new_obs_
 
-    def _augment_transition(
-        self,
-        replay_buffer: ReplayBuffer,
-        obs: np.ndarray,
-        next_obs: np.ndarray,
-        action: np.ndarray,
-        reward: np.ndarray,
-        done: np.ndarray,
-        infos: List[Dict[str, Any]],
-    ) -> None:
-
-        self.augment = True
-        # if self.augment:
-        #     print('augmenting')
-        #     aug_obs = deepcopy(self._last_original_obs)
-        #     aug_next_obs = deepcopy(next_obs)
-        #
-        #     delta = np.random.uniform(low=-0.1, high=+0.1)
-        #     aug_obs[0] += delta
-        #     aug_next_obs[0] += delta
-        #
-        #     replay_buffer.add(
-        #         aug_obs,
-        #         aug_next_obs,
-        #         action,
-        #         reward,
-        #         done,
-        #         infos,
-        #     )
-        # self.augmentation(obs, next_obs, action, reward, done, infos)
+    def set_augmentation_function(self, augmentation_function):
+        self.augmentation_function = augmentation_function
+        self.use_augmentation = self.augmentation_function is not None
