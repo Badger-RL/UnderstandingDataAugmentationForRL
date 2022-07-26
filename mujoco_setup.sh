@@ -31,3 +31,5 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$WORKING_DIR/.mujoco/mujoco210/bin"
 git clone https://github.com/openai/mujoco-py.git
 pip install -e mujoco-py
 export MUJOCO_PY_MUJOCO_PATH="$WORKING_DIR/.mujoco/mujoco210"
+
+cd $WORKING_DIR
