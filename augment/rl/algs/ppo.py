@@ -11,8 +11,10 @@ from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticP
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
+from augment.rl.algs.on_policy_algorithm import OnPolicyAlgorithmAugment
 
-class PPO(OnPolicyAlgorithm):
+
+class PPO(OnPolicyAlgorithmAugment):
     """
     Proximal Policy Optimization algorithm (PPO) (clip version)
 
@@ -305,7 +307,7 @@ class PPO(OnPolicyAlgorithm):
         tb_log_name: str = "PPO",
         eval_log_path: Optional[str] = None,
         reset_num_timesteps: bool = True,
-    ) -> "OnPolicyAlgorithm":
+    ) -> "OnPolicyAlgorithmAugment":
 
         return super().learn(
             total_timesteps=total_timesteps,

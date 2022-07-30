@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import gym
 import numpy as np
 import torch as th
+from gym import spaces
 
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.buffers import DictRolloutBuffer, RolloutBuffer
@@ -12,9 +13,10 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import obs_as_tensor, safe_mean
 from stable_baselines3.common.vec_env import VecEnv
+from torch.nn.functional import mse_loss
 
 
-class OnPolicyAlgorithm(BaseAlgorithm):
+class OnPolicyAlgorithmAugment(BaseAlgorithm):
     """
     The base for On-Policy algorithms (ex: A2C/PPO).
 
@@ -95,6 +97,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         self.vf_coef = vf_coef
         self.max_grad_norm = max_grad_norm
         self.rollout_buffer = None
+        self.num_bc = 0
 
         if _init_setup_model:
             self._setup_model()
@@ -222,6 +225,46 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         """
         raise NotImplementedError
 
+    def behavior_cloning(self) -> None:
+
+        if not ((self.num_timesteps+1)//10000 > self.num_bc):
+            return
+
+        self.num_bc += 1
+
+        print('behavior cloning')
+        optimizer_bc = th.optim.Adam(self.policy.parameters(), lr=3e-3)
+
+        self.policy.set_training_mode(True)
+
+        num_epochs = 20
+        for i in range(num_epochs):
+            for rollout_data in self.rollout_buffer.get():
+
+                obs = rollout_data.observations
+                actions = rollout_data.actions
+
+
+                if isinstance(self.action_space, spaces.Discrete):
+                    # Convert discrete action from float to long
+                    actions = rollout_data.actions.long().flatten()
+
+
+                aug_obs, aug_action = self.augmentation_function.augment_on_policy(obs, actions)
+
+                # aug_action = th.from_numpy(aug_action)
+                pred_action, _, _ = self.policy(aug_obs)
+
+                loss = mse_loss(pred_action, aug_action)
+
+                # Optimization step
+                optimizer_bc.zero_grad()
+                loss.backward()
+                # Clip grad norm
+                th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+                optimizer_bc.step()
+                print('loss =', loss)
+
     def learn(
         self,
         total_timesteps: int,
@@ -265,6 +308,8 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                 self.logger.dump(step=self.num_timesteps)
 
             self.train()
+            if self.augmentation_function:
+                self.behavior_cloning()
 
         callback.on_training_end()
 
@@ -274,3 +319,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         state_dicts = ["policy", "policy.optimizer"]
 
         return state_dicts, []
+
+    def set_augmentation_function(self, augmentation_function):
+        self.augmentation_function = augmentation_function
+        self.use_augmentation = self.augmentation_function is not None

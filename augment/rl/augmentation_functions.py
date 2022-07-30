@@ -89,4 +89,21 @@ class HorizontalTranslation(AugmentationFunction):
 
         # return aug_obs, aug_next_obs, action, reward, done, infos
 
+    def augment_on_policy(self,
+                obs: np.ndarray,
+                action: np.ndarray,
+                ):
+
+
+        aug_obs = deepcopy(obs).repeat(self.n, 1)
+        aug_action = deepcopy(action).repeat(self.n, 1)
+
+        delta = np.random.uniform(low=-self.sigma, high=+self.sigma, size=(len(aug_obs)))
+
+        aug_obs[:, 0] += delta
+
+        return aug_obs, aug_action
+
+
+
 
