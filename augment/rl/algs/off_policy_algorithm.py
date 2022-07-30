@@ -202,7 +202,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                 dones,
                 infos,
             )
-            # replay_buffer.add(*aug_transition)
+            replay_buffer.add(*aug_transition)
 
         self._last_obs = new_obs
         # Save the unnormalized observation
