@@ -8,11 +8,12 @@ from stable_baselines3.common.buffers import ReplayBuffer
 
 class AugmentationFunction:
 
-    def __init__(self, n=1):
-        self.n = n
+    def __init__(self):
+        pass
 
     def _deepcopy_transition(
             self,
+            augmentation_n: int,
             obs: np.ndarray,
             next_obs: np.ndarray,
             action: np.ndarray,
@@ -20,28 +21,14 @@ class AugmentationFunction:
             done: np.ndarray,
             infos: List[Dict[str, Any]],
     ):
-        aug_obs = deepcopy(obs).repeat(self.n, axis=0)
-        aug_next_obs = deepcopy(next_obs).repeat(self.n, axis=0)
-        aug_action = deepcopy(action).repeat(self.n, axis=0)
-        aug_reward = deepcopy(reward).repeat(self.n, axis=0)
-        aug_done = deepcopy(done).repeat(self.n, axis=0)
-        aug_infos = [deepcopy(infos) for _ in range(self.n)]
+        aug_obs = deepcopy(obs).repeat(augmentation_n, axis=0)
+        aug_next_obs = deepcopy(next_obs).repeat(augmentation_n, axis=0)
+        aug_action = deepcopy(action).repeat(augmentation_n, axis=0)
+        aug_reward = deepcopy(reward).repeat(augmentation_n, axis=0)
+        aug_done = deepcopy(done).repeat(augmentation_n, axis=0)
+        aug_infos = [deepcopy(infos) for _ in range(augmentation_n)]
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
-
-    def _append_to_replay_buffer(
-            self,
-            replay_buffer: ReplayBuffer,
-            obs: np.ndarray,
-            next_obs: np.ndarray,
-            action: np.ndarray,
-            reward: np.ndarray,
-            done: np.ndarray,
-            infos: List[List[Dict[str, Any]]]):
-
-        for i in range(self.n):
-            replay_buffer.add(obs[i], next_obs[i], action[i], reward[i], done[i], infos[i])
-
 
     def augment(self,
                 replay_buffer: ReplayBuffer,
@@ -57,13 +44,13 @@ class AugmentationFunction:
 
 class HorizontalTranslation(AugmentationFunction):
 
-    def __init__(self, n=1, sigma=0.1):
-        super().__init__(n=n)
+    def __init__(self, sigma=0.1, clip=True, noise='uniform'):
+        super().__init__()
         self.sigma = sigma
-        # self.noise_function =
+        self.noise_function = np.random.uniform
 
     def augment(self,
-                replay_buffer: ReplayBuffer,
+                augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
                 action: np.ndarray,
@@ -73,21 +60,19 @@ class HorizontalTranslation(AugmentationFunction):
                 ):
 
         # state_dim = obs.shape[-1]
-        delta = np.random.uniform(low=-self.sigma, high=+self.sigma, size=(self.n))
+        delta = self.noise_function(low=-self.sigma, high=+self.sigma, size=(augmentation_n,))
 
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(obs, next_obs, action, reward, done, infos)
+        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
+            augmentation_n, obs, next_obs, action, reward, done, infos)
 
         aug_obs[:,0] += delta
         aug_next_obs[:,0] += delta
 
-        # aug_obs[:, 0] = np.clip(aug_obs[:, 0]+delta, -1, +1)
-        # aug_next_obs[:, 0] = np.clip(aug_next_obs[:, 0]+delta, -1, +1)
+        aug_obs[:,0].clip(-1, +1, aug_obs[:,0])
+        aug_next_obs[:,0].clip(-1, +1, aug_next_obs[:,0])
 
 
-        self._append_to_replay_buffer(
-            replay_buffer, aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos)
-
-        # return aug_obs, aug_next_obs, action, reward, done, infos
+        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
     def augment_on_policy(self,
                 obs: np.ndarray,
@@ -95,8 +80,8 @@ class HorizontalTranslation(AugmentationFunction):
                 ):
 
 
-        aug_obs = deepcopy(obs).repeat(self.n, 1)
-        aug_action = deepcopy(action).repeat(self.n, 1)
+        aug_obs = deepcopy(obs).repeat(augmentation_n, 1)
+        aug_action = deepcopy(action).repeat(augmentation_n, 1)
 
         delta = np.random.uniform(low=-self.sigma, high=+self.sigma, size=(len(aug_obs)))
 

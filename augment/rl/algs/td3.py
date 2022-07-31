@@ -13,6 +13,7 @@ from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedul
 from stable_baselines3.common.utils import polyak_update
 from stable_baselines3.td3.policies import CnnPolicy, MlpPolicy, MultiInputPolicy, TD3Policy
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
+from augment.rl.augmentation_functions import AugmentationFunction
 
 
 class TD3(OffPolicyAlgorithmAugment):
@@ -94,7 +95,10 @@ class TD3(OffPolicyAlgorithmAugment):
         seed: Optional[int] = None,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
-    ):
+        augmentation_function: Optional[AugmentationFunction] = None,
+        augmentation_ratio: Optional[int] = 1,
+        augmentation_n: Optional[int] = 1,
+        augmentation_kwargs: Optional[Dict[str, Any]] = None    ):
 
         super().__init__(
             policy,
@@ -118,8 +122,12 @@ class TD3(OffPolicyAlgorithmAugment):
             seed=seed,
             sde_support=False,
             optimize_memory_usage=optimize_memory_usage,
-            supported_action_spaces=(gym.spaces.Box),
+            supported_action_spaces=(gym.spaces.Box,),
             support_multi_env=True,
+            augmentation_function=augmentation_function,
+            augmentation_ratio=augmentation_ratio,
+            augmentation_n=augmentation_n,
+            augmentation_kwargs=augmentation_kwargs,
         )
 
         self.policy_delay = policy_delay

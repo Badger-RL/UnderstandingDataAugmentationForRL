@@ -31,7 +31,10 @@ if __name__ == '__main__':
     # parameters
     parser.add_argument("--env-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional keyword argument to pass to the env constructor")
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
-    parser.add_argument("-aug-kwargs", "--augmentation-kwargs", type=str, nargs="*", action=StoreDict, default={})
+    parser.add_argument("-aug-function", "--augmentation-function", type=str, default=None)
+    parser.add_argument("-aug-n", "--augmentation-n", type=int, default=1)
+    parser.add_argument("-aug-ratio", "--augmentation-ratio", type=float, default=1)
+    parser.add_argument("-aug-kwargs", "--augmentation-kwargs", type=str, nargs="*", action=StoreDict, default={'sigma': 0.1})
     parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional ADDITIONAL keyword argument to pass to the policy constructor" )
 
     # saving
@@ -92,16 +95,16 @@ if __name__ == '__main__':
         hyperparams["train_freq"] = tuple(hyperparams["train_freq"])
 
     # augmentation
-    augmentation_function = None
-    if args.augmentation_kwargs:
-        print('Automatically scaling replay buffer to account for augmentation')
-        try:
-            num_aug = args.augmentation_kwargs['n']
-        except:
-            num_aug = 1
-
-        hyperparams['buffer_size'] *= (num_aug+1)
-        augmentation_function = HorizontalTranslation(**args.augmentation_kwargs)
+    if args.augmentation_function == 'cartpole_translate':
+        print(f'augmentation_function: {args.augmentation_function}')
+        print(f'augmentation_n: {args.augmentation_n}')
+        print(f'augmentation_kwargs: {args.augmentation_kwargs}')
+        print(f'Automatically scaling replay buffer')
+        hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * (1+args.augmentation_ratio*(args.augmentation_n+1))
+        )
+        hyperparams['augmentation_ratio'] = args.augmentation_ratio
+        hyperparams['augmentation_n'] = args.augmentation_n
+        hyperparams['augmentation_function'] = HorizontalTranslation(**args.augmentation_kwargs)
 
     ####################################################################################################################
     # More preprocessing that depends on the env object
@@ -111,13 +114,12 @@ if __name__ == '__main__':
 
     algo_class = ALGOS[algo]
     model = algo_class(env=env, **hyperparams)
-    model.set_augmentation_function(augmentation_function)
 
     # save hyperparams and args
     with open(os.path.join(save_dir, "config.yml"), "w") as f:
-        yaml.dump(hyperparams, f)
+        yaml.dump(hyperparams, f, sort_keys=True)
     with open(os.path.join(save_dir, "args.yml"), "w") as f:
-        yaml.dump(args, f)
+        yaml.dump(args, f, sort_keys=True)
 
     # Setting num threads to 1 makes things run faster on cpu
     torch.set_num_threads(1)

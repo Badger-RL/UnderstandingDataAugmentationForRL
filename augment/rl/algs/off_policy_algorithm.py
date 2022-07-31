@@ -95,7 +95,10 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         use_sde_at_warmup: bool = False,
         sde_support: bool = True,
         supported_action_spaces: Optional[Tuple[gym.spaces.Space, ...]] = None,
-        # augmentation_function: Optional = None
+        augmentation_function=None,
+        augmentation_ratio: Optional[int] = 1,
+        augmentation_n: Optional[int] = 1,
+        augmentation_kwargs: Optional[Dict[str, Any]] = None,
     ):
 
         super().__init__(
@@ -128,9 +131,57 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             supported_action_spaces=supported_action_spaces,
         )
 
-        # self.augmentation_function = augmentation_function
-        # self.use_augmentation = self.augmentation_function is not None
-        self.use_augmentation = False
+        self.augmentation_function = augmentation_function
+        self.use_augmentation = self.augmentation_function is not None
+        self.augmentation_ratio = augmentation_ratio
+        self.augmentation_n = augmentation_n
+        self.augmentation_buffer_size = self.buffer_size * self.augmentation_n
+        self.separate_augmentation_buffer = False
+
+        self._setup_augmented_replay_buffer()
+
+        print(augmentation_ratio, augmentation_n)
+
+    def _setup_augmented_replay_buffer(self):
+        self.augmented_replay_buffer = ReplayBuffer(
+            self.buffer_size,
+            self.observation_space,
+            self.action_space,
+            device=self.device,
+            n_envs=self.n_envs,
+            optimize_memory_usage=self.optimize_memory_usage,
+            **self.replay_buffer_kwargs,
+        )
+
+    def _append_to_replay_buffer(
+            self,
+            replay_buffer: ReplayBuffer,
+            obs: np.ndarray,
+            next_obs: np.ndarray,
+            action: np.ndarray,
+            reward: np.ndarray,
+            done: np.ndarray,
+            infos: List[List[Dict[str, Any]]]):
+
+        for i in range(len(obs)):
+            replay_buffer.add(obs[i], next_obs[i], action[i], reward[i], done[i], infos[i])
+
+    def augment_transition(self, obs, next_obs, action, reward, done, info):
+        if self.use_augmentation and np.random.random() < self.augmentation_ratio:
+            aug_transition = self.augmentation_function.augment(
+                self.augmentation_n,
+                obs,
+                next_obs,
+                action,
+                reward,
+                done,
+                info,
+            )
+            if self.separate_augmentation_buffer:
+                self._append_to_replay_buffer(self.augmented_replay_buffer, *aug_transition)
+                # self.augmented_replay_buffer.add(*aug_transition)
+            else:
+                self._append_to_replay_buffer(self.replay_buffer, *aug_transition)
 
     def _store_transition(
         self,
@@ -192,23 +243,16 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             infos,
         )
 
-        if self.use_augmentation:
-            aug_transition = self.augmentation_function.augment(
-                replay_buffer,
-                self._last_original_obs,
-                next_obs,
-                buffer_action,
-                reward_,
-                dones,
-                infos,
-            )
-            replay_buffer.add(*aug_transition)
+        self.augment_transition(
+            self._last_original_obs,
+            next_obs,
+            buffer_action,
+            reward_,
+            dones,
+            infos,
+        )
 
         self._last_obs = new_obs
         # Save the unnormalized observation
         if self._vec_normalize_env is not None:
             self._last_original_obs = new_obs_
-
-    def set_augmentation_function(self, augmentation_function):
-        self.augmentation_function = augmentation_function
-        self.use_augmentation = self.augmentation_function is not None

@@ -11,6 +11,7 @@ from stable_baselines3.td3.policies import TD3Policy
 
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
 from augment.rl.algs.td3 import TD3
+from augment.rl.augmentation_functions import AugmentationFunction
 
 
 class DDPG(TD3):
@@ -120,6 +121,9 @@ class DDPG(TD3):
         seed: Optional[int] = None,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
+        augmentaiton_function: Optional[AugmentationFunction] = None,
+        augmentation_n: Optional[int] = 1,
+        augmentation_kwargs: Optional[Dict[str, Any]] = None
     ):
 
         super().__init__(
@@ -149,6 +153,9 @@ class DDPG(TD3):
             target_noise_clip=0.0,
             target_policy_noise=0.1,
             _init_setup_model=False,
+            augmentation_function=augmentaiton_function,
+            augmentation_n=augmentation_n,
+            augmentation_kwargs=augmentation_kwargs,
         )
 
         # Use only one critic
