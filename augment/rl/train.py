@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # basic
-    parser.add_argument("--algo", help="RL Algorithm", default="ppo", type=str, required=False, choices=list(ALGOS.keys()))
+    parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
     parser.add_argument("--env", type=str, default="InvertedPendulum-v2", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e5), type=int)
@@ -39,6 +39,7 @@ if __name__ == '__main__':
 
     # saving
     parser.add_argument("-f", "--log-folder", help="Log folder", type=str, default="results")
+    parser.add_argument("-exp", "--experiment-name", help="<log folder>/<env_id>/<algo>/<experiment name>/run_<run_id>", type=str, default=None)
     parser.add_argument("--run-id", help="Run id to append to env save directory", default=None, type=int)
 
     # extra
@@ -71,7 +72,7 @@ if __name__ == '__main__':
     ####################################################################################################################
     # Preprocess args
 
-    save_dir = get_save_dir(args.log_folder, env_id, algo, args.run_id)
+    save_dir = get_save_dir(args.log_folder, env_id, algo, args.run_id, args.experiment_name)
 
     # update hyperparams
     hyperparams = read_hyperparameters(env_id, algo)

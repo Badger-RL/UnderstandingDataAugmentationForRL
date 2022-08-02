@@ -78,9 +78,9 @@ def get_latest_run_id(save_dir: str) -> int:
     return max_run_id
 
 
-def get_save_dir(log_folder, env_id, algo, run_id):
+def get_save_dir(log_folder, env_id, algo, run_id, exp=""):
     # set save directory
-    save_dir = f'{log_folder}/{env_id}/{algo}'
+    save_dir = f'{log_folder}/{env_id}/{algo}/{exp}'
     if run_id:
         save_dir += f'/run_{run_id}'
     else:
