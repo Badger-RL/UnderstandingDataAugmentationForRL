@@ -3,6 +3,7 @@ from copy import deepcopy
 from typing import Dict, List, Any
 
 import numpy as np
+import torch
 from stable_baselines3.common.buffers import ReplayBuffer
 
 
@@ -74,18 +75,21 @@ class HorizontalTranslation(AugmentationFunction):
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
-    def augment_on_policy(self,
-                obs: np.ndarray,
-                action: np.ndarray,
-                ):
+    def augment_on_policy(
+            self,
+            augmentation_n: int,
+            obs: np.ndarray,
+            action: np.ndarray, 
+            ):
 
 
         aug_obs = deepcopy(obs).repeat(augmentation_n, 1)
         aug_action = deepcopy(action).repeat(augmentation_n, 1)
 
-        delta = np.random.uniform(low=-self.sigma, high=+self.sigma, size=(len(aug_obs)))
+        # delta = np.random.uniform(low=-self.sigma, high=+self.sigma, size=(len(aug_obs)))
+        delta = np.random.uniform(low=-1, high=+1, size=(len(aug_obs)))
 
-        aug_obs[:, 0] += delta
+        aug_obs[:, 0] = torch.from_numpy(delta)
 
         return aug_obs, aug_action
 

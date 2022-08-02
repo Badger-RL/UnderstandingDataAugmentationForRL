@@ -79,7 +79,9 @@ if __name__ == '__main__':
         hyperparams.update(args.hyperparams)
 
     # set seed
-    if args.seed < 0:
+    if args.run_id:
+        args.seed=args.run_id
+    elif args.seed < 0:
         args.seed = np.random.randint(2 ** 32 - 1, dtype="int64").item()
     set_random_seed(args.seed)
 
@@ -100,8 +102,8 @@ if __name__ == '__main__':
         print(f'augmentation_n: {args.augmentation_n}')
         print(f'augmentation_kwargs: {args.augmentation_kwargs}')
         print(f'Automatically scaling replay buffer')
-        hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * (1+args.augmentation_ratio*(args.augmentation_n+1))
-        )
+        if algo != 'ppo':
+            hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * (1+args.augmentation_ratio*(args.augmentation_n+1)))
         hyperparams['augmentation_ratio'] = args.augmentation_ratio
         hyperparams['augmentation_n'] = args.augmentation_n
         hyperparams['augmentation_function'] = HorizontalTranslation(**args.augmentation_kwargs)
