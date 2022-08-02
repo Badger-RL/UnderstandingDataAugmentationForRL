@@ -72,6 +72,10 @@ class OnPolicyAlgorithmAugment(BaseAlgorithm):
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
         supported_action_spaces: Optional[Tuple[gym.spaces.Space, ...]] = None,
+        augmentation_function=None,
+        augmentation_ratio: Optional[int] = 1,
+        augmentation_n: Optional[int] = 1,
+        augmentation_kwargs: Optional[Dict[str, Any]] = None,
     ):
 
         super().__init__(
@@ -102,6 +106,12 @@ class OnPolicyAlgorithmAugment(BaseAlgorithm):
         if _init_setup_model:
             self._setup_model()
 
+        self.augmentation_function = augmentation_function
+        self.use_augmentation = self.augmentation_function is not None
+        self.augmentation_ratio = augmentation_ratio
+        self.augmentation_n = augmentation_n
+
+
     def _setup_model(self) -> None:
         self._setup_lr_schedule()
         self.set_random_seed(self.seed)
@@ -125,6 +135,8 @@ class OnPolicyAlgorithmAugment(BaseAlgorithm):
             **self.policy_kwargs  # pytype:disable=not-instantiable
         )
         self.policy = self.policy.to(self.device)
+        self.optimizer_bc = th.optim.Adam(self.policy.parameters(), lr=self.learning_rate)
+        # self.optimizer_bc = th.optim.Adam(self.policy.parameters(), lr=1e-4)
 
     def collect_rollouts(
         self,
@@ -227,19 +239,19 @@ class OnPolicyAlgorithmAugment(BaseAlgorithm):
 
     def behavior_cloning(self) -> None:
 
-        if not ((self.num_timesteps+1)//10000 > self.num_bc):
-            return
+        # if not ((self.num_timesteps+1)//10000 > self.num_bc):
+        #     return
 
         self.num_bc += 1
 
         print('behavior cloning')
-        optimizer_bc = th.optim.Adam(self.policy.parameters(), lr=3e-3)
 
         self.policy.set_training_mode(True)
 
-        num_epochs = 20
+        num_epochs = 10
         for i in range(num_epochs):
-            for rollout_data in self.rollout_buffer.get():
+            loss = 0
+            for rollout_data in self.rollout_buffer.get(256):
 
                 obs = rollout_data.observations
                 actions = rollout_data.actions
@@ -249,8 +261,7 @@ class OnPolicyAlgorithmAugment(BaseAlgorithm):
                     # Convert discrete action from float to long
                     actions = rollout_data.actions.long().flatten()
 
-
-                aug_obs, aug_action = self.augmentation_function.augment_on_policy(obs, actions)
+                aug_obs, aug_action = self.augmentation_function.augment_on_policy(self.augmentation_n, obs, actions)
 
                 # aug_action = th.from_numpy(aug_action)
                 pred_action, _, _ = self.policy(aug_obs)
@@ -258,12 +269,12 @@ class OnPolicyAlgorithmAugment(BaseAlgorithm):
                 loss = mse_loss(pred_action, aug_action)
 
                 # Optimization step
-                optimizer_bc.zero_grad()
+                self.optimizer_bc.zero_grad()
                 loss.backward()
                 # Clip grad norm
                 th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-                optimizer_bc.step()
-                print('loss =', loss)
+                self.optimizer_bc.step()
+            print('epoch loss =', loss)
 
     def learn(
         self,

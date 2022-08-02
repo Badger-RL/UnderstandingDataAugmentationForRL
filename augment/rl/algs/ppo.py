@@ -99,6 +99,10 @@ class PPO(OnPolicyAlgorithmAugment):
         seed: Optional[int] = None,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
+        augmentation_function=None,
+        augmentation_ratio: Optional[int] = 1,
+        augmentation_n: Optional[int] = 1,
+        augmentation_kwargs: Optional[Dict[str, Any]] = None,
     ):
 
         super().__init__(
@@ -126,6 +130,10 @@ class PPO(OnPolicyAlgorithmAugment):
                 spaces.MultiDiscrete,
                 spaces.MultiBinary,
             ),
+            augmentation_function=augmentation_function,
+            augmentation_ratio=augmentation_ratio,
+            augmentation_n=augmentation_n,
+            augmentation_kwargs=augmentation_kwargs,
         )
 
         # Sanity check, otherwise it will lead to noisy gradient and NaN
