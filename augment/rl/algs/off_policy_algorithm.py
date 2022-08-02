@@ -153,19 +153,6 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             **self.replay_buffer_kwargs,
         )
 
-    def _append_to_replay_buffer(
-            self,
-            replay_buffer: ReplayBuffer,
-            obs: np.ndarray,
-            next_obs: np.ndarray,
-            action: np.ndarray,
-            reward: np.ndarray,
-            done: np.ndarray,
-            infos: List[List[Dict[str, Any]]]):
-
-        for i in range(len(obs)):
-            replay_buffer.add(obs[i], next_obs[i], action[i], reward[i], done[i], infos[i])
-
     def augment_transition(self, obs, next_obs, action, reward, done, info):
         if self.use_augmentation and np.random.random() < self.augmentation_ratio:
             aug_transition = self.augmentation_function.augment(
@@ -178,10 +165,9 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                 info,
             )
             if self.separate_augmentation_buffer:
-                self._append_to_replay_buffer(self.augmented_replay_buffer, *aug_transition)
-                # self.augmented_replay_buffer.add(*aug_transition)
+                self.augmented_replay_buffer.extend(*aug_transition)
             else:
-                self._append_to_replay_buffer(self.replay_buffer, *aug_transition)
+                self.replay_buffer.extend(*aug_transition)
 
     def _store_transition(
         self,
