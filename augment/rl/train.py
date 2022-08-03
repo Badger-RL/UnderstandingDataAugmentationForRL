@@ -11,7 +11,7 @@ import yaml
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
-from augment.rl.augmentation_functions import HorizontalTranslation
+from augment.rl.augmentation_functions import AUGMENTATION_FUNCTIONS
 from augment.rl.utils import ALGOS, StoreDict,get_save_dir, preprocess_action_noise, read_hyperparameters
 from stable_baselines3.common.utils import set_random_seed
 
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument("-aug-function", "--augmentation-function", type=str, default=None)
     parser.add_argument("-aug-n", "--augmentation-n", type=int, default=1)
     parser.add_argument("-aug-ratio", "--augmentation-ratio", type=float, default=1)
-    parser.add_argument("-aug-kwargs", "--augmentation-kwargs", type=str, nargs="*", action=StoreDict, default={'sigma': 0.1})
+    parser.add_argument("-aug-kwargs", "--augmentation-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional ADDITIONAL keyword argument to pass to the policy constructor" )
 
     # saving
@@ -98,16 +98,18 @@ if __name__ == '__main__':
         hyperparams["train_freq"] = tuple(hyperparams["train_freq"])
 
     # augmentation
-    if args.augmentation_function == 'cartpole_translate':
+    if args.augmentation_function:
         print(f'augmentation_function: {args.augmentation_function}')
         print(f'augmentation_n: {args.augmentation_n}')
         print(f'augmentation_kwargs: {args.augmentation_kwargs}')
         print(f'Automatically scaling replay buffer')
+        aug_func_class = AUGMENTATION_FUNCTIONS[env_id][args.augmentation_function]
+
         if algo != 'ppo':
             hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * (1+args.augmentation_ratio*(args.augmentation_n+1)))
         hyperparams['augmentation_ratio'] = args.augmentation_ratio
         hyperparams['augmentation_n'] = args.augmentation_n
-        hyperparams['augmentation_function'] = HorizontalTranslation(**args.augmentation_kwargs)
+        hyperparams['augmentation_function'] = aug_func_class(**args.augmentation_kwargs)
 
     ####################################################################################################################
     # More preprocessing that depends on the env object
