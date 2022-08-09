@@ -100,3 +100,11 @@ def get_paths(results_dir, key, n_trials=10):
     for j in range(n_trials):
         path_dict[key].append(f'./{results_dir}/run_{j+1}/evaluations.npz')
     return path_dict
+
+def get_paths_auto(results_dir, key):
+
+    path_dict = {}
+    path_dict[key] = []
+    for dirpath, dirnames, filenames in os.walk(results_dir):
+        path_dict[key].append(f'./{dirpath}/evaluations.npz')
+    return path_dict
