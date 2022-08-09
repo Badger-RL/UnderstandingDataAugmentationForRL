@@ -175,3 +175,25 @@ Swimmer-v3:
   gamma: 0.9999
   train_freq: 1
   gradient_steps: 1
+
+### Custom Reacher
+
+Reacher4-v3: &reacher-defaults
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  learning_rate: !!float 1e-3
+  learning_starts: 10000
+  noise_type: 'normal'
+  noise_std: 0.1
+
+Reacher8-v3:
+  <<: *reacher-defaults
+
+Reacher12-v3:
+  <<: *reacher-defaults
+
+Reacher16-v3:
+  <<: *reacher-defaults
+
+Reacher20-v3:
+  <<: *reacher-defaults

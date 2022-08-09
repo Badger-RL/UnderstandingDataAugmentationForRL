@@ -4,7 +4,7 @@ import os.path
 import uuid
 from operator import itemgetter
 
-import gym
+import gym, my_gym
 import numpy as np
 import torch
 import yaml
