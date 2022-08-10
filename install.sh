@@ -13,7 +13,6 @@ source $ENVDIR/bin/activate
 source ./mujoco_setup.sh
 
 git clone https://github.com/DLR-RM/stable-baselines3.git
-pip install -e stable-baselines3
-pip install -e my-gym
-
 pip install -e .
+pip install -e stable-baselines3
+pip install -e augment/my-gym
