@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # basic
     parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="InvertedPendulum-v2", help="environment ID")
+    parser.add_argument("--env", type=str, default="Reacher4-v3", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e5), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
@@ -96,6 +96,7 @@ if __name__ == '__main__':
     # set train_freq
     if "train_freq" in hyperparams and isinstance(hyperparams["train_freq"], list):
         hyperparams["train_freq"] = tuple(hyperparams["train_freq"])
+    hyperparams['buffer_size'] = int(hyperparams['buffer_size'])
 
     # augmentation
     if args.augmentation_function:
