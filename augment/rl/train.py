@@ -39,7 +39,8 @@ if __name__ == '__main__':
 
     # saving
     parser.add_argument("-f", "--log-folder", help="Log folder", type=str, default="results")
-    parser.add_argument("-exp", "--experiment-name", help="<log folder>/<env_id>/<algo>/<experiment name>/run_<run_id>", type=str, default=None)
+    parser.add_argument("--save-best-model", default=False, type=bool)
+    parser.add_argument("-exp", "--experiment-name", help="<log folder>/<env_id>/<algo>/<experiment name>/run_<run_id>", type=str, default="")
     parser.add_argument("--run-id", help="Run id to append to env save directory", default=None, type=int)
 
     # extra
@@ -73,6 +74,7 @@ if __name__ == '__main__':
     # Preprocess args
 
     save_dir = get_save_dir(args.log_folder, env_id, algo, args.run_id, args.experiment_name)
+    best_model_save_dir = save_dir if args.save_best_model else None
 
     # update hyperparams
     hyperparams = read_hyperparameters(env_id, algo)
@@ -130,7 +132,7 @@ if __name__ == '__main__':
     # Setting num threads to 1 makes things run faster on cpu
     torch.set_num_threads(1)
     env_eval = Monitor(gym.make(env_id, **args.env_kwargs), filename=save_dir)
-    eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq, log_path=save_dir, best_model_save_path=save_dir)
+    eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq, log_path=save_dir, best_model_save_path=best_model_save_dir)
     model.learn(total_timesteps=int(n_timesteps), callback=eval_callback)
 
     print(f'Results saved to {save_dir}')
