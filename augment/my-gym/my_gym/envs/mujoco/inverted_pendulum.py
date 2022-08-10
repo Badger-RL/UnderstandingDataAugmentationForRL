@@ -83,11 +83,11 @@ class InvertedPendulumEnv(InvertedPendulumEnv_original):
     """
 
     def __init__(self, init_pos=None, use_pos=True):
-        super().__init__()
-
         self.init_pos = init_pos
         self.use_pos = use_pos
         print(f'init_pos = {init_pos}')
+        print(f'use_pos = {use_pos}')
+        super().__init__()
 
     def reset_model(self):
         if self.init_pos:
@@ -106,4 +106,8 @@ class InvertedPendulumEnv(InvertedPendulumEnv_original):
         return self._get_obs()
 
     def _get_obs(self):
-        return np.concatenate([self.sim.data.qpos, self.sim.data.qvel]).ravel()
+        if self.use_pos:
+            return np.concatenate([self.sim.data.qpos, self.sim.data.qvel]).ravel()
+        else:
+            return np.concatenate([[0], self.sim.data.qpos[1:], self.sim.data.qvel]).ravel()
+
