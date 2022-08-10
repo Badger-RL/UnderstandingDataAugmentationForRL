@@ -41,7 +41,7 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
 
         if self.randomize_goal:
             while True:
-                r = self.num_links*0.1 - 0.1
+                r = self.num_links*0.1
                 self.goal = np.random.uniform(-r, r, size=(2,))
                 if np.linalg.norm(self.goal) < 1: break
             qpos[-2:] = self.goal
@@ -55,7 +55,7 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
         return self._get_obs()
 
     def _get_obs(self):
-        theta = self.sim.data.qpos.flat[:2]
+        theta = self.sim.data.qpos.flat[:self.num_links]
         return np.concatenate(
             [
                 np.cos(theta),
