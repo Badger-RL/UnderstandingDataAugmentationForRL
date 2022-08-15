@@ -34,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
     parser.add_argument("-aug-function", "--augmentation-function", type=str, default=None)
     parser.add_argument("-aug-n", "--augmentation-n", type=int, default=1)
-    parser.add_argument("-aug-ratio", "--augmentation-ratio", type=Union[float, str], default=1)
+    parser.add_argument("-aug-ratio", "--augmentation-ratio", type=float, default=1)
     # parser.add_argument("-aug-ratio-final", "--augmentation-ratio-final", type=Union[float, str], default=1)
     parser.add_argument("-aug-kwargs", "--augmentation-kwargs", type=str, nargs="*", action=StoreDict, default={'schedule': 'constant', 'aug_ratio_final': 0})
     parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional ADDITIONAL keyword argument to pass to the policy constructor" )
