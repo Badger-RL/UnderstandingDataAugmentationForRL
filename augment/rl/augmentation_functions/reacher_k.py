@@ -1,3 +1,4 @@
+import time
 from typing import Dict, List, Any
 
 import numpy as np
@@ -29,8 +30,18 @@ class Rotate(AugmentationFunction):
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
+        # delta = np.pi/2
         cos_delta = np.cos(delta)
         sin_delta = np.sin(delta)
+
+        # np.concatenate(
+        #     [
+        #         np.cos(theta),  # 4 cos(joint angles)
+        #         np.sin(theta),  # 4 sin(joint angles
+        #         self.sim.data.qpos.flat[self.num_links:],  # 2 target
+        #         self.sim.data.qvel.flat[:self.num_links],  # 4 joint velocities
+        #         self.get_body_com("fingertip") - self.get_body_com("target"),  # 1 distance
+        #     ]
 
         # ONLY ROTATE THE FIRST JOINT.
         theta = np.arccos(aug_obs[:, 0])
@@ -57,3 +68,35 @@ class Rotate(AugmentationFunction):
         aug_reward[:] = -np.linalg.norm(aug_next_obs[:, -3:-1]-goal_next)*self.k - np.square(aug_action).sum()
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+
+
+import gym, my_gym
+
+if __name__ == "__main__":
+    env = gym.make('Reacher4-v3')
+    env.reset()
+
+    x = 0 #np.pi/4
+    qpos = np.array([x, 0,0,0, 0.4, 0.4])
+    qvel = np.zeros(6)
+    env.set_state(qpos, qvel)
+    obs = env.get_obs()
+    obs = obs.reshape(1, -1)
+
+    f = Rotate(sigma=1)
+    aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, obs, obs, obs, obs, [{}])
+
+    print(obs[0,-3:])
+    print(aug_obs[0,-3:])
+    while True:
+        env.set_state(qpos, qvel)
+        env.render()
+        time.sleep(0.1)
+
+        qpos_aug = np.copy(qpos)
+        qpos_aug[:4] = np.arcsin(aug_obs[0, 4:8])
+        env.set_state(qpos_aug, qvel)
+        env.render()
+        time.sleep(0.1)
+
+    # self.set_state(qpos, qvel)
