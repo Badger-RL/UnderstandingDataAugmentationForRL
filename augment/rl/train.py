@@ -8,11 +8,12 @@ import gym, my_gym
 import numpy as np
 import torch
 import yaml
+from typing import Union
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
 from augment.rl.augmentation_functions import AUGMENTATION_FUNCTIONS
-from augment.rl.utils import ALGOS, StoreDict,get_save_dir, preprocess_action_noise, read_hyperparameters
+from augment.rl.utils import ALGOS, StoreDict, get_save_dir, preprocess_action_noise, read_hyperparameters, SCHEDULES
 from stable_baselines3.common.utils import set_random_seed
 
 
@@ -21,7 +22,7 @@ if __name__ == '__main__':
 
     # basic
     parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="Reacher4-v3", help="environment ID")
+    parser.add_argument("--env", type=str, default="InvertedPendulum-v2", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e5), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
@@ -33,8 +34,9 @@ if __name__ == '__main__':
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
     parser.add_argument("-aug-function", "--augmentation-function", type=str, default=None)
     parser.add_argument("-aug-n", "--augmentation-n", type=int, default=1)
-    parser.add_argument("-aug-ratio", "--augmentation-ratio", type=float, default=1)
-    parser.add_argument("-aug-kwargs", "--augmentation-kwargs", type=str, nargs="*", action=StoreDict, default={})
+    parser.add_argument("-aug-ratio", "--augmentation-ratio", type=Union[float, str], default=1)
+    # parser.add_argument("-aug-ratio-final", "--augmentation-ratio-final", type=Union[float, str], default=1)
+    parser.add_argument("-aug-kwargs", "--augmentation-kwargs", type=str, nargs="*", action=StoreDict, default={'schedule': 'constant', 'aug_ratio_final': 0})
     parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional ADDITIONAL keyword argument to pass to the policy constructor" )
 
     # saving
@@ -109,8 +111,19 @@ if __name__ == '__main__':
         aug_func_class = AUGMENTATION_FUNCTIONS[env_id][args.augmentation_function]
 
         if algo != 'ppo':
-            hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * (1+args.augmentation_ratio*(args.augmentation_n+1)))
-        hyperparams['augmentation_ratio'] = args.augmentation_ratio
+            # area = (0.01-1)/np.log(0.01)
+            # hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * int(1+area*(args.augmentation_n+1)))
+            hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * int(1+args.augmentation_ratio*(args.augmentation_n+1)))
+            try:
+                batch_size = hyperparams['batch_size']
+            except:
+                hyperparams['batch_size'] = 100
+            hyperparams['batch_size'] *= int(1+args.augmentation_ratio*(args.augmentation_n+1))
+        # if isinstance(args.augmentation_ratio, str):
+        #     aug_ratio_schedule = SCHEDULES[args.augmentation_ratio]
+        hyperparams['augmentation_ratio'] = SCHEDULES['constant'](args.augmentation_ratio)
+        # hyperparams['augmentation_ratio'] = args.augmentation_ratio
+        # hyperparams['augmentation_ratio'] = SCHEDULES['constant'](1)
         hyperparams['augmentation_n'] = args.augmentation_n
         hyperparams['augmentation_function'] = aug_func_class(**args.augmentation_kwargs)
 
@@ -135,11 +148,4 @@ if __name__ == '__main__':
     eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq, log_path=save_dir, best_model_save_path=best_model_save_dir)
     model.learn(total_timesteps=int(n_timesteps), callback=eval_callback)
 
-    print(f'Results saved to {save_dir}')
-
-    # custom_objects = {}
-    # algo_class = ALGOS[algo]
-    # model_path = f'{save_dir}/best_model.zip'
-    # model = algo_class.load(path=model_path, custom_objects=custom_objects, env=env)
-    #
-    # evaluate_policy(model=model, env=env_eval, n_eval_episodes=10, deterministic=True, render=True)
+    print(f'Results saved to {save_dir}')\

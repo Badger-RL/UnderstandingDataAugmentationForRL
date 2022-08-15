@@ -96,7 +96,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         sde_support: bool = True,
         supported_action_spaces: Optional[Tuple[gym.spaces.Space, ...]] = None,
         augmentation_function=None,
-        augmentation_ratio: Optional[int] = 1,
+        augmentation_ratio: Optional[Union[float, Schedule]] = 1,
         augmentation_n: Optional[int] = 1,
         augmentation_kwargs: Optional[Dict[str, Any]] = None,
     ):
@@ -154,20 +154,23 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         )
 
     def augment_transition(self, obs, next_obs, action, reward, done, info):
-        if self.use_augmentation and np.random.random() < self.augmentation_ratio:
-            aug_transition = self.augmentation_function.augment(
-                self.augmentation_n,
-                obs,
-                next_obs,
-                action,
-                reward,
-                done,
-                info,
-            )
-            if self.separate_augmentation_buffer:
-                self.augmented_replay_buffer.extend(*aug_transition)
-            else:
-                self.replay_buffer.extend(*aug_transition)
+        if self.use_augmentation:
+            augmentation_ratio = self.augmentation_ratio(self._current_progress_remaining)
+            # print(augmentation_ratio)
+            if self.use_augmentation and np.random.random() < augmentation_ratio:
+                aug_transition = self.augmentation_function.augment(
+                    self.augmentation_n,
+                    obs,
+                    next_obs,
+                    action,
+                    reward,
+                    done,
+                    info,
+                )
+                if self.separate_augmentation_buffer:
+                    self.augmented_replay_buffer.extend(*aug_transition)
+                else:
+                    self.replay_buffer.extend(*aug_transition)
 
     def _store_transition(
         self,
