@@ -148,4 +148,4 @@ if __name__ == '__main__':
     eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq, log_path=save_dir, best_model_save_path=best_model_save_dir)
     model.learn(total_timesteps=int(n_timesteps), callback=eval_callback)
 
-    print(f'Results saved to {save_dir}')\
+    print(f'Results saved to {save_dir}')
