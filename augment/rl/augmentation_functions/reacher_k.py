@@ -30,7 +30,7 @@ class Rotate(AugmentationFunction):
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
-        # delta = np.pi/2
+        # delta = 3*np.pi/2
         cos_delta = np.cos(delta)
         sin_delta = np.sin(delta)
 
@@ -45,6 +45,9 @@ class Rotate(AugmentationFunction):
 
         # ONLY ROTATE THE FIRST JOINT.
         theta = np.arccos(aug_obs[:, 0])
+        is_quadrant_34 = aug_obs[:, self.k] < 0
+        theta[is_quadrant_34] += np.pi
+
         goal = aug_obs[:, 2*self.k:2*self.k+2]
         fingertip_x = aug_obs[:, -3] + goal[:,0]
         fingertip_y = aug_obs[:, -2] + goal[:,1]
