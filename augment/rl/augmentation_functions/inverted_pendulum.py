@@ -34,8 +34,8 @@ class InvertedPendulumTranslate(AugmentationFunction):
         aug_obs[:,0] += delta
         aug_next_obs[:,0] += delta
 
-        # aug_obs[:,0].clip(-1, +1, aug_obs[:,0])
-        # aug_next_obs[:,0].clip(-1, +1, aug_next_obs[:,0])
+        aug_obs[:,0].clip(-1, +1, aug_obs[:,0])
+        aug_next_obs[:,0].clip(-1, +1, aug_next_obs[:,0])
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
