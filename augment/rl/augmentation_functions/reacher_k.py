@@ -22,14 +22,17 @@ class Rotate(AugmentationFunction):
                 action: np.ndarray,
                 reward: np.ndarray,
                 done: np.ndarray,
-                infos: List[Dict[str, Any]]
+                infos: List[Dict[str, Any]],
+                delta = None
                 ):
 
-        delta = np.random.uniform(low=-self.sigma, high=+self.sigma, size=(augmentation_n,))
+        if delta is None:
+            delta = np.random.uniform(low=-self.sigma, high=+self.sigma, size=(augmentation_n,))
+
+
 
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
-
         # delta = 3*np.pi/2
         cos_delta = np.cos(delta)
         sin_delta = np.sin(delta)
@@ -44,9 +47,8 @@ class Rotate(AugmentationFunction):
         #     ]
 
         # ONLY ROTATE THE FIRST JOINT.
-        theta = np.arccos(aug_obs[:, 0])
-        is_quadrant_34 = aug_obs[:, self.k] < 0
-        theta[is_quadrant_34] += np.pi
+        theta = np.arctan2(aug_obs[:, self.k], aug_obs[:, 0])
+        if theta < 0: theta += 2*np.pi
 
         goal = aug_obs[:, 2*self.k:2*self.k+2]
         fingertip_x = aug_obs[:, -3] + goal[:,0]
@@ -80,26 +82,35 @@ if __name__ == "__main__":
     env.reset()
 
     x = 0 #np.pi/4
-    qpos = np.array([x, 0,0,0, 0.4, 0.4])
+    qpos = np.array([x, 0.5, 0.5, 0.5, 0.4, 0.4])
     qvel = np.zeros(6)
     env.set_state(qpos, qvel)
     obs = env.get_obs()
     obs = obs.reshape(1, -1)
 
     f = Rotate(sigma=1)
-    aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, obs, obs, obs, obs, [{}])
+    # aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, obs, obs, obs, obs, [{}])
 
-    print(obs[0,-3:])
-    print(aug_obs[0,-3:])
-    while True:
-        env.set_state(qpos, qvel)
-        env.render()
-        time.sleep(0.1)
+    # print(obs[0,-3:])
+    # print(aug_obs[0,-3:])
+    for delta in np.linspace(0, 4*np.pi, 100):
 
+
+        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, obs, obs, obs, obs, [{}], delta=delta)
+
+        theta = np.arctan2(aug_obs[0, 4], aug_obs[0, 0])
+        if theta < 0: theta += 2*np.pi
+        # is_quadrant_34 = np.arcsin(aug_obs[0, 4]) < 0
+        # if is_quadrant_34:
+        #     theta += np.pi
+
+        print(delta/np.pi, theta/np.pi, delta/np.pi - theta/np.pi)
         qpos_aug = np.copy(qpos)
-        qpos_aug[:4] = np.arcsin(aug_obs[0, 4:8])
+        qpos_aug[0] = theta
+
         env.set_state(qpos_aug, qvel)
         env.render()
-        time.sleep(0.1)
+        # time.sleep(0.1)
+        time.sleep(0.01)
 
     # self.set_state(qpos, qvel)
