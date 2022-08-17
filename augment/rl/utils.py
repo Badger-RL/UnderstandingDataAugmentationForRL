@@ -161,7 +161,7 @@ def linear_schedule(initial_value: float, final_value: float, cutoff: float) -> 
 
     return func
 
-def exponential_schedule(initial_value: float, final_value: float) -> Callable[[float], float]:
+def exponential_schedule(initial_value: float, final_value: float=0.01) -> Callable[[float], float]:
 
     def func(progress_remaining: float) -> float:
         """

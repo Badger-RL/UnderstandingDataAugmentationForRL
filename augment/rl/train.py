@@ -38,6 +38,7 @@ if __name__ == '__main__':
     # parser.add_argument("-aug-ratio-final", "--augmentation-ratio-final", type=Union[float, str], default=1)
     parser.add_argument("-aug-kwargs", "--augmentation-kwargs", type=str, nargs="*", action=StoreDict, default={'schedule': 'constant', 'aug_ratio_final': 0})
     parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional ADDITIONAL keyword argument to pass to the policy constructor" )
+    parser.add_argument("-aug-schedule", "--augmentation-schedule", type=str, default='constant')
 
     # saving
     parser.add_argument("-f", "--log-folder", help="Log folder", type=str, default="results")
@@ -121,7 +122,7 @@ if __name__ == '__main__':
             hyperparams['batch_size'] *= int(1+args.augmentation_ratio*(args.augmentation_n+1))
         # if isinstance(args.augmentation_ratio, str):
         #     aug_ratio_schedule = SCHEDULES[args.augmentation_ratio]
-        hyperparams['augmentation_ratio'] = SCHEDULES['constant'](args.augmentation_ratio)
+        hyperparams['augmentation_ratio'] = SCHEDULES[args.augmentation_schedule](args.augmentation_ratio,)
         # hyperparams['augmentation_ratio'] = args.augmentation_ratio
         # hyperparams['augmentation_ratio'] = SCHEDULES['constant'](1)
         hyperparams['augmentation_n'] = args.augmentation_n
