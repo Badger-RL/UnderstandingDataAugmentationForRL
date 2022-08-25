@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # basic
-    parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
+    parser.add_argument("--algo", help="RL Algorithm", default="sac", type=str, required=False, choices=list(ALGOS.keys()))
     parser.add_argument("--env", type=str, default="InvertedPendulum-v2", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e5), type=int)
@@ -41,6 +41,7 @@ if __name__ == '__main__':
     parser.add_argument("--aug-schedule", type=str, default="constant")
     # parser.add_argument("-aug-ratio-final", "--augmentation-ratio-final", type=Union[float, str], default=1)
     parser.add_argument("--aug-buffer", type=bool, default=True)
+    parser.add_argument("--aug-constraint", type=bool, default=None)
     parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={},
                         help="Optional ADDITIONAL keyword argument to pass to the policy constructor")
 
@@ -124,6 +125,7 @@ if __name__ == '__main__':
         # hyperparams['buffer_size'] = hyperparams['buffer_size'] * buffer_scale
         hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](initial_value=aug_ratio)
         hyperparams['aug_function'] = aug_func_class(aug_n, aug_func_kwargs)
+        hyperparams['aug_constraint'] = args.aug_constraint
 
 
     ####################################################################################################################

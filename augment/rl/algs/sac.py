@@ -115,7 +115,9 @@ class SAC(OffPolicyAlgorithmAugment):
         aug_function: Optional[AugmentationFunction] = None,
         aug_ratio: Optional[Union[float, Schedule]] = None,
         aug_n: Optional[int] = 1,
-        aug_buffer: Optional[bool] = True,):
+        aug_buffer: Optional[bool] = True,
+        aug_constraint: Optional[float] = 0,
+    ):
 
         super().__init__(
             policy,
@@ -147,6 +149,7 @@ class SAC(OffPolicyAlgorithmAugment):
             aug_ratio=aug_ratio,
             aug_n=aug_n,
             aug_buffer=aug_buffer,
+            aug_constraint=aug_constraint
         )
 
         self.target_entropy = target_entropy

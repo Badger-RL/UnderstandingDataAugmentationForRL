@@ -102,6 +102,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         aug_ratio: Optional[Union[float, Schedule]] = None,
         aug_n: Optional[int] = 1,
         aug_buffer: Optional[bool] = True,
+        aug_constraint: Optional[float] = None,
     ):
 
         super().__init__(
@@ -138,6 +139,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         self.aug_ratio = aug_ratio
         self.aug_n = aug_n
         self.separate_aug_buffer = aug_buffer
+        self.aug_constraint = aug_constraint
 
         self.use_aug = self.aug_function is not None
 
@@ -160,8 +162,15 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
     def augment_transition(self, obs, next_obs, action, reward, done, info):
         if self.use_aug:
             aug_ratio = self.aug_ratio(self._current_progress_remaining)
-            print(aug_ratio)
+            # print(aug_ratio)
             if self.separate_aug_buffer or (np.random.random() < aug_ratio):
+
+                normalization_constant = 1
+                dist = None
+                if self.aug_constraint is not None:
+                    dist = self.replay_buffer.state_counts + self.aug_constraint*self.replay_buffer.num_states
+                    dist /= dist.sum()
+
                 aug_transition = self.aug_function.augment(
                     self.aug_n,
                     obs,
@@ -170,6 +179,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                     reward,
                     done,
                     info,
+                    p=dist
                     # p=self.replay_buffer.state_counts/self.replay_buffer.num_states
                 )
                 if self.separate_aug_buffer:

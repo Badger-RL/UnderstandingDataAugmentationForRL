@@ -146,7 +146,7 @@ def step_schedule(initial_value: float, decay_rate: float) -> Callable[[float], 
         :return: current learning rate
         """
         progress = 1-progress_remaining
-        if progress*50e3 < 2000:
+        if progress*50e3 < 5000:
             return 1
         else:
             return 0
@@ -175,7 +175,8 @@ def exponential_schedule(initial_value: float, final_value: float=0.01) -> Calla
         :param progress_remaining:
         :return: current learning rate
         """
-        return initial_value*final_value**(1-progress_remaining)
+        progress = 1-progress_remaining
+        return initial_value*final_value**(progress)
 
     return func
 

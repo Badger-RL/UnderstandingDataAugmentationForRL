@@ -63,6 +63,7 @@ class InvertedPendulumTranslateUniform(AugmentationFunction):
             bin = np.argwhere(bin)[0]
             delta = -1 + bin*0.02
             delta +=  torch.from_numpy(np.random.uniform(low=0, high=+0.02, size=(augmentation_n,)))
+            # print(p)
         else:
             delta = torch.from_numpy(np.random.uniform(low=-1, high=+1, size=(augmentation_n,)))
 
