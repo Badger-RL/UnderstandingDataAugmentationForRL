@@ -5,13 +5,15 @@ import numpy as np
 import torch as th
 from torch.nn import functional as F
 
-from stable_baselines3.common.buffers import ReplayBuffer
+# from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.noise import ActionNoise
 # from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import polyak_update
 from stable_baselines3.td3.policies import CnnPolicy, MlpPolicy, MultiInputPolicy, TD3Policy
+
+from augment.rl.algs.buffers import ReplayBuffer
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
 from augment.rl.augmentation_functions import AugmentationFunction
 
@@ -82,7 +84,7 @@ class TD3(OffPolicyAlgorithmAugment):
         train_freq: Union[int, Tuple[int, str]] = (1, "episode"),
         gradient_steps: int = -1,
         action_noise: Optional[ActionNoise] = None,
-        replay_buffer_class: Optional[ReplayBuffer] = None,
+        replay_buffer_class: Optional[ReplayBuffer] = ReplayBuffer,
         replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
         optimize_memory_usage: bool = False,
         policy_delay: int = 2,
@@ -95,10 +97,11 @@ class TD3(OffPolicyAlgorithmAugment):
         seed: Optional[int] = None,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
-        augmentation_function: Optional[AugmentationFunction] = None,
-        augmentation_ratio: Optional[int] = 1,
-        augmentation_n: Optional[int] = 1,
-        augmentation_kwargs: Optional[Dict[str, Any]] = None    ):
+        aug_function: Optional[AugmentationFunction] = None,
+        aug_ratio: Optional[Union[float, Schedule]] = None,
+        aug_n: Optional[int] = 1,
+        aug_buffer: Optional[bool] = True,
+    ):
 
         super().__init__(
             policy,
@@ -124,10 +127,10 @@ class TD3(OffPolicyAlgorithmAugment):
             optimize_memory_usage=optimize_memory_usage,
             supported_action_spaces=(gym.spaces.Box,),
             support_multi_env=True,
-            augmentation_function=augmentation_function,
-            augmentation_ratio=augmentation_ratio,
-            augmentation_n=augmentation_n,
-            augmentation_kwargs=augmentation_kwargs,
+            aug_function=aug_function,
+            aug_ratio=aug_ratio,
+            aug_n=aug_n,
+            aug_buffer=aug_buffer,
         )
 
         self.policy_delay = policy_delay
@@ -159,22 +162,35 @@ class TD3(OffPolicyAlgorithmAugment):
         for _ in range(gradient_steps):
 
             self._n_updates += 1
-            # Sample replay buffer
+            # Sample replay buffer. Aug buffer contains aug_n times as many transitions as the normal buffer.
+            # Rather than changing the probability of augmenting a transition, we augment every transition with
+            # equal probability and instead change the probability of sampling augmented transitions for updates.
+            batch_size_aug = int(batch_size*self.aug_ratio(self._current_progress_remaining))
+            diff = batch_size - batch_size_aug
             replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)
+            replay_data_aug = self.aug_replay_buffer.sample(batch_size_aug, env=self._vec_normalize_env)
+            # print(self.augmentation_ratio(self._current_progress_remaining), len(replay_data_aug[0]), self.replay_buffer.size(), self.augmented_replay_buffer.size())
+
+            observations = th.concat((replay_data.observations, replay_data_aug.observations))
+            actions = th.concat((replay_data.actions, replay_data_aug.actions))
+            next_observations = th.concat((replay_data.next_observations, replay_data_aug.next_observations))
+            rewards = th.concat((replay_data.rewards, replay_data_aug.rewards))
+            dones = th.concat((replay_data.dones, replay_data_aug.dones))
+
 
             with th.no_grad():
                 # Select action according to policy and add clipped noise
-                noise = replay_data.actions.clone().data.normal_(0, self.target_policy_noise)
+                noise = actions.clone().data.normal_(0, self.target_policy_noise)
                 noise = noise.clamp(-self.target_noise_clip, self.target_noise_clip)
-                next_actions = (self.actor_target(replay_data.next_observations) + noise).clamp(-1, 1)
+                next_actions = (self.actor_target(next_observations) + noise).clamp(-1, 1)
 
                 # Compute the next Q-values: min over all critics targets
-                next_q_values = th.cat(self.critic_target(replay_data.next_observations, next_actions), dim=1)
+                next_q_values = th.cat(self.critic_target(next_observations, next_actions), dim=1)
                 next_q_values, _ = th.min(next_q_values, dim=1, keepdim=True)
-                target_q_values = replay_data.rewards + (1 - replay_data.dones) * self.gamma * next_q_values
+                target_q_values = rewards + (1 - dones) * self.gamma * next_q_values
 
             # Get current Q-values estimates for each critic network
-            current_q_values = self.critic(replay_data.observations, replay_data.actions)
+            current_q_values = self.critic(observations, actions)
 
             # Compute critic loss
             critic_loss = sum(F.mse_loss(current_q, target_q_values) for current_q in current_q_values)
@@ -188,7 +204,7 @@ class TD3(OffPolicyAlgorithmAugment):
             # Delayed policy updates
             if self._n_updates % self.policy_delay == 0:
                 # Compute actor loss
-                actor_loss = -self.critic.q1_forward(replay_data.observations, self.actor(replay_data.observations)).mean()
+                actor_loss = -self.critic.q1_forward(observations, self.actor(observations)).mean()
                 actor_losses.append(actor_loss.item())
 
                 # Optimize the actor

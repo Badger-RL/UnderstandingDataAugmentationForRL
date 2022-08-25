@@ -1,6 +1,8 @@
 import numpy as np
 from torch.utils.data import Dataset
 
+from augment.rl.augmentation_functions import PendulumTranslateUniform
+
 
 class TransitionDataset(Dataset):
     def __init__(self, states, actions, rewards, dones, normalize_rewards=True):
@@ -68,7 +70,7 @@ def load_dataset(data_path, n=None):
     # return TransitionDataset(states, actions, rewards, next_states, next_actions, dones)
     return TransitionDataset(states, actions, rewards, dones)
 
-def load_dataset(data_path, n=None):
+def load_dataset(data_path, n=None, slice=0):
 
     data = np.load(data_path)
     actions = data['actions']
@@ -82,10 +84,23 @@ def load_dataset(data_path, n=None):
     dones = dones.reshape(-1)
 
     if n is not None:
-        actions = actions[:n,:]
-        states = states[:n,:]
-        rewards = rewards[:n]
-        dones = dones[:n]
+        start = int(slice)
+        end = int(slice+n)
 
+        actions = actions[start:end,:]
+        states = states[start:end,:]
+        rewards = rewards[start:end]
+        dones = dones[start:end]
+
+
+    n = 100
+    delta = np.random.uniform(low=-1, high=+1, size=(n * len(actions),))
+    aug = PendulumTranslateUniform()
+    states1, next_states1, actions1, rewards1, dones1, infos1 = aug._deepcopy_transition(n, obs=states, next_obs=states, action=actions, reward=rewards, done=dones, infos=[{}])
+    states1[:,0] = delta
+    states = np.concatenate((states, states1))
+    actions = np.concatenate((actions, actions1))
+    rewards = np.concatenate((rewards, rewards1))
+    dones = np.concatenate((dones, dones1))
     # return TransitionDataset(states, actions, rewards, next_states, next_actions, dones)
     return TransitionDataset(states, actions, rewards, dones)

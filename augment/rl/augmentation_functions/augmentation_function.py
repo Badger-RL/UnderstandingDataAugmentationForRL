@@ -29,13 +29,14 @@ class AugmentationFunction:
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
     def augment(self,
-                replay_buffer: ReplayBuffer,
+                aug_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
                 action: np.ndarray,
                 reward: np.ndarray,
                 done: np.ndarray,
-                infos: List[Dict[str, Any]]
+                infos: List[Dict[str, Any]],
+                **kwargs,
                 ):
 
         raise NotImplementedError("Augmentation function not implemented.")

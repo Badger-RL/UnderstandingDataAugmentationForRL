@@ -22,7 +22,8 @@ class InvertedPendulumTranslate(AugmentationFunction):
                 action: np.ndarray,
                 reward: np.ndarray,
                 done: np.ndarray,
-                infos: List[Dict[str, Any]]
+                infos: List[Dict[str, Any]],
+                **kwargs
                 ):
 
         # state_dim = obs.shape[-1]
@@ -53,13 +54,21 @@ class InvertedPendulumTranslateUniform(AugmentationFunction):
                 action: np.ndarray,
                 reward: np.ndarray,
                 done: np.ndarray,
-                infos: List[Dict[str, Any]]
+                infos: List[Dict[str, Any]],
+                p=None,
                 ):
+
+        if p is not None:
+            bin = torch.from_numpy(np.random.multinomial(augmentation_n, pvals=p))
+            bin = np.argwhere(bin)[0]
+            delta = -1 + bin*0.02
+            delta +=  torch.from_numpy(np.random.uniform(low=0, high=+0.02, size=(augmentation_n,)))
+        else:
+            delta = torch.from_numpy(np.random.uniform(low=-1, high=+1, size=(augmentation_n,)))
 
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
-        delta = torch.from_numpy(np.random.uniform(low=-1, high=+1, size=(augmentation_n,)))
         aug_obs[:,0] = delta
         # aug_next_obs[:,0] = delta
 
@@ -71,16 +80,18 @@ class InvertedPendulumReflect(AugmentationFunction):
 
     def augment(
             self,
-            augmentation_n: int,
+            aug_n: int,
             obs: np.ndarray,
             next_obs: np.ndarray,
             action: np.ndarray,
             reward: np.ndarray,
             done: np.ndarray,
-            infos: List[Dict[str, Any]]):
+            infos: List[Dict[str, Any]],
+            **kwargs,
+    ):
 
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
-            augmentation_n, obs, next_obs, action, reward, done, infos)
+            aug_n, obs, next_obs, action, reward, done, infos)
 
         aug_obs[:,1:] *= -1
         aug_next_obs[:,1:] *= -1

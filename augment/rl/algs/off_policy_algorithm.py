@@ -9,11 +9,14 @@ import gym
 import numpy as np
 import torch as th
 
-from stable_baselines3.common.buffers import ReplayBuffer
+# from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, Schedule
+
+from augment.rl.algs.buffers import ReplayBuffer
+from augment.rl.augmentation_functions import AugmentationFunction
 
 
 class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
@@ -95,10 +98,10 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         use_sde_at_warmup: bool = False,
         sde_support: bool = True,
         supported_action_spaces: Optional[Tuple[gym.spaces.Space, ...]] = None,
-        augmentation_function=None,
-        augmentation_ratio: Optional[Union[float, Schedule]] = 1,
-        augmentation_n: Optional[int] = 1,
-        augmentation_kwargs: Optional[Dict[str, Any]] = None,
+        aug_function: Optional[AugmentationFunction] = None,
+        aug_ratio: Optional[Union[float, Schedule]] = None,
+        aug_n: Optional[int] = 1,
+        aug_buffer: Optional[bool] = True,
     ):
 
         super().__init__(
@@ -131,19 +134,20 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             supported_action_spaces=supported_action_spaces,
         )
 
-        self.augmentation_function = augmentation_function
-        self.use_augmentation = self.augmentation_function is not None
-        self.augmentation_ratio = augmentation_ratio
-        self.augmentation_n = augmentation_n
-        self.augmentation_buffer_size = self.buffer_size * self.augmentation_n
-        self.separate_augmentation_buffer = False
+        self.aug_function = aug_function
+        self.aug_ratio = aug_ratio
+        self.aug_n = aug_n
+        self.separate_aug_buffer = aug_buffer
+
+        self.use_aug = self.aug_function is not None
+
 
         self._setup_augmented_replay_buffer()
 
-        print(augmentation_ratio, augmentation_n)
+        print(aug_ratio, aug_n)
 
     def _setup_augmented_replay_buffer(self):
-        self.augmented_replay_buffer = ReplayBuffer(
+        self.aug_replay_buffer = ReplayBuffer(
             self.buffer_size,
             self.observation_space,
             self.action_space,
@@ -154,21 +158,23 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         )
 
     def augment_transition(self, obs, next_obs, action, reward, done, info):
-        if self.use_augmentation:
-            augmentation_ratio = self.augmentation_ratio(self._current_progress_remaining)
-            # print(augmentation_ratio)
-            if self.use_augmentation and np.random.random() < augmentation_ratio:
-                aug_transition = self.augmentation_function.augment(
-                    self.augmentation_n,
+        if self.use_aug:
+            aug_ratio = self.aug_ratio(self._current_progress_remaining)
+            print(aug_ratio)
+            if self.separate_aug_buffer or (np.random.random() < aug_ratio):
+                aug_transition = self.aug_function.augment(
+                    self.aug_n,
                     obs,
                     next_obs,
                     action,
                     reward,
                     done,
                     info,
+                    # p=self.replay_buffer.state_counts/self.replay_buffer.num_states
                 )
-                if self.separate_augmentation_buffer:
-                    self.augmented_replay_buffer.extend(*aug_transition)
+                if self.separate_aug_buffer:
+                    self.aug_replay_buffer.extend(*aug_transition)
+                    self.aug_replay_buffer.update_hists(next_obs)
                 else:
                     self.replay_buffer.extend(*aug_transition)
 
@@ -231,6 +237,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             dones,
             infos,
         )
+        self.replay_buffer.update_hists(next_obs)
 
         self.augment_transition(
             self._last_original_obs,

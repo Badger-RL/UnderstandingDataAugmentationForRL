@@ -32,13 +32,17 @@ if __name__ == '__main__':
     # parameters
     parser.add_argument("--env-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional keyword argument to pass to the env constructor")
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
-    parser.add_argument("-aug-function", "--augmentation-function", type=str, default=None)
-    parser.add_argument("-aug-n", "--augmentation-n", type=int, default=1)
-    parser.add_argument("-aug-ratio", "--augmentation-ratio", type=float, default=1)
+
+    # augmentation
+    parser.add_argument("--aug-function", type=str, default='translate_uniform')
+    parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
+    parser.add_argument("--aug-n", type=int, default=1)
+    parser.add_argument("--aug-ratio", type=float, default=1)
+    parser.add_argument("--aug-schedule", type=str, default="constant")
     # parser.add_argument("-aug-ratio-final", "--augmentation-ratio-final", type=Union[float, str], default=1)
-    parser.add_argument("-aug-kwargs", "--augmentation-kwargs", type=str, nargs="*", action=StoreDict, default={'schedule': 'constant', 'aug_ratio_final': 0})
-    parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional ADDITIONAL keyword argument to pass to the policy constructor" )
-    parser.add_argument("-aug-schedule", "--augmentation-schedule", type=str, default='constant')
+    parser.add_argument("--aug-buffer", type=bool, default=True)
+    parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={},
+                        help="Optional ADDITIONAL keyword argument to pass to the policy constructor")
 
     # saving
     parser.add_argument("-f", "--log-folder", help="Log folder", type=str, default="results")
@@ -104,29 +108,23 @@ if __name__ == '__main__':
     hyperparams['buffer_size'] = int(hyperparams['buffer_size'])
 
     # augmentation
-    if args.augmentation_function:
-        print(f'augmentation_function: {args.augmentation_function}')
-        print(f'augmentation_n: {args.augmentation_n}')
-        print(f'augmentation_kwargs: {args.augmentation_kwargs}')
-        print(f'Automatically scaling replay buffer')
-        aug_func_class = AUGMENTATION_FUNCTIONS[env_id][args.augmentation_function]
+    if args.aug_function:
+        # print(f'Automatically scaling replay buffer')
+        # print('BUFFER SCALING CURRENTLY DISABLED')
 
-        if algo != 'ppo':
-            # area = (0.01-1)/np.log(0.01)
-            # hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * int(1+area*(args.augmentation_n+1)))
-            hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * int(1+args.augmentation_ratio*(args.augmentation_n+1)))
-            try:
-                batch_size = hyperparams['batch_size']
-            except:
-                hyperparams['batch_size'] = 100
-            hyperparams['batch_size'] *= int(1+args.augmentation_ratio*(args.augmentation_n+1))
-        # if isinstance(args.augmentation_ratio, str):
-        #     aug_ratio_schedule = SCHEDULES[args.augmentation_ratio]
-        hyperparams['augmentation_ratio'] = SCHEDULES[args.augmentation_schedule](args.augmentation_ratio,)
-        # hyperparams['augmentation_ratio'] = args.augmentation_ratio
-        # hyperparams['augmentation_ratio'] = SCHEDULES['constant'](1)
-        hyperparams['augmentation_n'] = args.augmentation_n
-        hyperparams['augmentation_function'] = aug_func_class(**args.augmentation_kwargs)
+        aug_buffer = args.aug_buffer
+        aug_ratio = args.aug_ratio
+        aug_schedule = args.aug_schedule #
+        aug_n = args.aug_n
+        aug_func = args.aug_function #
+        aug_func_kwargs = args.aug_function_kwargs
+
+        aug_func_class = AUGMENTATION_FUNCTIONS[env_id][aug_func]
+        # buffer_scale = int(1+aug_ratio*aug_n)
+        # hyperparams['buffer_size'] = hyperparams['buffer_size'] * buffer_scale
+        hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](initial_value=aug_ratio)
+        hyperparams['aug_function'] = aug_func_class(aug_n, aug_func_kwargs)
+
 
     ####################################################################################################################
     # More preprocessing that depends on the env object

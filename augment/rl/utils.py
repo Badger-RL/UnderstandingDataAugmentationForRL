@@ -14,6 +14,7 @@ from stable_baselines3 import A2C, DDPG, DQN, PPO, SAC, TD3
 from augment.rl.algs.ddpg import DDPG
 from augment.rl.algs.ppo import PPO
 from augment.rl.algs.td3 import TD3
+from augment.rl.algs.sac import SAC
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, BaseCallback
 from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise
 from stable_baselines3.common.vec_env import VecEnv
@@ -136,7 +137,7 @@ def constant_schedule(initial_value: float) -> Callable[[float], float]:
 
     return func
 
-def step_schedule(initial_value: float, decay_rate: float, epoch: float) -> Callable[[float], float]:
+def step_schedule(initial_value: float, decay_rate: float) -> Callable[[float], float]:
     def func(progress_remaining: float) -> float:
         """
         Progress will decrease from 1 (beginning) to 0.
@@ -144,12 +145,16 @@ def step_schedule(initial_value: float, decay_rate: float, epoch: float) -> Call
         :param progress_remaining:
         :return: current learning rate
         """
-
-        return initial_value * decay_rate**((1-progress_remaining)//epoch)
+        progress = 1-progress_remaining
+        if progress*50e3 < 2000:
+            return 1
+        else:
+            return 0
+        # return initial_value * decay_rate**((1-progress_remaining)//epoch)
 
     return func
 
-def linear_schedule(initial_value: float, final_value: float, cutoff: float) -> Callable[[float], float]:
+def linear_schedule(initial_value: float, final_value: float) -> Callable[[float], float]:
     def func(progress_remaining: float) -> float:
         """
         Progress will decrease from 1 (beginning) to 0.
