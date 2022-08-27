@@ -1,3 +1,6 @@
+import os
+
+import gym.spaces
 import numpy as np
 
 from gym import utils
@@ -5,7 +8,7 @@ from gym.envs.mujoco import mujoco_env
 from gym.envs.mujoco import InvertedPendulumEnv as InvertedPendulumEnv_original
 
 
-class InvertedPendulumEnv(InvertedPendulumEnv_original):
+class InvertedPendulumEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     """
     ### Description
 
@@ -82,12 +85,34 @@ class InvertedPendulumEnv(InvertedPendulumEnv_original):
 
     """
 
-    def __init__(self, init_pos=None, use_pos=True):
+    def __init__(self, init_pos=None, rbf_n=None):
+
         self.init_pos = init_pos
-        self.use_pos = use_pos
         print(f'init_pos = {init_pos}')
-        print(f'use_pos = {use_pos}')
-        super().__init__()
+
+        self.rbf_n = rbf_n
+
+        if self.rbf_n:
+            self.observation_space = gym.spaces.Box(low=-1, high=+1, shape=(self.rbf_n,))
+            self.ob = self.observation_space.sample()
+
+            self.P = np.random.normal(loc=0, scale=1, size=(self.rbf_n,4))
+            self.phi = np.random.uniform(low=-np.pi, high=np.pi, size=(self.rbf_n,))
+
+        utils.EzPickle.__init__(self)
+        fullpath = os.path.join(os.path.dirname(__file__), "assets", "inverted_pendulum.xml")
+        mujoco_env.MujocoEnv.__init__(self, fullpath, 2)
+
+
+    def step(self, a):
+        self.do_simulation(a, self.frame_skip)
+        obs = self._get_obs()
+        notdone = np.isfinite(obs).all() and (np.abs(self.sim.data.qpos[1]) <= 0.2)
+        # ob = ob.reshape(1, -1)
+        done = not notdone
+        # print(ob)
+        reward = 1.0 #- 10*self.sim.expert_data.qvel[0]**2
+        return obs, reward, done, {}
 
     def reset_model(self):
         if self.init_pos:
@@ -106,8 +131,10 @@ class InvertedPendulumEnv(InvertedPendulumEnv_original):
         return self._get_obs()
 
     def _get_obs(self):
-        if self.use_pos:
-            return np.concatenate([self.sim.data.qpos, self.sim.data.qvel]).ravel()
-        else:
-            return np.concatenate([[0], self.sim.data.qpos[1:], self.sim.data.qvel]).ravel()
+        obs = np.concatenate([self.sim.data.qpos, self.sim.data.qvel]).ravel()
+        if self.rbf_n:
+            obs = self._rbf(obs)
+        return obs
 
+    def _rbf(self, obs):
+        return np.sin(self.P.dot(obs)/1 + self.phi)

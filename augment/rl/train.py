@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # basic
-    parser.add_argument("--algo", help="RL Algorithm", default="sac", type=str, required=False, choices=list(ALGOS.keys()))
+    parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
     parser.add_argument("--env", type=str, default="InvertedPendulum-v2", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e5), type=int)
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
 
     # augmentation
-    parser.add_argument("--aug-function", type=str, default='translate_uniform')
+    parser.add_argument("--aug-function", type=str, default=None)
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-n", type=int, default=1)
     parser.add_argument("--aug-ratio", type=float, default=1)
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     # set train_freq
     if "train_freq" in hyperparams and isinstance(hyperparams["train_freq"], list):
         hyperparams["train_freq"] = tuple(hyperparams["train_freq"])
-    hyperparams['buffer_size'] = int(hyperparams['buffer_size'])
+    # hyperparams['buffer_size'] = int(hyperparams['buffer_size'])
 
     # augmentation
     if args.aug_function:
