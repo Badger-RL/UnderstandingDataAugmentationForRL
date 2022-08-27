@@ -168,7 +168,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                 normalization_constant = 1
                 dist = None
                 if self.aug_constraint is not None:
-                    dist = self.replay_buffer.state_counts + self.aug_constraint*self.replay_buffer.num_states
+                    dist = self.replay_buffer.marginal_hist + self.aug_constraint*self.replay_buffer.num_states
                     dist /= dist.sum()
 
                 aug_transition = self.aug_function.augment(

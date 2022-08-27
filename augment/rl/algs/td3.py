@@ -15,6 +15,7 @@ from stable_baselines3.td3.policies import CnnPolicy, MlpPolicy, MultiInputPolic
 
 from augment.rl.algs.buffers import ReplayBuffer
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
+from augment.rl.algs.rbf_policy import RBFExtractor
 from augment.rl.augmentation_functions import AugmentationFunction
 
 
@@ -101,8 +102,10 @@ class TD3(OffPolicyAlgorithmAugment):
         aug_ratio: Optional[Union[float, Schedule]] = None,
         aug_n: Optional[int] = 1,
         aug_buffer: Optional[bool] = True,
+        aug_constraint: Optional[float] = 0,
     ):
 
+        # policy_kwargs.update({'features_extractor_class': RBFExtractor})
         super().__init__(
             policy,
             env,
@@ -131,6 +134,7 @@ class TD3(OffPolicyAlgorithmAugment):
             aug_ratio=aug_ratio,
             aug_n=aug_n,
             aug_buffer=aug_buffer,
+            aug_constraint=aug_constraint
         )
 
         self.policy_delay = policy_delay

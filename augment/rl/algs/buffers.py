@@ -38,12 +38,38 @@ class ReplayBuffer(ReplayBuffer_sb3):
     ):
         super().__init__(buffer_size, observation_space, action_space, device, n_envs, optimize_memory_usage, handle_timeout_termination)
 
-        self.state_counts = np.zeros(100)
+        self.n_bins = 100
+        self.bin_width = 2/self.n_bins
+        self.hist = np.zeros((self.n_bins,)*self.observation_space.shape[-1])
+        self.marginal_hist = np.zeros((self.observation_space.shape[-1], self.n_bins))
+
         self.num_states = 0
 
-    def update_hists(self, states):
-        aug_dims = states[:, 0]
+    def _which_bin(self, x):
+        return np.clip(int((x+1)/self.bin_width), 0, 99)
 
-        counts, bins = np.histogram(aug_dims, bins=100, range=[-1,1])
-        self.state_counts += counts
-        self.num_states += len(aug_dims)
+    def update_hists(self, states):
+        assert states.shape[0] == 1
+
+        # bin = self._which_bin(states[:,0])
+        # self.state_counts[bin] += 1
+        # self.num_states += len(states)
+
+        bins = []
+        for i in range(self.observation_space.shape[-1]):
+            bin = self._which_bin(states[:,i])
+            self.marginal_hist[i, bin] += 1
+            bins.append(bin)
+        self.num_states += 1
+
+        self.hist[bins[0], bins[1], bins[2], bins[3]] += 1
+
+        #
+        # bins = np.array(bins, dtype=int)
+        # self.state_counts[bins] += 1
+        # x = self.state_counts[bins]
+        # self.num_states += 1
+
+        # counts, bins = np.histogramdd(states, bins=self.n_bins, range=[[-1,1] for i in range(4)],)
+        # self.state_counts += counts
+        # self.num_states += len(states)
