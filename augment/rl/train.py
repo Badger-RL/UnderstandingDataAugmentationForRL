@@ -148,5 +148,6 @@ if __name__ == '__main__':
     env_eval = Monitor(gym.make(env_id, **args.env_kwargs), filename=save_dir)
     eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq, log_path=save_dir, best_model_save_path=best_model_save_dir)
     model.learn(total_timesteps=int(n_timesteps), callback=eval_callback)
+    # model.save_replay_buffer(f"{save_dir}/buffer")
 
     print(f'Results saved to {save_dir}')
