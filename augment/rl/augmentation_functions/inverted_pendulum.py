@@ -59,10 +59,11 @@ class InvertedPendulumTranslateUniform(AugmentationFunction):
                 ):
 
         if p is not None:
-            bin = torch.from_numpy(np.random.multinomial(augmentation_n, pvals=p))
+            bin = torch.from_numpy(np.random.multinomial(augmentation_n, pvals=p[0]))
             bin = np.argwhere(bin)[0]
-            delta = -1 + bin*0.02
-            delta +=  torch.from_numpy(np.random.uniform(low=0, high=+0.02, size=(augmentation_n,)))
+            bin_width = 2/len(p[0])
+            delta = -1 + bin*bin_width
+            delta +=  torch.from_numpy(np.random.uniform(low=0, high=bin_width, size=(augmentation_n,)))
             # print(p)
         else:
             delta = torch.from_numpy(np.random.uniform(low=-1, high=+1, size=(augmentation_n,)))
