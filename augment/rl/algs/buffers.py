@@ -40,7 +40,7 @@ class ReplayBuffer(ReplayBuffer_sb3):
 
         self.n_bins = 100
         self.bin_width = 2/self.n_bins
-        self.hist = np.zeros((self.n_bins,)*self.observation_space.shape[-1])
+        # self.hist = np.zeros((self.n_bins,)*self.observation_space.shape[-1])
         self.marginal_hist = np.zeros((self.observation_space.shape[-1], self.n_bins))
 
         self.num_states = 0
@@ -62,7 +62,7 @@ class ReplayBuffer(ReplayBuffer_sb3):
             bins.append(bin)
         self.num_states += 1
 
-        self.hist[bins[0], bins[1], bins[2], bins[3]] += 1
+        # self.hist[bins[0], bins[1], bins[2], bins[3]] += 1
 
         #
         # bins = np.array(bins, dtype=int)
