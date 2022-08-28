@@ -106,7 +106,10 @@ if __name__ == '__main__':
     # set train_freq
     if "train_freq" in hyperparams and isinstance(hyperparams["train_freq"], list):
         hyperparams["train_freq"] = tuple(hyperparams["train_freq"])
-    # hyperparams['buffer_size'] = int(hyperparams['buffer_size'])
+    try:
+        hyperparams['buffer_size'] = int(hyperparams['buffer_size'])
+    except:
+        pass
 
     # augmentation
     if args.aug_function:
@@ -124,8 +127,9 @@ if __name__ == '__main__':
         # buffer_scale = int(1+aug_ratio*aug_n)
         # hyperparams['buffer_size'] = hyperparams['buffer_size'] * buffer_scale
         hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](initial_value=aug_ratio)
-        hyperparams['aug_function'] = aug_func_class(aug_n, aug_func_kwargs)
+        hyperparams['aug_function'] = aug_func_class(**aug_func_kwargs)
         hyperparams['aug_constraint'] = args.aug_constraint
+        hyperparams['aug_n'] = aug_n
 
 
     ####################################################################################################################
