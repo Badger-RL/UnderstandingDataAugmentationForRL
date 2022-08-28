@@ -137,7 +137,7 @@ def constant_schedule(initial_value: float) -> Callable[[float], float]:
 
     return func
 
-def step_schedule(initial_value: float, decay_rate: float) -> Callable[[float], float]:
+def step_down_schedule(initial_value: float,) -> Callable[[float], float]:
     def func(progress_remaining: float) -> float:
         """
         Progress will decrease from 1 (beginning) to 0.
@@ -146,10 +146,27 @@ def step_schedule(initial_value: float, decay_rate: float) -> Callable[[float], 
         :return: current learning rate
         """
         progress = 1-progress_remaining
-        if progress*50e3 < 5000:
+        if progress*50e3 < 2000:
             return 1
         else:
             return 0
+        # return initial_value * decay_rate**((1-progress_remaining)//epoch)
+
+    return func
+
+def step_up_schedule(initial_value: float) -> Callable[[float], float]:
+    def func(progress_remaining: float) -> float:
+        """
+        Progress will decrease from 1 (beginning) to 0.
+
+        :param progress_remaining:
+        :return: current learning rate
+        """
+        progress = 1-progress_remaining
+        if progress*50e3 < 25000:
+            return 0
+        else:
+            return 1
         # return initial_value * decay_rate**((1-progress_remaining)//epoch)
 
     return func
@@ -184,7 +201,8 @@ def exponential_schedule(initial_value: float, final_value: float=0.01) -> Calla
 
 SCHEDULES = {
     'constant': constant_schedule,
-    'step': step_schedule,
+    'step_down': step_down_schedule,
+    'step_up': step_up_schedule,
     'linear': linear_schedule,
     'exponential': exponential_schedule,
 }
