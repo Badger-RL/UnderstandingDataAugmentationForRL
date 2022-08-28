@@ -23,7 +23,8 @@ class Rotate(AugmentationFunction):
                 reward: np.ndarray,
                 done: np.ndarray,
                 infos: List[Dict[str, Any]],
-                delta = None
+                delta = None,
+                p=None
                 ):
 
         if delta is None:

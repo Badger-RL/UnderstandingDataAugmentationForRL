@@ -180,7 +180,7 @@ Reacher4-v3: &reacher-defaults
   policy: 'MlpPolicy'
   learning_rate: !!float 1e-3
   learning_starts: 1000
-  buffer_size: !!float 1e6
+  buffer_size: 1000000
   noise_type: 'normal'
   noise_std: 0.1
 

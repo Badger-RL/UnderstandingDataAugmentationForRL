@@ -221,7 +221,7 @@ class SAC(OffPolicyAlgorithmAugment):
             replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)
 
             if self.use_aug:
-                batch_size_aug = int(batch_size*self.aug_ratio(self._current_progress_remaining))
+                batch_size_aug = int(batch_size*self.aug_ratio(self._current_progress_remaining)*self.aug_n)
                 diff = batch_size - batch_size_aug
                 replay_data_aug = self.aug_replay_buffer.sample(batch_size_aug, env=self._vec_normalize_env)
 
