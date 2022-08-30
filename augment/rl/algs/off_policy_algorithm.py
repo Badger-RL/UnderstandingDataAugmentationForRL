@@ -182,7 +182,6 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                 # p=self.replay_buffer.state_counts/self.replay_buffer.num_states
             )
 
-            self.actor.predict()
 
             if self.separate_aug_buffer:
                 self.aug_replay_buffer.extend(*aug_transition)
