@@ -161,32 +161,34 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
 
     def augment_transition(self, obs, next_obs, action, reward, done, info):
         if self.use_aug:
-            aug_ratio = self.aug_ratio(self._current_progress_remaining)
+            # aug_ratio = self.aug_ratio(self._current_progress_remaining)
             # print(aug_ratio)
-            if self.separate_aug_buffer or (np.random.random() < aug_ratio):
+            # if self.separate_aug_buffer or (np.random.random() < aug_ratio):
+            normalization_constant = 1
+            dist = None
+            if self.aug_constraint is not None:
+                dist = self.replay_buffer.marginal_hist + self.aug_constraint*self.replay_buffer.num_states
+                dist /= dist.sum()
 
-                normalization_constant = 1
-                dist = None
-                if self.aug_constraint is not None:
-                    dist = self.replay_buffer.marginal_hist + self.aug_constraint*self.replay_buffer.num_states
-                    dist /= dist.sum()
+            aug_transition = self.aug_function.augment(
+                self.aug_n,
+                obs,
+                next_obs,
+                action,
+                reward,
+                done,
+                info,
+                p=dist
+                # p=self.replay_buffer.state_counts/self.replay_buffer.num_states
+            )
 
-                aug_transition = self.aug_function.augment(
-                    self.aug_n,
-                    obs,
-                    next_obs,
-                    action,
-                    reward,
-                    done,
-                    info,
-                    p=dist
-                    # p=self.replay_buffer.state_counts/self.replay_buffer.num_states
-                )
-                if self.separate_aug_buffer:
-                    self.aug_replay_buffer.extend(*aug_transition)
-                    self.aug_replay_buffer.update_hists(next_obs)
-                else:
-                    self.replay_buffer.extend(*aug_transition)
+            self.actor.predict()
+
+            if self.separate_aug_buffer:
+                self.aug_replay_buffer.extend(*aug_transition)
+                self.aug_replay_buffer.update_hists(next_obs)
+            else:
+                self.replay_buffer.extend(*aug_transition)
 
     def _store_transition(
         self,
