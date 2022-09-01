@@ -85,13 +85,17 @@ class InvertedPendulumEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
     """
 
-    def __init__(self, init_pos=None, rbf_n=None):
+    def __init__(self, init_pos=None, rbf_n=None, discrete=False):
 
         self.init_pos = init_pos
         print(f'init_pos = {init_pos}')
 
-        self.rbf_n = rbf_n
+        self.discrete = discrete
+        if self.discrete:
+            self.action_map = [-0.3, -0.2, -0.1, -0.01, -0.001, 0.5, 0.4, 0.3, 0.2, 0.1, 0.01, 0.001]
+            self.action_space = gym.spaces.Discrete(len(self.action_map))
 
+        self.rbf_n = rbf_n
         if self.rbf_n:
             self.observation_space = gym.spaces.Box(low=-1, high=+1, shape=(self.rbf_n,))
             self.ob = self.observation_space.sample()

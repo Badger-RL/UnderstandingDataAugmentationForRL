@@ -6,13 +6,12 @@ import torch
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
 
 
-class InvertedPendulumTranslate(AugmentationFunction):
+class TranslatePaddle(AugmentationFunction):
 
     def __init__(self, sigma=0.1, clip=True, noise='uniform', **kwargs):
         super().__init__()
         self.sigma = sigma
         self.clip = clip
-        self.delta = np.random.uniform(-1, 1)
         if noise == 'uniform':
             self.noise_function = np.random.uniform
 
@@ -28,13 +27,13 @@ class InvertedPendulumTranslate(AugmentationFunction):
                 ):
 
         # state_dim = obs.shape[-1]
-        # delta = self.noise_function(low=-self.sigma, high=+self.sigma, size=(augmentation_n,))
-        if done[0]: self.delta = np.random.uniform(-1, 1)
+        delta = self.noise_function(low=-self.sigma, high=+self.sigma, size=(augmentation_n,))
+
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
-        aug_obs[:,0] += self.delta
-        aug_next_obs[:,0] += self.delta
+        aug_obs[:,0] += delta
+        aug_next_obs[:,0] += delta
 
         aug_obs[:,0].clip(-1, +1, aug_obs[:,0])
         aug_next_obs[:,0].clip(-1, +1, aug_next_obs[:,0])

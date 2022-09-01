@@ -58,10 +58,10 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
         theta = self.sim.data.qpos.flat[:self.num_links]
         return np.concatenate(
             [
-                np.cos(theta),
-                np.sin(theta),
-                self.sim.data.qpos.flat[self.num_links:],
-                self.sim.data.qvel.flat[:self.num_links],
-                self.get_body_com("fingertip") - self.get_body_com("target"),
+                np.cos(theta), # 4 cos(joint angles)
+                np.sin(theta), # 4 sin(joint angles
+                self.sim.data.qpos.flat[self.num_links:], # 2 target
+                self.sim.data.qvel.flat[:self.num_links], # 4 joint velocities
+                self.get_body_com("fingertip") - self.get_body_com("target"), # 1 distance
             ]
         )

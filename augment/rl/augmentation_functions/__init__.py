@@ -12,6 +12,12 @@ AUGMENTATION_FUNCTIONS = {
         'translate_uniform': InvertedPendulumTranslateUniform,
         'reflect': InvertedPendulumReflect,
     },
+    'CartPole-v1': {
+        'translate': InvertedPendulumTranslate,
+        'translate_uniform': InvertedPendulumTranslateUniform,
+        'reflect': InvertedPendulumReflect,
+    },
+
 }
 
 for k in range(2,20+1):

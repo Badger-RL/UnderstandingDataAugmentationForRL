@@ -1,3 +1,4 @@
+import gym.spaces
 import numpy as np
 
 from gym import utils
@@ -110,9 +111,13 @@ class InvertedDoublePendulumEnv(InvertedDoublePendulumEnv_original):
 
     """
 
-    def __init__(self, init_pos=None, use_pos=True):
+    def __init__(self, init_pos=None, use_pos=True, discrete=False):
         self.init_pos = init_pos
         self.use_pos = use_pos
+        self.discrete = discrete
+        if self.discrete:
+            self.action_map = [-0.8, -0.2, 0, 0.2, 0.8]
+            self.action_space = gym.spaces.Discrete(len(self.action_map))
         print(f'init_pos = {init_pos}')
         print(f'use_pos = {use_pos}')
         super().__init__()

@@ -21,8 +21,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # basic
-    parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="InvertedPendulum-v2", help="environment ID")
+    parser.add_argument("--algo", help="RL Algorithm", default="dqn", type=str, required=False, choices=list(ALGOS.keys()))
+    parser.add_argument("--env", type=str, default="CartPole-v1", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e5), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)

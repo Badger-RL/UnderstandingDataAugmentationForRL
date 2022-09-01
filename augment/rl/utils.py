@@ -15,6 +15,8 @@ from augment.rl.algs.ddpg import DDPG
 from augment.rl.algs.ppo import PPO
 from augment.rl.algs.td3 import TD3
 from augment.rl.algs.sac import SAC
+from augment.rl.algs.dqn import DQN
+
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, BaseCallback
 from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise
 from stable_baselines3.common.vec_env import VecEnv

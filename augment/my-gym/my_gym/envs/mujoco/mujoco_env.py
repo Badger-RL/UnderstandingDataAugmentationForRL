@@ -46,7 +46,7 @@ class MujocoEnv(gym.Env):
         self.model_class = model_class
         self.action_dim = None
         self.latent_dim = latent_dim
-        self.set_latent_info(env_id=self.id, latent_dim=self.latent_dim, model_class=self.model_class)
+        # self.set_latent_info(env_id=self.id, latent_dim=self.latent_dim, model_class=self.model_class)
 
         self._set_action_space()
 

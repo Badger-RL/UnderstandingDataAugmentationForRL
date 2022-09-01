@@ -7,30 +7,22 @@ from matplotlib import pyplot as plt
 
 def get_line_styles(name):
 
-    parts = name.split(' ')
-    if len(parts) > 1:
-        name = parts[0]
-        q = int(parts[1])
-
     colors = sns.color_palette(n_colors=10)
 
-    if name == 'native':
+    linewidth = 1
+    linestyle = '-'
+
+    if name == 'no aug':
+        linewidth = 3
         linestyle = '-'
-        linewidth=3
-        color=colors[0]
-    elif name.startswith('AE'):
-        linestyle = '-'
-        linewidth=2
-        color=colors[q+1]
-    else:
-        linestyle = '-.'
-        linewidth=2
-        color=colors[q+1]
+    if name == 'no aug 64':
+        linewidth = 3
+        linestyle = '--'
 
     style_dict = {
         'linestyle': linestyle,
         'linewidth': linewidth,
-        'color': color,
+        # 'color': color,
     }
 
     return style_dict
@@ -57,6 +49,7 @@ def plot(save_dict, title, save_dir, save_name, n=int(2e6), eval_freq=int(1e3)):
             t, avg = load_data(path, n, eval_freq)
             if avg is not None:
                 avgs.append(avg)
+                print(path, len(t))
 
         if len(avgs) == 0: continue
         elif len(avgs) == 1:
@@ -76,9 +69,12 @@ def plot(save_dict, title, save_dir, save_name, n=int(2e6), eval_freq=int(1e3)):
 
         # plt.plot(t, avg_of_avgs, label=agent, **style_dict)
         # plt.fill_between(t, q05, q95, alpha=0.2, color=style_dict['color'])
+
+        style_kwargs = get_line_styles(agent)
+
         if t is None:
             t = np.linspace(eval_freq, n+1, eval_freq)
-        plt.plot(t, avg_of_avgs, label=agent)
+        plt.plot(t, avg_of_avgs, label=agent, **style_kwargs)
         plt.fill_between(t, q05, q95, alpha=0.2)
         plt.title(title, fontsize=16)
         plt.xlabel('Timestep', fontsize=16)
@@ -93,15 +89,15 @@ def plot(save_dict, title, save_dir, save_name, n=int(2e6), eval_freq=int(1e3)):
         os.mkdir(save_dir)
     fig.savefig(f'{save_dir}/{save_name}')
 
-def get_paths(results_dir, key, n_trials=10):
+# def get_paths(results_dir, key, n_trials=20):
+#
+#     path_dict = {}
+#     path_dict[key] = []
+#     for j in range(n_trials):
+#         path_dict[key].append(f'./{results_dir}/run_{j+1}/evaluations.npz')
+#     return path_dict
 
-    path_dict = {}
-    path_dict[key] = []
-    for j in range(n_trials):
-        path_dict[key].append(f'./{results_dir}/run_{j+1}/evaluations.npz')
-    return path_dict
-
-def get_paths_auto(results_dir, key):
+def get_paths(results_dir, key):
 
     path_dict = {}
     path_dict[key] = []
