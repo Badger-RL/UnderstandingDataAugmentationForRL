@@ -140,6 +140,12 @@ register(
     max_episode_steps=200,
 )
 
+register(
+    id="LQRGoal-v0",
+    entry_point="my_gym.envs:LQRGoalEnv",
+    max_episode_steps=50,
+)
+
 # register(
 #     id="Bandit-v0",
 #     entry_point="my_gym.envs:BanditEnv",

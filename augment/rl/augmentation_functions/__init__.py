@@ -24,6 +24,10 @@ AUGMENTATION_FUNCTIONS = {
         'translate': LQRTranslate,
         'rotate': LQRRotate,
     },
+    'LQRGoal-v0': {
+        'translate': LQRTranslate,
+        'rotate': LQRRotate,
+    },
     'Swimmer-v3': {
         'reflect': SwimmerReflect,
     },
@@ -34,4 +38,4 @@ AUGMENTATION_FUNCTIONS = {
 
 for k in range(2,20+1):
     AUGMENTATION_FUNCTIONS[f'Reacher{k}-v3'] = {'rotate': Rotate}
-    AUGMENTATION_FUNCTIONS[f'Swimmer{k}-v3'] = {'rotate': SwimmerReflect}
+    AUGMENTATION_FUNCTIONS[f'Swimmer{k}-v3'] = {'reflect': SwimmerReflect}

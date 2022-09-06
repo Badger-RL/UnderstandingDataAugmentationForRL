@@ -110,6 +110,11 @@ if __name__ == "__main__":
         time.sleep(0.001)
 
 
-        # time.sleep(0.1)
+    env.set_state(qpos, qvel)
 
-    # self.set_state(qpos, qvel)
+    action = np.array([1,1,1,-1,-1,-1])
+    next_obs, r, done, info = env.step(action)
+    aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, next_obs, action, obs, obs, [{}])
+
+    env.set_state(qpos, qvel)
+    next_obs, r, done, info = env.step(np.concatenate(action[3:], action[3:]))
