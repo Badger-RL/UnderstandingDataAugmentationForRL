@@ -195,3 +195,9 @@ Reacher16-v3:
 
 Reacher20-v3:
   <<: *reacher-defaults
+
+Swimmer10-v3:
+  <<: *mujoco-defaults
+
+Swimmer20-v3:
+  <<: *mujoco-defaults
