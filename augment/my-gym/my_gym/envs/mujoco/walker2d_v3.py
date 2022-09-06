@@ -193,6 +193,17 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         observation = np.concatenate((position, velocity)).ravel()
         return observation
 
+    def obs_to_q(self, obs):
+        if self._exclude_current_positions_from_observation:
+            qpos = np.zeros(9)
+            qpos[1:] = obs[:8]
+            qvel = obs[8:]
+        else:
+            qpos = obs[:9]
+            qvel = obs[9:]
+
+        return qpos, qvel
+
     def get_obs(self):
         return self._get_obs()
 
