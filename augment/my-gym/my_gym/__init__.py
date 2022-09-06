@@ -5,7 +5,9 @@ from gym.envs.registration import register
 
 # unregister gym's env so I can use the same name
 # envs_to_unregister = ['Ant-v3', 'HalfCheetah-v3', 'Humanoid-v3', 'Walker2d-v3']
-envs_to_unregister = ['CartPole-v1', 'InvertedPendulum-v2', 'InvertedDoublePendulum-v2']
+envs_to_unregister = [
+    'CartPole-v1', 'InvertedPendulum-v2', 'InvertedDoublePendulum-v2',
+    'Ant-v3', 'HalfCheetah-v3', 'Humanoid-v3', 'Walker2d-v3', 'Hopper-v3', 'Swimmer-v3', 'HumanoidStandup-v2']
 # for env_id in envs_to_unregister:
 #     if env_id in gym.envs.registry.env_specs:
 #         del gym.envs.registry.env_specs[env_id]
@@ -102,6 +104,13 @@ register(
 # ###########################################################################
 
 register(
+    id=f'Swimmer10-v3',
+    entry_point='my_gym.envs.mujoco:SwimmerKEnv',
+    kwargs={'num_links': 10},
+    max_episode_steps=1000,
+)
+
+register(
     id=f'Swimmer20-v3',
     entry_point='my_gym.envs.mujoco:SwimmerKEnv',
     kwargs={'num_links': 20},
@@ -125,12 +134,12 @@ for k in [4,8,12,16,20]:
 #
 # ###########################################################################
 #
-# register(
-#     id="LQR-v0",
-#     entry_point="my_gym.envs:LQREnv",
-#     max_episode_steps=50,
-# )
-#
+register(
+    id="LQR-v0",
+    entry_point="my_gym.envs:LQREnv",
+    max_episode_steps=200,
+)
+
 # register(
 #     id="Bandit-v0",
 #     entry_point="my_gym.envs:BanditEnv",

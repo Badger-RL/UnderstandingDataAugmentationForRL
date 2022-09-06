@@ -4,6 +4,8 @@ import scipy.linalg
 
 from matplotlib import pyplot as plt
 
+from augment.rl.algs.td3 import TD3
+
 
 def dlqr(A,B,Q,R):
     """
@@ -20,10 +22,8 @@ def dlqr(A,B,Q,R):
 class LQREnv(gym.Env):
     def __init__(
             self,
-            n=1,
+            n=2,
             sigma=0.00,
-            exponent=0.33,
-            hardtanh=None,
     ):
 
         self.n = n
@@ -32,16 +32,10 @@ class LQREnv(gym.Env):
         self.step_num = 0
         self.horizon = 200
         self.sigma = sigma
-        self.hardtanh = hardtanh
-        self.exponent = exponent
-        self.discontinuous = False
-
         self.delta = 0.05
 
-        np.random.seed(0)
         self.A = np.eye(n)
         self.B = np.eye(n)*self.delta
-        # self.Q = np.eye(n)
         self.Q = np.eye(n)
         self.R = np.eye(n)*0.1
 
@@ -49,26 +43,19 @@ class LQREnv(gym.Env):
 
     def get_trajectory(self):
 
-        t = np.linspace(0, 4, self.horizon)
+        t = np.linspace(0, 2, self.horizon)
 
+        # fixed = 1
+        # if fixed:
+        #     t = np.ones(self.horizon)
 
-        fixed = 1
-        if fixed:
-            t = np.ones(self.horizon)
-            # t[self.horizon//2:] = -1
-        rx = 1
-        ry = 0.5
-
-
-        # t = np.ones(100)
-
+        rx, ry = 1, 1
         trajectory = np.array([
-            t,
-            # ry * np.sin(t*np.pi/2),
+            rx * np.cos(t*np.pi),
+            ry * np.sin(t*np.pi),
         ])
 
         m = trajectory.shape[0]
-
         trajectory = np.concatenate((trajectory, np.zeros(shape=(self.n-m, self.horizon))))
         trajectory = trajectory.T
 
@@ -88,26 +75,14 @@ class LQREnv(gym.Env):
 
         cost_goal = dist_x.T @ self.Q @ dist_x
         cost_ctrl = dist_u.T @ self.R @ dist_u
-
-        # if x > -0.5 and x < 0.5:
-        #     cost_goal = 5
-
         return cost_goal, cost_ctrl
 
     def next_state(self, x, u):
         noise = np.random.normal(0, self.sigma)
-        # x -= self.goal
-
         next_state = self.A @ x + self.B @ u + noise
         return next_state
-
-
+    
     def step(self, u):
-
-        u = np.clip(u, -1, +1)
-        # u -= 0.5
-        u = self._action_map(u)
-
         self.step_num += 1
 
         self.x = self.next_state(self.x, u)
@@ -119,60 +94,49 @@ class LQREnv(gym.Env):
         if self.step_num == self.horizon:
             self.step_num = 0
             done = True
-        info = {"cost_goal": cost_goal, "cost_ctrl": cost_ctrl}
 
+        info = {"cost_goal": cost_goal, "cost_ctrl": cost_ctrl}
+        
         self.goal = self.trajectory[self.step_num]
-        self.state = np.concatenate((self.goal, self.x))
-        return self.state, -cost, done, info
+        self.obs = np.concatenate((self.x, self.goal))
+        return self.obs, -cost, done, info
 
     def reset(self):
 
         self.x = np.zeros(self.n)
-        self.x[0] = np.random.uniform(-1, 1)
-        self.x[0] = -1
-        # if self.x[0] < 0:
-        #     self.trajectory *= -1
+        # self.x = np.random.uniform(-1, 1, size=(self.n,))
         self.goal = self.trajectory[0]
-        self.state = np.concatenate((self.goal, self.x))
-        return self.state
+        self.obs = np.concatenate((self.goal, self.x))
+        return self.obs
 
-    # def optimal(self):
+if __name__ == "__main__":
 
-    def _action_map(self, a):
+    T = 200
+    env = LQREnv(n=2)
+    obs = env.reset()
 
-        if self.hardtanh:
-            mask_lo  = a < -self.hardtanh
-            mask_hi  = a > +self.hardtanh
-            mask_mid = ~mask_lo & ~mask_hi
+    pos = []
+    goal = []
 
-            a_new = np.empty_like(a)
+    model = TD3.load('../../../local/results/LQR-v0/td3/no_aug/run_1/best_model.zip', env, custom_objects={})
 
-            a_new[mask_hi] = 1
-            a_new[mask_lo] = -1
-            a_new[mask_mid] = a[mask_mid]/self.hardtanh
-        elif self.exponent:
-            neg = a < 0
-            pos = a > 0
-            a[pos] = a[pos]**self.exponent
-            a[neg] = -(-a[neg])**self.exponent
-            a_new = a
-            # a_new = a**self.exponent
-        elif self.discontinuous:
-            mask_lo  = a < 0
-            mask_hi  = a > 0
 
-            a_new = np.copy(a)
-            a_new[mask_lo] += 1
-            a_new[mask_hi] -= 1
+    for t in range(T):
+        if model:
+            u, _ = model.predict(obs)
         else:
-            a_new = a
+            u = np.random.uniform(-1, +1, size=(2,))
+        obs, reward, done, info = env.step(u)
+        pos.append(obs[:2])
+        goal.append(obs[2:])
 
-        return a_new
-
-
-
-
-
+    t = np.arange(T)
+    pos = np.array(pos)
+    goal = np.array(goal)
+    plt.scatter(pos[:,0], pos[:,1], c=t)
+    # plt.scatter(goal[:,0], goal[:,1])
+    plt.axis('equal')
+    plt.show()
 
 
 

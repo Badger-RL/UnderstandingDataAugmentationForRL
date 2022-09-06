@@ -13,7 +13,7 @@ class SwimmerKEnv(MujocoEnv, utils.EzPickle):
                  ):
         self.num_links = num_links
         self.latent_dim = latent_dim
-        self.action_dim = self.latent_dim if self.latent_dim>0 else 19
+        self.action_dim = self.latent_dim if self.latent_dim>0 else self.num_links-1
         self.action_space = gym.spaces.Box(-1, +1, shape=(self.action_dim,))
 
         MujocoEnv.__init__(self, f"swimmer{num_links}.xml", 4,
@@ -49,6 +49,9 @@ class SwimmerKEnv(MujocoEnv, utils.EzPickle):
         qpos = self.sim.data.qpos
         qvel = self.sim.data.qvel
         return np.concatenate([qpos.flat[2:], qvel.flat])
+
+    def get_obs(self):
+        return self._get_obs()
 
     def reset_model(self):
         vel = self.init_qvel + self.np_random.uniform(low=-0.01, high=0.01, size=self.model.nv)

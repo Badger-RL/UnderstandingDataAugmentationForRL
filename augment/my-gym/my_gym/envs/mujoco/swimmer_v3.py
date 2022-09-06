@@ -149,7 +149,7 @@ class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         control_cost = self._ctrl_cost_weight * np.sum(np.square(action))
         return control_cost
 
-    def _get_robot_state(self):
+    def get_obs(self):
         obs = self._get_obs()
         return obs
 

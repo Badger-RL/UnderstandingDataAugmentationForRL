@@ -18,10 +18,10 @@
     <!--  ================= SWIMMER ================= /-->
     <body name="head" pos="0 0 0">
       <camera name="track" mode="trackcom" pos="0 -3 3" xyaxes="1 0 0 0 1 1"/>
-      <geom density="1000" size="0.2" type="sphere"/>
+      <geom density="1000" fromto="0 0 0 1 0 0" size="0.1" type="capsule"/>
       <joint axis="1 0 0" name="slider1" pos="0 0 0" type="slide"/>
-<!--      <joint axis="0 1 0" name="slider2" pos="0 0 0" type="slide"/>-->
-<!--      <joint axis="0 0 1" name="rot" pos="0 0 0" type="hinge"/>-->
+      <joint axis="0 1 0" name="slider2" pos="0 0 0" type="slide"/>
+      <joint axis="0 0 1" name="rot" pos="0 0 0" type="hinge"/>
       <body name="tail1" pos="0 0 0">
         <geom density="1000" fromto="0 0 0 -1 0 0" size="0.1" type="capsule"/>
         <joint axis="0 0 1" limited="true" name="rot2" pos="0 0 0" range="-100 100" type="hinge"/>
