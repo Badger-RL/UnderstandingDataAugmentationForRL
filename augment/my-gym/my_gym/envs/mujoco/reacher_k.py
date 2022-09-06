@@ -62,6 +62,18 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
                 np.sin(theta), # 4 sin(joint angles
                 self.sim.data.qpos.flat[self.num_links:], # 2 target
                 self.sim.data.qvel.flat[:self.num_links], # 4 joint velocities
-                self.get_body_com("fingertip") - self.get_body_com("target"), # 1 distance
+                self.get_body_com("fingertip") - self.get_body_com("target"), # (x,y,z) distance
             ]
         )
+
+    def obs_to_q(self, obs):
+        k = self.num_links
+
+        qpos = np.arctan2(obs[k:2*k], obs[:k]) # joint angles = arctan(sin/cos)
+        qpos = np.concatenate((qpos, obs[2*k:2*k+2])) # (joint angles, target pos)
+        qvel = np.concatenate((obs[2*k+2:-3], np.zeros(2))) # (joint vel, target vel)
+
+        return qpos, qvel
+
+    def get_obs(self):
+        return self._get_obs()
