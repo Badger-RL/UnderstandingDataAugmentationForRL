@@ -55,14 +55,14 @@ class ReplayBuffer(ReplayBuffer_sb3):
         # self.state_counts[bin] += 1
         # self.num_states += len(states)
 
-        bins = []
-        for i in range(self.observation_space.shape[-1]):
-            bin = self._which_bin(states[:,i])
-            self.marginal_hist[i, bin] += 1
-            bins.append(bin)
-        self.num_states += 1
-
-        # self.hist[bins[0], bins[1], bins[2], bins[3]] += 1
+        # bins = []
+        # for i in range(self.observation_space.shape[-1]):
+        #     bin = self._which_bin(states[:,i])
+        #     self.marginal_hist[i, bin] += 1
+        #     bins.append(bin)
+        # self.num_states += 1
+        #
+        # self.hist[bins[0], bins[1]] += 1
 
         #
         # bins = np.array(bins, dtype=int)
