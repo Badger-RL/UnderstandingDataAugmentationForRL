@@ -34,47 +34,40 @@ class Rotate(AugmentationFunction):
 
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
-        # delta = 3*np.pi/2
-        cos_delta = np.cos(delta)
-        sin_delta = np.sin(delta)
 
-        # np.concatenate(
-        #     [
-        #         np.cos(theta),  # 4 cos(joint angles)
-        #         np.sin(theta),  # 4 sin(joint angles
-        #         self.sim.data.qpos.flat[self.num_links:],  # 2 target
-        #         self.sim.data.qvel.flat[:self.num_links],  # 4 joint velocities
-        #         self.get_body_com("fingertip") - self.get_body_com("target"),  # 1 distance
-        #     ]
+        M = np.array([[np.cos(delta), -np.sin(delta)],
+                      [np.sin(delta), np.cos(delta)]])
 
-        # ONLY ROTATE THE FIRST JOINT.
-        theta = np.arctan2(aug_obs[:, self.k], aug_obs[:, 0])
-        if theta < 0: theta += 2*np.pi
-
+        # rotate targets
         goal = aug_obs[:, 2*self.k:2*self.k+2]
-        fingertip_x = aug_obs[:, -3] + goal[:,0]
-        fingertip_y = aug_obs[:, -2] + goal[:,1]
+        aug_goal = M.dot(goal[0])
+        aug_obs[:, 2*self.k:2*self.k+2] = aug_goal
 
+        goal_next = aug_next_obs[:, 2*self.k:2*self.k+2]
+        aug_goal_next = M.dot(goal_next[0])
+        aug_next_obs[:, 2*self.k:2*self.k+2] = aug_goal_next
+
+        # rotate central joint
+        theta = np.arctan2(aug_obs[:, self.k], aug_obs[:, 0])
         aug_obs[:, 0] = np.cos(theta + delta)
         aug_obs[:, self.k] = np.sin(theta + delta)
-        aug_obs[:, -3] = (fingertip_x*cos_delta - fingertip_y*sin_delta) - goal[:,0]
-        aug_obs[:, -2] = (fingertip_x*sin_delta + fingertip_y*cos_delta) - goal[:,1]
 
-        theta_next = np.arccos(aug_next_obs[:, 0])
-        goal_next = aug_next_obs[:, 2*self.k:2*self.k+2]
-
-        fingertip_x_next = aug_next_obs[:, -3] + goal_next[:,0]
-        fingertip_y_next = aug_next_obs[:, -2] + goal_next[:,1]
-
+        theta_next = np.arctan2(aug_next_obs[:, self.k], aug_next_obs[:, 0])
         aug_next_obs[:, 0] = np.cos(theta_next + delta)
         aug_next_obs[:, self.k] = np.sin(theta_next + delta)
-        aug_next_obs[:, -3] = (fingertip_x_next*cos_delta - fingertip_y_next*sin_delta) - goal_next[:,0]
-        aug_next_obs[:, -2] = (fingertip_x_next*sin_delta + fingertip_y_next*cos_delta) - goal_next[:,1]
 
-        aug_reward[:] = -np.linalg.norm(aug_next_obs[:, -3:-1]-goal_next)*self.k - np.square(aug_action).sum()
+        # rotate fingertips (use original goal to compute fingertip)
+        fingertip_dist = aug_obs[:, -3:-1]
+        aug_obs[:, -3:-1] = M.dot(fingertip_dist[0])
+
+        fingertip_dist_next = aug_next_obs[:, -3:-1]
+        aug_next_obs[:, -3:-1] = M.dot(fingertip_dist_next[0])
+
+        # reward should be unchanged
+        aug_fingertip_dist = aug_obs[:, -3:-1]
+        aug_reward[:] = -np.linalg.norm(aug_fingertip_dist)*self.k - np.square(action).sum()
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
-
 
 import gym, my_gym
 
@@ -82,36 +75,66 @@ if __name__ == "__main__":
     env = gym.make('Reacher4-v3')
     env.reset()
 
-    x = 0 #np.pi/4
-    qpos = np.array([x, 0.5, 0.5, 0.5, 0.4, 0.4])
+    # set initial qpos, qvel
+    qpos = np.array([0.2, 0.3, 0.5, 0.7] + [0, 1])
     qvel = np.zeros(6)
     env.set_state(qpos, qvel)
     obs = env.get_obs()
-    obs = obs.reshape(1, -1)
+
+    # get transition
+    action = np.ones(4)
+    next_obs, reward, done, info = env.step(action)
+    obs = obs.reshape(1,-1)
+    next_obs = next_obs.reshape(1,-1)
+    action = action.reshape(1,-1)
+    done = np.array([done]).reshape(1, -1)
 
     f = Rotate(sigma=1)
-    # aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, obs, obs, obs, obs, [{}])
 
-    # print(obs[0,-3:])
-    # print(aug_obs[0,-3:])
-    for delta in np.linspace(0, 4*np.pi, 100):
+    for i in range(1000):
+        delta = np.random.uniform(-np.pi, np.pi)
+        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, next_obs, action, reward, done, [{}], delta=delta)
 
+        # Make sure aug transition matches simulation
+        # aug_obs to qpos, qvel
+        qpos2, qvel2 = env.obs_to_q(aug_obs[0])
+        env.set_state(qpos2, qvel2)
+        obs2 = env.get_obs()
+        next_obs2, reward2, done2, info2 = env.step(action)
 
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, obs, obs, obs, obs, [{}], delta=delta)
+        assert np.allclose(aug_obs, obs2)
+        assert np.allclose(aug_next_obs, next_obs2)
+        assert np.allclose(aug_reward, reward2)
 
-        theta = np.arctan2(aug_obs[0, 4], aug_obs[0, 0])
-        if theta < 0: theta += 2*np.pi
-        # is_quadrant_34 = np.arcsin(aug_obs[0, 4]) < 0
-        # if is_quadrant_34:
-        #     theta += np.pi
+        # print(aug_obs - obs2)
+        # print(aug_next_obs - next_obs2)
+        # print(aug_reward - reward2, aug_reward, reward2)
 
-        print(delta/np.pi, theta/np.pi, delta/np.pi - theta/np.pi)
-        qpos_aug = np.copy(qpos)
-        qpos_aug[0] = theta
+    # qpos[qpos < 0] += 2*np.pi
 
-        env.set_state(qpos_aug, qvel)
-        env.render()
-        # time.sleep(0.1)
-        time.sleep(0.01)
+    #
+    #
+    # x = 0 #np.pi/4
+    # qpos = np.array([x, 0.5, 0.5, 0.5, 0.4, 0.4])
+    # qvel = np.zeros(6)
+    # env.set_state(qpos, qvel)
+    # obs = env.get_obs()
+    # obs = obs.reshape(1, -1)
+    #
+    #
+    # for delta in np.linspace(0, 4*np.pi, 100):
+    #
+    #     aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, obs, obs, obs, obs, [{}], delta=delta)
+    #
+    #     theta = np.arctan2(aug_obs[0, 4], aug_obs[0, 0])
+    #     if theta < 0: theta += 2*np.pi
+    #
+    #     print(delta/np.pi, theta/np.pi, delta/np.pi - theta/np.pi)
+    #     qpos_aug = np.copy(qpos)
+    #     qpos_aug[0] = theta
+    #
+    #     env.set_state(qpos_aug, qvel)
+    #     env.render()
+    #     time.sleep(0.01)
+    #
 
-    # self.set_state(qpos, qvel)
