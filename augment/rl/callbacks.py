@@ -7,6 +7,7 @@ from threading import Thread
 from typing import Optional
 
 # from sb3_contrib import TQC
+import numpy as np
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 
@@ -147,3 +148,39 @@ class ParallelTrainCallback(BaseCallback):
             if self.verbose > 0:
                 print("Waiting for training thread to terminate")
             self.process.join()
+
+class SaveReplayDistribution(BaseCallback):
+    """
+    Stop the training once a threshold in episodic reward
+    has been reached (i.e. when the model is good enough).
+
+    It must be used with the ``EvalCallback``.
+
+    :param reward_threshold:  Minimum expected reward per episode
+        to stop training.
+    :param verbose:
+    """
+
+    def __init__(self, log_path: Optional[str] = None, save_freq = 10000, verbose: int = 0):
+        super().__init__(verbose=verbose)
+        if log_path is not None:
+            log_path = os.path.join(log_path, "replay_distributions")
+
+        self.log_path = log_path
+        self.evaluations_timesteps = []
+        self.replay_dists = []
+        self.save_freq = save_freq
+
+    def _on_step(self) -> bool:
+        if self.save_freq > 0 and self.n_calls % self.save_freq == 0:
+            print('Saving replay buffer histogram')
+            self.evaluations_timesteps.append(self.num_timesteps)
+            self.replay_dists.append(self.model.replay_buffer.hist)
+            np.savez(
+                self.log_path,
+                timesteps=self.evaluations_timesteps,
+                replay_state_hists=self.replay_dists,
+            )
+        continue_training = True
+        return continue_training
+
