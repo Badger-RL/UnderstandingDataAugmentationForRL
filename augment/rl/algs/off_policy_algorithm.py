@@ -272,7 +272,6 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
 
         :return: List of parameters that should be excluded from being saved with pickle.
         """
-        print('here')
         return [
             "policy",
             "device",
