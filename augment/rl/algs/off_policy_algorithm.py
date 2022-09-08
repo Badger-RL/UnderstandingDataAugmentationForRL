@@ -146,8 +146,6 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
 
         self._setup_augmented_replay_buffer()
 
-        print(aug_ratio, aug_n)
-
     def _setup_augmented_replay_buffer(self):
         self.aug_replay_buffer = ReplayBuffer(
             self.buffer_size,
@@ -263,3 +261,27 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         # Save the unnormalized observation
         if self._vec_normalize_env is not None:
             self._last_original_obs = new_obs_
+
+    def _excluded_save_params(self) -> List[str]:
+        """
+        Returns the names of the parameters that should be excluded from being
+        saved by pickling. E.g. replay buffers are skipped by default
+        as they take up a lot of space. PyTorch variables should be excluded
+        with this so they can be stored with ``th.save``.
+
+        :return: List of parameters that should be excluded from being saved with pickle.
+        """
+        print('here')
+        return [
+            "policy",
+            "device",
+            "env",
+            "eval_env",
+            "replay_buffer",
+            "aug_replay_buffer",
+            "rollout_buffer",
+            "_vec_normalize_env",
+            "_episode_storage",
+            "_logger",
+            "_custom_logger",
+        ]
