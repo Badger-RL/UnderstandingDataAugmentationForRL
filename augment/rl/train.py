@@ -52,6 +52,7 @@ if __name__ == '__main__':
     parser.add_argument("-exp", "--experiment-name", help="<log folder>/<env_id>/<algo>/<experiment name>/run_<run_id>", type=str, default="")
     parser.add_argument("--run-id", help="Run id to append to env save directory", default=None, type=int)
     parser.add_argument("--save-replay-buffer", type=bool, default=False)
+    parser.add_argument("--save-aug-replay-buffer", type=bool, default=False)
 
     # extra
     parser.add_argument("--verbose", help="Verbose mode (0: no output, 1: INFO)", default=0, type=int)
@@ -161,5 +162,7 @@ if __name__ == '__main__':
 
     if args.save_replay_buffer:
         model.save_replay_buffer(f"{save_dir}/replay_buffer")
+    if args.save_aug_replay_buffer:
+        model.save_aug_replay_buffer(f"{save_dir}/aug_replay_buffer")
 
     print(f'Results saved to {save_dir}')

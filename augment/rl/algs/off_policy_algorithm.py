@@ -13,6 +13,7 @@ import torch as th
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy
+from stable_baselines3.common.save_util import save_to_pkl
 from stable_baselines3.common.type_aliases import GymEnv, Schedule
 
 from augment.rl.algs.buffers import ReplayBuffer
@@ -285,3 +286,13 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             "_logger",
             "_custom_logger",
         ]
+
+    def save_aug_replay_buffer(self, path: Union[str, pathlib.Path, io.BufferedIOBase]) -> None:
+        """
+        Save the replay buffer as a pickle file.
+
+        :param path: Path to the file where the replay buffer should be saved.
+            if path is a str or pathlib.Path, the path is automatically created if necessary.
+        """
+        assert self.aug_replay_buffer is not None, "The replay buffer is not defined"
+        save_to_pkl(path, self.aug_replay_buffer, self.verbose)
