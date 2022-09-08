@@ -168,7 +168,12 @@ Walker2d-v3:
 
 Humanoid-v3:
   <<: *mujoco-defaults
-  n_timesteps: !!float 2e6
+  n_timesteps: !!float 1e6
+  # SAC Hyperparams
+  train_freq: 1
+  gradient_steps: 1
+  learning_rate: !!float 3e-4
+  batch_size: 256
 
 Swimmer-v3:
   <<: *mujoco-defaults
@@ -206,7 +211,9 @@ LQR-v0:
 LQRGoal-v0:
   <<: *mujoco-defaults
   learning_starts: 10000
-  learning_rate: !!float 1e-4
+  learning_rate: !!float 1e-3
+#  noise_type: 'ornstein-uhlenbeck'
+#  noise_std: 0.5
 
 Swimmer10-v3: &swimmer-defaults
   n_timesteps: !!float 1e6
