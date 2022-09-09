@@ -1,5 +1,6 @@
 import argparse
 import difflib
+import inspect
 import os.path
 import uuid
 from operator import itemgetter
@@ -22,8 +23,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # basic
-    parser.add_argument("--algo", help="RL Algorithm", default="dqn", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="CartPole-v1", help="environment ID")
+    parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
+    parser.add_argument("--env", type=str, default="Reacher4-v3", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e5), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
@@ -32,6 +33,7 @@ if __name__ == '__main__':
 
     # parameters
     parser.add_argument("--env-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional keyword argument to pass to the env constructor")
+    parser.add_argument("--eval-env-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional keyword argument to pass to the eval env constructor")
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
 
     # augmentation
@@ -116,9 +118,6 @@ if __name__ == '__main__':
 
     # augmentation
     if args.aug_function:
-        # print(f'Automatically scaling replay buffer')
-        # print('BUFFER SCALING CURRENTLY DISABLED')
-
         aug_buffer = args.aug_buffer
         aug_ratio = args.aug_ratio
         aug_schedule = args.aug_schedule #
@@ -134,6 +133,16 @@ if __name__ == '__main__':
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
 
+
+        try:
+            batch_size_scaled = int((1+args.aug_ratio)*hyperparams['batch_size'])
+        except:
+            signature = inspect.signature(ALGOS[algo])
+            hyperparams['batch_size'] = signature.parameters['batch_size'].default
+            batch_size_scaled = int((1+args.aug_ratio)*hyperparams['batch_size'])
+
+        print(f"Automatically scaling replay buffer: {hyperparams['batch_size']} --> {batch_size_scaled}")
+        hyperparams['batch_size'] = batch_size_scaled
 
     ####################################################################################################################
     # More preprocessing that depends on the env object
@@ -152,7 +161,7 @@ if __name__ == '__main__':
 
     # Setting num threads to 1 makes things run faster on cpu
     torch.set_num_threads(1)
-    env_eval = Monitor(gym.make(env_id, **args.env_kwargs), filename=save_dir)
+    env_eval = Monitor(gym.make(env_id, **args.eval_env_kwargs), filename=save_dir)
     eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq, log_path=save_dir, best_model_save_path=best_model_save_dir)
     callbacks = [eval_callback]
     if args.save_replay_buffer:

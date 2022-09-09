@@ -171,13 +171,14 @@ class TD3(OffPolicyAlgorithmAugment):
             # Sample replay buffer. Aug buffer contains aug_n times as many transitions as the normal buffer.
             # Rather than changing the probability of augmenting a transition, we augment every transition with
             # equal probability and instead change the probability of sampling augmented transitions for updates.
-            replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)
 
             if self.use_aug:
-                batch_size_aug = int(batch_size*self.aug_ratio(self._current_progress_remaining)*self.aug_n)
-                # print(batch_size_aug,self.aug_n)
-                diff = batch_size - batch_size_aug
+                alpha = self.aug_ratio(self._current_progress_remaining)
+                batch_size_aug = int(alpha*batch_size)
+                batch_size -= batch_size_aug
                 replay_data_aug = self.aug_replay_buffer.sample(batch_size_aug, env=self._vec_normalize_env)
+
+                replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)
 
                 observations = th.concat((replay_data.observations, replay_data_aug.observations))
                 actions = th.concat((replay_data.actions, replay_data_aug.actions))
@@ -185,6 +186,7 @@ class TD3(OffPolicyAlgorithmAugment):
                 rewards = th.concat((replay_data.rewards, replay_data_aug.rewards))
                 dones = th.concat((replay_data.dones, replay_data_aug.dones))
             else:
+                replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)
                 observations = replay_data.observations
                 actions = replay_data.actions
                 next_observations = replay_data.next_observations
