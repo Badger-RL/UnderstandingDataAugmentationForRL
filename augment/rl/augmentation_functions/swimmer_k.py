@@ -28,7 +28,6 @@ class SwimmerReflect(AugmentationFunction):
                 ):
 
         k = (obs.shape[-1]-2)//2
-        print(k)
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
