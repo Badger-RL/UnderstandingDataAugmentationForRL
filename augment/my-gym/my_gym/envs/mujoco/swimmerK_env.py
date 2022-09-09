@@ -16,8 +16,7 @@ class SwimmerKEnv(MujocoEnv, utils.EzPickle):
         self.action_dim = self.latent_dim if self.latent_dim>0 else self.num_links-1
         self.action_space = gym.spaces.Box(-1, +1, shape=(self.action_dim,))
 
-        MujocoEnv.__init__(self, f"swimmer{num_links}.xml", 4,
-                           id=f'Swimmer{num_links}-v3', latent_dim=latent_dim, model_class=model_class)
+        MujocoEnv.__init__(self, f"swimmer{num_links}.xml", 4)
 
         utils.EzPickle.__init__(self)
 
@@ -26,12 +25,6 @@ class SwimmerKEnv(MujocoEnv, utils.EzPickle):
         return obs
 
     def step(self, a):
-        if self.model_class is not None:
-            state = None
-            if 'C' in self.model_class:
-                state = self._get_obs()
-            a = self.latent_to_native_mapping(s=state, z=a)
-
         ctrl_cost_coeff = 0.0001
         xposbefore = self.sim.data.qpos[0]
         self.do_simulation(a, self.frame_skip)
@@ -70,3 +63,9 @@ class SwimmerKEnv(MujocoEnv, utils.EzPickle):
         self.viewer.cam.lookat[2] += 0.0
         self.viewer.cam.elevation = -20  # camera rotation around the axis in the plane going through the frame origin (if 0 you just see a line)
         self.viewer.cam.azimuth = 160  # camera rotation around the camera's vertical axis
+
+    def obs_to_q(self, obs):
+        qpos = np.zeros(self.num_links+2)
+        qpos[2:] = obs[:self.num_links]
+        qvel = obs[self.num_links:]
+        return qpos, qvel

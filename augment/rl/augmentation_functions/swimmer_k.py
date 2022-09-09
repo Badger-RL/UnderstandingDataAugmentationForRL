@@ -50,8 +50,8 @@ class SwimmerReflect(AugmentationFunction):
 import gym, my_gym
 
 if __name__ == "__main__":
-    k=3
-    env = gym.make('Swimmer-v3')
+    k=10
+    env = gym.make('Swimmer10-v3')
 
     f = SwimmerReflect()
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
         # env.render()
 
         # get transition
-        action = np.ones(2)
+        action = np.ones(k-1)
         next_obs, reward, done, info = env.step(action)
         obs = obs.reshape(1, -1)
         next_obs = next_obs.reshape(1, -1)
