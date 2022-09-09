@@ -28,7 +28,7 @@ class Rotate(AugmentationFunction):
                 ):
 
         if delta is None:
-            delta = np.random.uniform(low=-self.sigma, high=+self.sigma, size=(augmentation_n,))
+            delta = np.random.uniform(low=-self.sigma, high=+self.sigma)
 
 
 
