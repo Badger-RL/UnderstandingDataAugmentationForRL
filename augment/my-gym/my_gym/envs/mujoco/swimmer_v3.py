@@ -143,7 +143,7 @@ class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             exclude_current_positions_from_observation
         )
 
-        mujoco_env.MujocoEnv.__init__(self, xml_file, 4, id='Swimmer-v3', latent_dim=latent_dim, model_class=model_class)
+        mujoco_env.MujocoEnv.__init__(self, xml_file, 4)
 
     def control_cost(self, action):
         control_cost = self._ctrl_cost_weight * np.sum(np.square(action))
@@ -154,11 +154,6 @@ class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return obs
 
     def step(self, action):
-        if self.model_class is not None:
-            state = None
-            if 'C' in self.model_class:
-                state = self._get_obs()
-            action = self.latent_to_native_mapping(s=state, z=action)
 
         xy_position_before = self.sim.data.qpos[0:2].copy()
         self.do_simulation(action, self.frame_skip)
@@ -196,6 +191,16 @@ class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         observation = np.concatenate([position, velocity]).ravel()
         return observation
+
+    def obs_to_q(self, obs):
+        if self._exclude_current_positions_from_observation:
+            qpos = np.zeros(5)
+            qpos[2:] = obs[:3]
+            qvel = obs[3:]
+        else:
+            qpos = obs[:5]
+            qvel = obs[5:]
+        return qpos, qvel
 
     def reset_model(self):
         noise_low = -self._reset_noise_scale
