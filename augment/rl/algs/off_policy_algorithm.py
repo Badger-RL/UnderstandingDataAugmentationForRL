@@ -289,14 +289,19 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         save_to_pkl(path, self.aug_replay_buffer, self.verbose)
 
     def sample_replay_buffers(self) -> ReplayBufferSamples:
-        observed_batch = self.replay_buffer.sample(self.batch_size, env=self._vec_normalize_env)
+        alpha = 0
+        if self.use_aug:
+            alpha = self.aug_ratio(self._current_progress_remaining)
 
-        alpha = self.aug_ratio(self._current_progress_remaining)
-        if alpha == 0:
-            return observed_batch
+        if alpha >= 0:
+            observed_batch = self.replay_buffer.sample(self.batch_size, env=self._vec_normalize_env)
+            if alpha == 0:
+                return observed_batch
 
-        aug_batch_size = int(alpha * self.batch_size)
+        aug_batch_size = int(np.abs(alpha) * self.batch_size)
         aug_batch = self.aug_replay_buffer.sample(aug_batch_size, env=self._vec_normalize_env)
+        if alpha < 0:
+            return aug_batch
 
         observations = th.concat((observed_batch.observations, aug_batch.observations))
         actions = th.concat((observed_batch.actions, aug_batch.actions))
