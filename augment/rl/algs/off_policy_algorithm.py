@@ -14,7 +14,8 @@ from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.save_util import save_to_pkl
-from stable_baselines3.common.type_aliases import GymEnv, Schedule
+from stable_baselines3.common.type_aliases import GymEnv, Schedule, ReplayBufferSamples
+from stable_baselines3.common.vec_env import VecNormalize
 
 from augment.rl.algs.buffers import ReplayBuffer
 from augment.rl.augmentation_functions import AugmentationFunction
@@ -143,8 +144,6 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         self.aug_constraint = aug_constraint
 
         self.use_aug = self.aug_function is not None
-
-
         self._setup_augmented_replay_buffer()
 
     def _setup_augmented_replay_buffer(self):
@@ -159,34 +158,25 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         )
 
     def augment_transition(self, obs, next_obs, action, reward, done, info):
-        if self.use_aug:
-            # aug_ratio = self.aug_ratio(self._current_progress_remaining)
-            # print(aug_ratio)
-            # if self.separate_aug_buffer or (np.random.random() < aug_ratio):
-            normalization_constant = 1
-            dist = None
-            if self.aug_constraint is not None:
-                dist = self.replay_buffer.marginal_hist + self.aug_constraint*self.replay_buffer.num_states
-                dist /= dist.sum()
+        normalization_constant = 1
+        dist = None
+        if self.aug_constraint is not None:
+            dist = self.replay_buffer.marginal_hist + self.aug_constraint*self.replay_buffer.num_states
+            dist /= dist.sum()
 
-            aug_transition = self.aug_function.augment(
-                self.aug_n,
-                obs,
-                next_obs,
-                action,
-                reward,
-                done,
-                info,
-                p=dist
-                # p=self.replay_buffer.state_counts/self.replay_buffer.num_states
-            )
+        aug_transition = self.aug_function.augment(
+            self.aug_n,
+            obs,
+            next_obs,
+            action,
+            reward,
+            done,
+            info,
+            p=dist
+            # p=self.replay_buffer.state_counts/self.replay_buffer.num_states
+        )
 
-
-            if self.separate_aug_buffer:
-                self.aug_replay_buffer.extend(*aug_transition)
-                self.aug_replay_buffer.update_hists(next_obs)
-            else:
-                self.replay_buffer.extend(*aug_transition)
+        return aug_transition
 
     def _store_transition(
         self,
@@ -247,16 +237,18 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             dones,
             infos,
         )
-        self.replay_buffer.update_hists(next_obs)
+        # self.replay_buffer.update_hists(next_obs)
 
-        self.augment_transition(
-            self._last_original_obs,
-            next_obs,
-            buffer_action,
-            reward_,
-            dones,
-            infos,
-        )
+        if self.use_aug:
+            aug_transition = self.augment_transition(
+                self._last_original_obs,
+                next_obs,
+                buffer_action,
+                reward_,
+                dones,
+                infos,
+            )
+            self.aug_replay_buffer.extend(*aug_transition)
 
         self._last_obs = new_obs
         # Save the unnormalized observation
@@ -295,3 +287,21 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         """
         assert self.aug_replay_buffer is not None, "The replay buffer is not defined"
         save_to_pkl(path, self.aug_replay_buffer, self.verbose)
+
+    def sample_replay_buffers(self) -> ReplayBufferSamples:
+        observed_batch = self.replay_buffer.sample(self.batch_size, env=self._vec_normalize_env)
+
+        alpha = self.aug_ratio(self._current_progress_remaining)
+        if alpha == 0:
+            return observed_batch
+
+        aug_batch_size = int(alpha * self.batch_size)
+        aug_batch = self.aug_replay_buffer.sample(aug_batch_size, env=self._vec_normalize_env)
+
+        observations = th.concat((observed_batch.observations, aug_batch.observations))
+        actions = th.concat((observed_batch.actions, aug_batch.actions))
+        next_observations = th.concat((observed_batch.next_observations, aug_batch.next_observations))
+        rewards = th.concat((observed_batch.rewards, aug_batch.rewards))
+        dones = th.concat((observed_batch.dones, aug_batch.dones))
+
+        return ReplayBufferSamples(observations, actions, next_observations, dones, rewards)

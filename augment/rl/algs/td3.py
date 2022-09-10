@@ -85,7 +85,7 @@ class TD3(OffPolicyAlgorithmAugment):
         train_freq: Union[int, Tuple[int, str]] = (1, "episode"),
         gradient_steps: int = -1,
         action_noise: Optional[ActionNoise] = None,
-        replay_buffer_class: Optional[ReplayBuffer] = ReplayBuffer,
+        replay_buffer_class: Optional[ReplayBuffer] = None,
         replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
         optimize_memory_usage: bool = False,
         policy_delay: int = 2,
@@ -169,44 +169,22 @@ class TD3(OffPolicyAlgorithmAugment):
 
             self._n_updates += 1
             # Sample replay buffer. Aug buffer contains aug_n times as many transitions as the normal buffer.
-            # Rather than changing the probability of augmenting a transition, we augment every transition with
-            # equal probability and instead change the probability of sampling augmented transitions for updates.
 
-            if self.use_aug:
-                alpha = self.aug_ratio(self._current_progress_remaining)
-                batch_size_aug = int(alpha*batch_size)
-                batch_size -= batch_size_aug
-                replay_data_aug = self.aug_replay_buffer.sample(batch_size_aug, env=self._vec_normalize_env)
-
-                replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)
-
-                observations = th.concat((replay_data.observations, replay_data_aug.observations))
-                actions = th.concat((replay_data.actions, replay_data_aug.actions))
-                next_observations = th.concat((replay_data.next_observations, replay_data_aug.next_observations))
-                rewards = th.concat((replay_data.rewards, replay_data_aug.rewards))
-                dones = th.concat((replay_data.dones, replay_data_aug.dones))
-            else:
-                replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)
-                observations = replay_data.observations
-                actions = replay_data.actions
-                next_observations = replay_data.next_observations
-                rewards = replay_data.rewards
-                dones = replay_data.dones
-
+            replay_data = self.sample_replay_buffers()
 
             with th.no_grad():
                 # Select action according to policy and add clipped noise
-                noise = actions.clone().data.normal_(0, self.target_policy_noise)
+                noise = replay_data.actions.clone().data.normal_(0, self.target_policy_noise)
                 noise = noise.clamp(-self.target_noise_clip, self.target_noise_clip)
-                next_actions = (self.actor_target(next_observations) + noise).clamp(-1, 1)
+                next_actions = (self.actor_target(replay_data.next_observations) + noise).clamp(-1, 1)
 
                 # Compute the next Q-values: min over all critics targets
-                next_q_values = th.cat(self.critic_target(next_observations, next_actions), dim=1)
+                next_q_values = th.cat(self.critic_target(replay_data.next_observations, next_actions), dim=1)
                 next_q_values, _ = th.min(next_q_values, dim=1, keepdim=True)
-                target_q_values = rewards + (1 - dones) * self.gamma * next_q_values
+                target_q_values = replay_data.rewards + (1 - replay_data.dones) * self.gamma * next_q_values
 
             # Get current Q-values estimates for each critic network
-            current_q_values = self.critic(observations, actions)
+            current_q_values = self.critic(replay_data.observations, replay_data.actions)
 
             # Compute critic loss
             critic_loss = sum(F.mse_loss(current_q, target_q_values) for current_q in current_q_values)
@@ -220,7 +198,7 @@ class TD3(OffPolicyAlgorithmAugment):
             # Delayed policy updates
             if self._n_updates % self.policy_delay == 0:
                 # Compute actor loss
-                actor_loss = -self.critic.q1_forward(observations, self.actor(observations)).mean()
+                actor_loss = -self.critic.q1_forward(replay_data.observations, self.actor(replay_data.observations)).mean()
                 # actor_loss = -self.critic.q1_forward(replay_data.observations, self.actor(replay_data.observations)).mean()
                 actor_losses.append(actor_loss.item())
 
