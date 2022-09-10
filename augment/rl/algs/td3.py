@@ -168,8 +168,7 @@ class TD3(OffPolicyAlgorithmAugment):
         for _ in range(gradient_steps):
 
             self._n_updates += 1
-            # Sample replay buffer. Aug buffer contains aug_n times as many transitions as the normal buffer.
-
+            # Sample observed and augmented replay buffers
             replay_data = self.sample_replay_buffers()
 
             with th.no_grad():
@@ -199,7 +198,6 @@ class TD3(OffPolicyAlgorithmAugment):
             if self._n_updates % self.policy_delay == 0:
                 # Compute actor loss
                 actor_loss = -self.critic.q1_forward(replay_data.observations, self.actor(replay_data.observations)).mean()
-                # actor_loss = -self.critic.q1_forward(replay_data.observations, self.actor(replay_data.observations)).mean()
                 actor_losses.append(actor_loss.item())
 
                 # Optimize the actor
