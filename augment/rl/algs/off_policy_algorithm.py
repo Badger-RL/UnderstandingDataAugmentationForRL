@@ -298,7 +298,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             if alpha == 0:
                 return observed_batch
 
-        aug_batch_size = int(np.abs(alpha) * self.batch_size)
+        aug_batch_size = int(np.abs(alpha) * self.aug_n * self.batch_size)
         aug_batch = self.aug_replay_buffer.sample(aug_batch_size, env=self._vec_normalize_env)
         if alpha < 0:
             return aug_batch
