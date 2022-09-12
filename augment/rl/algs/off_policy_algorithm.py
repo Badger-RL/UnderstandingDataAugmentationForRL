@@ -10,10 +10,11 @@ import numpy as np
 import torch as th
 
 # from stable_baselines3.common.buffers import ReplayBuffer
+from stable_baselines3 import HerReplayBuffer
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy
-from stable_baselines3.common.save_util import save_to_pkl
+from stable_baselines3.common.save_util import save_to_pkl, load_from_pkl
 from stable_baselines3.common.type_aliases import GymEnv, Schedule, ReplayBufferSamples
 from stable_baselines3.common.vec_env import VecNormalize
 
@@ -287,6 +288,35 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         """
         assert self.aug_replay_buffer is not None, "The replay buffer is not defined"
         save_to_pkl(path, self.aug_replay_buffer, self.verbose)
+
+    def load_aug_replay_buffer(
+        self,
+        path: Union[str, pathlib.Path, io.BufferedIOBase],
+        truncate_last_traj: bool = True,
+    ) -> None:
+        """
+        Load a replay buffer from a pickle file.
+
+        :param path: Path to the pickled replay buffer.
+        :param truncate_last_traj: When using ``HerReplayBuffer`` with online sampling:
+            If set to ``True``, we assume that the last trajectory in the replay buffer was finished
+            (and truncate it).
+            If set to ``False``, we assume that we continue the same trajectory (same episode).
+        """
+        self.aug_replay_buffer = load_from_pkl(path, self.verbose)
+        assert isinstance(self.aug_replay_buffer, ReplayBuffer), "The replay buffer must inherit from ReplayBuffer class"
+
+        # Backward compatibility with SB3 < 2.1.0 replay buffer
+        # Keep old behavior: do not handle timeout termination separately
+        if not hasattr(self.aug_replay_buffer, "handle_timeout_termination"):  # pragma: no cover
+            self.aug_replay_buffer.handle_timeout_termination = False
+            self.aug_replay_buffer.timeouts = np.zeros_like(self.aug_replay_buffer.dones)
+
+        if isinstance(self.aug_replay_buffer, HerReplayBuffer):
+            assert self.env is not None, "You must pass an environment at load time when using `HerReplayBuffer`"
+            self.aug_replay_buffer.set_env(self.get_env())
+            if truncate_last_traj:
+                self.aug_replay_buffer.truncate_last_trajectory()
 
     def sample_replay_buffers(self) -> ReplayBufferSamples:
         alpha = 0
