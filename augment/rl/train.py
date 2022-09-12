@@ -1,19 +1,14 @@
 import argparse
 import difflib
-import inspect
 import os.path
-import uuid
-from operator import itemgetter
 
 import gym, my_gym
 import numpy as np
 import torch
 import yaml
-from typing import Union
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
-from augment.rl.algs.buffers import DoubleReplayBuffer
 from augment.rl.augmentation_functions import AUGMENTATION_FUNCTIONS
 from augment.rl.callbacks import SaveReplayDistribution
 from augment.rl.utils import ALGOS, StoreDict, get_save_dir, preprocess_action_noise, read_hyperparameters, SCHEDULES
@@ -25,7 +20,7 @@ if __name__ == '__main__':
 
     # basic
     parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="Reacher4-v3", help="environment ID")
+    parser.add_argument("--env", type=str, default="PredatorPrey-v0", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e5), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)

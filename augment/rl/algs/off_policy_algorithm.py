@@ -148,7 +148,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
 
     def _setup_augmented_replay_buffer(self):
         self.aug_replay_buffer = ReplayBuffer(
-            self.buffer_size,
+            self.buffer_size * self.aug_n,
             self.observation_space,
             self.action_space,
             device=self.device,
