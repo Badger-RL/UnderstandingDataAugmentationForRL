@@ -143,8 +143,14 @@ register(
 register(
     id="LQRGoal-v0",
     entry_point="my_gym.envs:LQRGoalEnv",
+    max_episode_steps=100,
+)
+register(
+    id="PredatorPrey-v0",
+    entry_point="my_gym.envs:PredatorPreyEnv",
     max_episode_steps=50,
 )
+
 
 # register(
 #     id="Bandit-v0",

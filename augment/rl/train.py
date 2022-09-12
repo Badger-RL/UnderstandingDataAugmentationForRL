@@ -13,6 +13,7 @@ from typing import Union
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
+from augment.rl.algs.buffers import DoubleReplayBuffer
 from augment.rl.augmentation_functions import AUGMENTATION_FUNCTIONS
 from augment.rl.callbacks import SaveReplayDistribution
 from augment.rl.utils import ALGOS, StoreDict, get_save_dir, preprocess_action_noise, read_hyperparameters, SCHEDULES
@@ -128,21 +129,21 @@ if __name__ == '__main__':
         aug_func_class = AUGMENTATION_FUNCTIONS[env_id][aug_func]
         # buffer_scale = int(1+aug_ratio*aug_n)
         # hyperparams['buffer_size'] = hyperparams['buffer_size'] * buffer_scale
+        # hyperparams['replay_buffer_class'] = DoubleReplayBuffer
         hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](initial_value=aug_ratio)
         hyperparams['aug_function'] = aug_func_class(**aug_func_kwargs)
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
 
-
-        try:
-            batch_size_scaled = int((1+args.aug_ratio)*hyperparams['batch_size'])
-        except:
-            signature = inspect.signature(ALGOS[algo])
-            hyperparams['batch_size'] = signature.parameters['batch_size'].default
-            batch_size_scaled = int((1+args.aug_ratio)*hyperparams['batch_size'])
-
-        print(f"Automatically scaling replay buffer: {hyperparams['batch_size']} --> {batch_size_scaled}")
-        hyperparams['batch_size'] = batch_size_scaled
+        # try:
+        #     batch_size_scaled = int((1+args.aug_ratio)*hyperparams['batch_size'])
+        # except:
+        #     signature = inspect.signature(ALGOS[algo])
+        #     hyperparams['batch_size'] = signature.parameters['batch_size'].default
+        #     batch_size_scaled = int((1+args.aug_ratio)*hyperparams['batch_size'])
+        #
+        # print(f"Automatically scaling replay buffer: {hyperparams['batch_size']} --> {batch_size_scaled}")
+        # hyperparams['batch_size'] = batch_size_scaled
 
     ####################################################################################################################
     # More preprocessing that depends on the env object
