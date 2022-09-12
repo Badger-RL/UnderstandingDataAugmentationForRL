@@ -58,8 +58,7 @@ class PredatorPreyRotate(AugmentationFunction):
                 ):
 
 
-        theta = np.random.choice(self.thetas)
-        theta = np.pi/2
+        theta = np.random.choice(self.thetas, replace=False)
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
