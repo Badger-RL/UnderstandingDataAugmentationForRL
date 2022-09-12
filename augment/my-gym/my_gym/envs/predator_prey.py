@@ -38,7 +38,7 @@ class PredatorPreyEnv(gym.Env):
         reward = -0.1
 
         if self.sparse and np.linalg.norm(self.x - self.goal) < 0.05:
-            reward = +1
+            reward = +1.0
             done = True
 
         info = {}
