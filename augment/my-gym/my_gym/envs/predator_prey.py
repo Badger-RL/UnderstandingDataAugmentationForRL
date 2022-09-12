@@ -53,6 +53,7 @@ class PredatorPreyEnv(gym.Env):
         theta = np.random.uniform(-np.pi, +np.pi)
         r = np.random.uniform(-1, +1)
         self.goal = np.array([r * np.cos(theta), r * np.sin(theta)])
+        self.goal = np.random.uniform(-1, 1, size=(self.n,))
 
         self.obs = np.concatenate((self.x, self.goal))
         return self.obs
