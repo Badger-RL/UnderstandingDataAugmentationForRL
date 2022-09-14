@@ -23,20 +23,32 @@ class PredatorPreyTranslate(AugmentationFunction):
                 p=None,
                 ):
 
-        v = np.random.uniform(low=-1, high=+1, size=(augmentation_n,))
-
+        v = np.random.uniform(low=-0.1, high=+0.1, size=(augmentation_n,2))
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
-        delta_v = aug_next_obs[:, :2] - aug_obs[:, :2]
+        # delta_v = aug_next_obs[:, :2] - aug_obs[:, :2]
         # delta_x = aug_next_obs[:,0] - aug_obs[:,0]
         aug_obs[:, :2] = v
-        aug_obs[:, 2:] += v
-        aug_next_obs[:, :2] += v
-        aug_next_obs[:, 2:] += v
+        # aug_next_obs[:, :2] = np.clip(v + delta_v, -1, +1)
+        dx = aug_action[:,0]*np.cos(aug_action[:, 1])
+        dy = aug_action[:,0]*np.sin(aug_action[:, 1])
+        aug_next_obs[:, 0] = v[:,0] + dx*0.1
+        aug_next_obs[:, 1] = v[:,1] + dy*0.1
+        aug_next_obs[:, :2] = np.clip(aug_next_obs[:, :2], -1, +1)
 
-        aug_obs = np.clip(aug_obs, -1, +1)
-        aug_next_obs = np.clip(aug_next_obs, -1, +1)
+        # print(delta_v)
+        # if delta_v[0,1] > -1:
+        #     stop = 0
+
+        dist = np.linalg.norm(aug_next_obs[:, :2] - aug_next_obs[:, 2:], axis=-1)
+        at_goal = (dist < 0.05)
+        aug_done = at_goal or done
+
+        aug_reward[at_goal] = +1
+        aug_reward[~at_goal] = -0.1
+
+        # aug_obs = np.clip(aug_obs, -1, +1)
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
@@ -114,7 +126,7 @@ if __name__ == "__main__":
     env = gym.make('PredatorPrey-v0')
     env.reset()
 
-    # env.set_state(np.array([0.,0]), np.array([1,1]))
+    # env.set_state(np.array([0.9,0.9]), np.array([0.58032204 -0.39712917]))
     # obs = np.concatenate((env.x, env.goal))
     # action = np.array([1,np.pi/2])
     # next_obs, reward, done, info = env.step(action)
@@ -127,10 +139,13 @@ if __name__ == "__main__":
     # infos = [info]
 
     f = PredatorPreyRotate()
+    f = PredatorPreyTranslate()
 
     for i in range(1000):
         obs = env.reset()
         action = np.random.uniform(low=np.zeros(2), high=np.array([1, 2*np.pi]))
+        # action = np.array([1, np.pi*3/2])
+
         next_obs, reward, done, info = env.step(action)
 
         obs = obs.reshape(1, -1)
@@ -142,13 +157,15 @@ if __name__ == "__main__":
 
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, next_obs, action, reward, done, infos)
 
-        env.set_state(aug_obs[0, :2], aug_obs[0, 2:])
+        env.set_state(np.copy(aug_obs[0, :2]), np.copy(aug_obs[0, 2:]))
 
         next_obs2, reward2, done2, info2 = env.step(aug_action[0])
 
+        # print('dv2', next_obs2[:2]-aug_obs[:,:2])
         print(next_obs2)
         print(aug_next_obs)
+        print(reward2, aug_reward)
         assert np.allclose(next_obs2, aug_next_obs)
         assert np.allclose(reward2, aug_reward)
-        assert np.allclose(done, aug_done)
+        # assert np.allclose(done, aug_done)
 
