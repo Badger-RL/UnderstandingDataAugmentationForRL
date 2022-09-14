@@ -173,7 +173,6 @@ class SaveReplayDistribution(BaseCallback):
 
     def _on_step(self) -> bool:
         if self.save_freq > 0 and self.n_calls % self.save_freq == 0:
-            print('Saving replay buffer histogram')
             self.evaluations_timesteps.append(self.num_timesteps)
             # self.replay_dists.append(self.model.replay_buffer.hist)
             np.savez(

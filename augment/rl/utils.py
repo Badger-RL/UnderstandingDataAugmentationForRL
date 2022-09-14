@@ -164,11 +164,10 @@ def step_up_schedule(initial_value: float) -> Callable[[float], float]:
         :param progress_remaining:
         :return: current learning rate
         """
-        progress = 1-progress_remaining
-        if progress*50e3 < 25000:
+        if progress_remaining > 0.5:
             return 0
         else:
-            return 1
+            return -1
         # return initial_value * decay_rate**((1-progress_remaining)//epoch)
 
     return func
