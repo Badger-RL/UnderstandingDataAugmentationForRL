@@ -1,5 +1,7 @@
+import time
 from typing import Dict, List, Any
 
+import gym#, my_gym
 import numpy as np
 import torch
 
@@ -67,13 +69,16 @@ class InvertedPendulumTranslateUniform(AugmentationFunction):
             delta +=  torch.from_numpy(np.random.uniform(low=0, high=bin_width, size=(augmentation_n,)))
             # print(p)
         else:
-            delta = torch.from_numpy(np.random.uniform(low=-1, high=+1, size=(augmentation_n,)))
+            delta = np.random.uniform(low=-0.95, high=+0.95, size=(augmentation_n,))
 
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
+        delta_x = aug_next_obs[:,0] - aug_obs[:,0]
+        # delta_x = torch.from_numpy(delta_x)
         aug_obs[:,0] = delta
-        # aug_next_obs[:,0] = delta
+        # print(delta_x, delta)
+        aug_next_obs[:,0] = np.clip(delta_x + delta, -1, 1)
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
@@ -96,9 +101,106 @@ class InvertedPendulumReflect(AugmentationFunction):
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             aug_n, obs, next_obs, action, reward, done, infos)
 
-        aug_obs[:,1:] *= -1
-        aug_next_obs[:,1:] *= -1
-        aug_action[:] *= -1
+        delta_x = aug_next_obs[:, 0] - aug_obs[:,0]
+
+        aug_obs[:,0:] *= -1
+        aug_next_obs[:,0:] *= -1
+        # aug_next_obs[:,0] -= 2*delta_x
+        aug_action = ~aug_action
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
+
+
+if __name__ == "__main__":
+    env = gym.make('InvertedPendulum-v2')
+
+    f = InvertedPendulumReflect()
+    f = InvertedPendulumTranslateUniform()
+
+    for i in range(1000):
+        env.reset()
+        # set initial qpos, qvel
+        # qpos = np.copy(env.sim.data.qpos)
+        # qvel = np.copy(env.sim.data.qvel)
+
+        qpos = np.array([0, 0])
+        qvel = np.zeros(2)
+        env.set_state(qpos, qvel)
+        obs = env.get_obs()
+
+        # get transition
+        action = np.ones(1)*3
+        next_obs, reward, done, info = env.step(action)
+        obs = obs.reshape(1, -1)
+        next_obs = next_obs.reshape(1, -1)
+        reward = np.array([reward])
+        action = action.reshape(1, -1)
+        done = np.array([done]).reshape(1, -1)
+
+        # print(obs)
+        # print(next_obs)
+        # print()
+        # continue
+        # env.render()
+        # time.sleep(0.1)
+
+
+        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, next_obs, action, reward, done, [{}])
+
+        # Make sure aug transition matches simulation
+        # aug_obs to qpos, qvel
+        qpos2, qvel2 = env.obs_to_q(aug_obs[0])
+        env.set_state(qpos2, qvel2)
+        # env.render()
+        # time.sleep(0.1)
+        obs2 = env.get_obs()
+        # qpos = np.array([0, 0])
+        # qvel = np.zeros(2)
+        # env.set_state(qpos, qvel)
+        obs = env.get_obs()
+        next_obs2, reward2, done2, info2 = env.step(aug_action[0])
+
+        print(aug_next_obs)
+        print(next_obs2)
+
+
+        print(aug_obs - obs2)
+        print(aug_next_obs - next_obs2)
+        print(aug_reward - reward2, aug_reward, reward2)
+
+        assert np.allclose(aug_obs, obs2)
+        assert np.allclose(aug_next_obs, next_obs2)
+        assert np.allclose(aug_reward, reward2)
+
+#
+# if __name__ == "__main__":
+#     env = gym.make('InvertedPendulum-v2')
+#     env = gym.make('CartPole-v1')
+#
+#     f = InvertedPendulumReflect()
+#
+#     for i in range(1000):
+#         env.reset()
+#         # set initial qpos, qvel
+#         # qpos = np.copy(env.sim.data.qpos)
+#         # qvel = np.copy(env.sim.data.qvel)
+#
+#         qpos = np.array([0, 0])
+#         qvel = np.zeros(2)
+#         env.set_state(qpos, qvel)
+#         obs = env.get_obs()
+#
+#         # get transition
+#         action = 0
+#         next_obs, reward, done, info = env.step(action)
+#         obs = obs.reshape(1, -1)
+#         next_obs = next_obs.reshape(1, -1)
+#         reward = np.array([reward])
+#         # action = action.reshape(1, -1)
+#         done = np.array([done]).reshape(1, -1)
+#
+#         print(obs)
+#         print(next_obs)
+#         print()
+#         continue
