@@ -241,15 +241,17 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         # self.replay_buffer.update_hists(next_obs)
 
         if self.use_aug:
-            aug_transition = self.augment_transition(
+            unscaled_action = self.policy.unscale_action(buffer_action)
+            aug_obs, aug_next_obs, aug_unscaled_action, aug_reward, aug_done, aug_info = self.augment_transition(
                 self._last_original_obs,
                 next_obs,
-                buffer_action,
+                unscaled_action,
                 reward_,
                 dones,
                 infos,
             )
-            self.aug_replay_buffer.extend(*aug_transition)
+            aug_action = self.policy.scale_action(aug_unscaled_action)
+            self.aug_replay_buffer.extend(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info)
 
         self._last_obs = new_obs
         # Save the unnormalized observation
