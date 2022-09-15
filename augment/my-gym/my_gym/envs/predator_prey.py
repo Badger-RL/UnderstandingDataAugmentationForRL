@@ -18,9 +18,9 @@ class PredatorPreyEnv(gym.Env):
         self.action_space = gym.spaces.Box(low=np.zeros(2), high=np.array([1, 2 * np.pi]), shape=(n,))
         self.observation_space = gym.spaces.Box(-1, +1, shape=(2 * n,))
         self.step_num = 0
-        self.horizon = 50
+        self.horizon = 100
         self.sigma = sigma
-        self.delta = 0.1
+        self.delta = 0.05
 
         self.sparse = True
 
@@ -41,12 +41,15 @@ class PredatorPreyEnv(gym.Env):
             reward = +1.0
             done = True
 
+        if self.step_num == self.horizon:
+            done = True
+
         info = {}
         self.obs = np.concatenate((self.x, self.goal))
         return self.obs, reward, done, info
 
     def reset(self):
-
+        self.step_num = 0
         # self.x = np.zeros(self.n)
         self.x = np.random.uniform(-1, 1, size=(self.n,))
 
