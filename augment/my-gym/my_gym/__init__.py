@@ -151,6 +151,12 @@ register(
     max_episode_steps=50,
 )
 
+register(
+    id="PredatorPreyDiscrete-v0",
+    entry_point="my_gym.envs:PredatorPreyDiscreteEnv",
+    max_episode_steps=50,
+)
+
 
 # register(
 #     id="Bandit-v0",
