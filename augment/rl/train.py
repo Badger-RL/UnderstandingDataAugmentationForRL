@@ -160,11 +160,14 @@ if __name__ == '__main__':
     env_eval = Monitor(gym.make(env_id, **args.eval_env_kwargs), filename=save_dir)
     eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq, log_path=save_dir, best_model_save_path=best_model_save_dir)
     callbacks = [eval_callback]
-    if args.save_replay_buffer:
-        hist_callback = SaveReplayDistribution(log_path=save_dir, save_freq=args.eval_freq)
-        callbacks.append(hist_callback)
+    # if args.save_replay_buffer:
+    #     hist_callback = SaveReplayDistribution(log_path=save_dir, save_freq=args.eval_freq)
+    #     callbacks.append(hist_callback)
     model.learn(total_timesteps=int(n_timesteps), callback=callbacks)
 
+    print(f"Saving to {save_dir}/{env_id}")
+    model.save(f"{save_dir}/{env_id}")
+    
     if args.save_replay_buffer:
         model.save_replay_buffer(f"{save_dir}/replay_buffer")
     if args.save_aug_replay_buffer:
