@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
     # saving
     parser.add_argument("-f", "--log-folder", help="Log folder", type=str, default="results")
-    parser.add_argument("--save-best-model", default=False, type=bool)
+    parser.add_argument("--save-best-model", default=True, type=bool)
     parser.add_argument("-exp", "--experiment-name", help="<log folder>/<env_id>/<algo>/<experiment name>/run_<run_id>", type=str, default="")
     parser.add_argument("--run-id", help="Run id to append to env save directory", default=None, type=int)
     parser.add_argument("--save-replay-buffer", type=bool, default=False)
