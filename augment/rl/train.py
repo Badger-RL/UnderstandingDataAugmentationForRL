@@ -157,6 +157,8 @@ if __name__ == '__main__':
 
     # Setting num threads to 1 makes things run faster on cpu
     torch.set_num_threads(1)
+
+    if not args.eval_env_kwargs: args.eval_env_kwargs = args.env_kwargs
     env_eval = Monitor(gym.make(env_id, **args.eval_env_kwargs), filename=save_dir)
     eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq, log_path=save_dir, best_model_save_path=best_model_save_dir)
     callbacks = [eval_callback]
