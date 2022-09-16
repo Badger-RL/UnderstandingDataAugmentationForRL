@@ -2,12 +2,35 @@ from copy import deepcopy
 from typing import Dict, List, Any
 
 import numpy as np
-from stable_baselines3.common.buffers import ReplayBuffer
+
+from my_gym import ENVS_DIR
+
 
 class AugmentationFunction:
 
-    def __init__(self, **kwargs):
-        pass
+    def __init__(self, rbf_n=None, **kwargs):
+        self.rbf_n = rbf_n
+        if self.rbf_n:
+            load_dir = f'{ENVS_DIR}/rbf_basis/obs_dim_{4}/n_{rbf_n}'
+
+            self.P = np.load(f'{load_dir}/P.npy')
+            self.phi = np.load(f'{load_dir}/phi.npy')
+            self.nu = np.load(f'{load_dir}/nu.npy')
+            self.Pinv = np.linalg.pinv(self.P)
+
+    def rbf(self, obs):
+        x = obs.T
+        x = self.P.dot(x)
+        # x += self.phi
+        x = np.tanh(x)
+        return x.T
+
+    def rbf_inverse(self, rbf_obs):
+        x = rbf_obs
+        x = np.arctanh(x)
+        # x -= self.phi
+        x = self.Pinv.dot(x.T)
+        return x.T
 
     def _deepcopy_transition(
             self,
@@ -40,3 +63,19 @@ class AugmentationFunction:
                 ):
 
         raise NotImplementedError("Augmentation function not implemented.")
+
+if __name__ == "__main__":
+
+    f = AugmentationFunction(rbf_n=16)
+
+    m = 1000
+    observations = np.random.uniform(-1, +1, size=(m, 4))
+    rbf_observations = []
+    for i in range(m):
+        rbf_observations.append(f.rbf(observations[i]))
+    rbf_observations = np.array(rbf_observations)
+
+    inv_rbf_observations = f.rbf_inverse(rbf_observations)
+
+    assert np.allclose(observations, inv_rbf_observations)
+

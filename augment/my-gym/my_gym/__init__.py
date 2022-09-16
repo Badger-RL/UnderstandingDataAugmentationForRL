@@ -1,7 +1,11 @@
 import copy
+import os
 
 import gym
 from gym.envs.registration import register
+
+ENVS_DIR = os.path.join(os.path.dirname(__file__), 'envs')
+
 
 # unregister gym's env so I can use the same name
 # envs_to_unregister = ['Ant-v3', 'HalfCheetah-v3', 'Humanoid-v3', 'Walker2d-v3']
@@ -149,6 +153,14 @@ register(
     id="PredatorPrey-v0",
     entry_point="my_gym.envs:PredatorPreyEnv",
     max_episode_steps=200,
+)
+register(
+    id="PredatorPreyEasy-v0",
+    entry_point="my_gym.envs:PredatorPreyEnv",
+    max_episode_steps=50,
+    kwargs={
+        'delta': 0.1
+    },
 )
 
 register(

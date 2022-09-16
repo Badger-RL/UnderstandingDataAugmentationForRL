@@ -112,6 +112,11 @@ if __name__ == '__main__':
     except:
         pass
 
+    # Make envs
+    env = Monitor(gym.make(env_id, **args.env_kwargs),)
+    if not args.eval_env_kwargs: args.eval_env_kwargs = args.env_kwargs
+    env_eval = Monitor(gym.make(env_id, **args.eval_env_kwargs), filename=save_dir)
+
     # augmentation
     if args.aug_function:
         aug_buffer = args.aug_buffer
@@ -126,7 +131,7 @@ if __name__ == '__main__':
         # hyperparams['buffer_size'] = hyperparams['buffer_size'] * buffer_scale
         # hyperparams['replay_buffer_class'] = DoubleReplayBuffer
         hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](initial_value=aug_ratio)
-        hyperparams['aug_function'] = aug_func_class(**aug_func_kwargs)
+        hyperparams['aug_function'] = aug_func_class(env=env, **aug_func_kwargs)
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
 
@@ -143,7 +148,6 @@ if __name__ == '__main__':
     ####################################################################################################################
     # More preprocessing that depends on the env object
 
-    env = Monitor(gym.make(env_id, **args.env_kwargs),)
     preprocess_action_noise(hyperparams=hyperparams, env=env)
 
     algo_class = ALGOS[algo]
@@ -158,8 +162,7 @@ if __name__ == '__main__':
     # Setting num threads to 1 makes things run faster on cpu
     torch.set_num_threads(1)
 
-    if not args.eval_env_kwargs: args.eval_env_kwargs = args.env_kwargs
-    env_eval = Monitor(gym.make(env_id, **args.eval_env_kwargs), filename=save_dir)
+
     eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq, log_path=save_dir, best_model_save_path=best_model_save_dir)
     callbacks = [eval_callback]
     # if args.save_replay_buffer:

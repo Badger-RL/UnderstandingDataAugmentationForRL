@@ -1,28 +1,24 @@
 import gym
 import numpy as np
-import scipy.linalg
 
 from matplotlib import pyplot as plt
 
 from augment.rl.algs.td3 import TD3
+from my_gym.envs.my_env import MyEnv
 
-class PredatorPreyEnv(gym.Env):
-    def __init__(
-            self,
-            n=2,
-            sigma=0.00,
-    ):
+class PredatorPreyEnv(MyEnv):
+    def __init__(self, delta=0.05, rbf_n=None):
 
-        self.n = n
+        self.n = 2
         # self.action_space = gym.spaces.Box(-1, +1, shape=(n,))
-        self.action_space = gym.spaces.Box(low=np.zeros(2), high=np.array([1, 2 * np.pi]), shape=(n,))
-        self.observation_space = gym.spaces.Box(-1, +1, shape=(2 * n,))
+        self.action_space = gym.spaces.Box(low=np.zeros(2), high=np.array([1, 2 * np.pi]), shape=(self.n,))
+        self.observation_space = gym.spaces.Box(-1, +1, shape=(2 * self.n,))
         self.step_num = 0
-        self.horizon = 200
-        self.sigma = sigma
-        self.delta = 0.025
+        self.delta = delta
 
         self.sparse = True
+        super().__init__(rbf_n=rbf_n)
+
 
 
     def step(self, u):
@@ -46,7 +42,7 @@ class PredatorPreyEnv(gym.Env):
 
         info = {}
         self.obs = np.concatenate((self.x, self.goal))
-        return self.obs, reward, done, info
+        return self._get_obs(), reward, done, info
 
     def reset(self):
         self.step_num = 0
@@ -59,11 +55,17 @@ class PredatorPreyEnv(gym.Env):
         self.goal = np.random.uniform(-1, 1, size=(self.n,))
 
         self.obs = np.concatenate((self.x, self.goal))
-        return self.obs
+        return self._get_obs()
 
     def set_state(self, pos, goal):
         self.x = pos
         self.goal = goal
+
+class PredatorPreyEasyEnv(PredatorPreyEnv):
+    def __init__(self, rbf_n=None):
+        super().__init__(delta=0.1, rbf_n=None)
+
+
 
 if __name__ == "__main__":
 
