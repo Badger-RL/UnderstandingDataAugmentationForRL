@@ -43,7 +43,7 @@ class PredatorPreyTranslate(AugmentationFunction):
 
         dist = np.linalg.norm(aug_next_obs[:, :2] - aug_next_obs[:, 2:], axis=-1)
         at_goal = (dist < 0.05)
-        aug_done = at_goal or done
+        aug_done = at_goal | done
 
         aug_reward[at_goal] = +1
         aug_reward[~at_goal] = -0.1
