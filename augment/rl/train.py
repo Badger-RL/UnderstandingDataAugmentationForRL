@@ -130,8 +130,12 @@ if __name__ == '__main__':
         # buffer_scale = int(1+aug_ratio*aug_n)
         # hyperparams['buffer_size'] = hyperparams['buffer_size'] * buffer_scale
         # hyperparams['replay_buffer_class'] = DoubleReplayBuffer
+        try:
+            rbf_n = args.env_kwargs['rbf_n']
+        except:
+            rbf_n = None
         hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](initial_value=aug_ratio)
-        hyperparams['aug_function'] = aug_func_class(env=env, **aug_func_kwargs)
+        hyperparams['aug_function'] = aug_func_class(env=env, rbf_n=rbf_n, **aug_func_kwargs)
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
 

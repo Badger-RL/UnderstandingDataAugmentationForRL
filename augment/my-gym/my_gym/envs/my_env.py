@@ -12,12 +12,10 @@ class MyEnv(gym.Env):
 
         self.rbf_n = rbf_n
         if self.rbf_n:
-            original_obs_dim = self.observation_space.shape[-1]
+            self.original_obs_dim = self.observation_space.shape[-1]
             self.observation_space = gym.spaces.Box(low=-1, high=+1, shape=(self.rbf_n,))
 
-            print(os.getcwd())
-            print(ENVS_DIR)
-            load_dir = f'{ENVS_DIR}/rbf_basis/obs_dim_{original_obs_dim}/n_{rbf_n}/'
+            load_dir = f'{ENVS_DIR}/rbf_basis/obs_dim_{self.original_obs_dim}/n_{rbf_n}/'
             self.P = np.load(f'{load_dir}/P.npy')
             self.phi = np.load(f'{load_dir}/phi.npy')
             self.nu = np.load(f'{load_dir}/nu.npy')

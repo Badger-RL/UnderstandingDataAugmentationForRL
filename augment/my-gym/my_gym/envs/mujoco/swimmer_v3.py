@@ -4,11 +4,12 @@ import numpy as np
 
 from gym import utils
 from my_gym.envs.mujoco import mujoco_env
+from my_gym.envs.my_env import MyEnv
 
 DEFAULT_CAMERA_CONFIG = {}
 
 
-class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
+class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle, MyEnv):
     """
     ### Description
 
@@ -130,7 +131,8 @@ class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         reset_noise_scale=0.1,
         exclude_current_positions_from_observation=True,
         latent_dim=-1,
-        model_class=None
+        model_class=None,
+        rbf_n=None
     ):
         utils.EzPickle.__init__(**locals())
 
@@ -142,8 +144,7 @@ class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self._exclude_current_positions_from_observation = (
             exclude_current_positions_from_observation
         )
-
-        mujoco_env.MujocoEnv.__init__(self, xml_file, 4)
+        mujoco_env.MujocoEnv.__init__(self, xml_file, 4, rbf_n=rbf_n)
 
     def control_cost(self, action):
         control_cost = self._ctrl_cost_weight * np.sum(np.square(action))
@@ -190,6 +191,10 @@ class SwimmerEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             position = position[2:]
 
         observation = np.concatenate([position, velocity]).ravel()
+
+        if self.rbf_n:
+            return self._rbf(observation)
+
         return observation
 
     def obs_to_q(self, obs):

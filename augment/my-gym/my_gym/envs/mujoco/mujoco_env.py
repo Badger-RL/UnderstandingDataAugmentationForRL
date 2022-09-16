@@ -1,15 +1,13 @@
-import copy
 import os
 
-import gym
-import mujoco_py
 import numpy as np
-import torch
 from gym import spaces
-from gym.envs.mujoco.mujoco_env import convert_observation_to_space, DEFAULT_SIZE, MujocoEnv as MujocoEnv_og
-from gym.utils import seeding
+from gym.envs.mujoco.mujoco_env import convert_observation_to_space, MujocoEnv as MujocoEnv_og
 
-class MujocoEnv(MujocoEnv_og):
+from my_gym.envs.my_env import MyEnv
+
+
+class MujocoEnv(MujocoEnv_og, MyEnv):
     """
     Superclass for all MuJoCo environments.
 
@@ -17,11 +15,15 @@ class MujocoEnv(MujocoEnv_og):
     we search for the xml file from the local xml directory.
     """
 
-    def __init__(self, model_path, frame_skip):
+    def __init__(self, model_path, frame_skip, rbf_n=None):
         local_model_path = os.path.join(os.path.dirname(__file__), "assets", model_path)
         if os.path.exists(local_model_path):
             model_path = local_model_path
+
+        self.rbf_n = None
         super().__init__(model_path=model_path, frame_skip=frame_skip)
+        MyEnv.__init__(self, rbf_n=rbf_n)
+
 
     def _set_action_space(self):
         if self.action_space is None:

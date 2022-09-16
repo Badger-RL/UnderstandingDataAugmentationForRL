@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
 
     for rbf_n in [16,32,64,128,256,512,1024]:
-        obs_dim = 4
+        obs_dim = 8
 
         P = np.random.normal(loc=0, scale=1, size=(rbf_n, obs_dim))
         phi = np.random.uniform(low=-np.pi, high=np.pi, size=(rbf_n,))
