@@ -3,18 +3,21 @@ import os
 import gym
 import numpy as np
 from gym import utils
-from gym.envs.mujoco import MujocoEnv
+from my_gym.envs.mujoco.mujoco_env import MujocoEnv
+
 
 
 class ReacherEnv(MujocoEnv, utils.EzPickle):
-    def __init__(self, num_links=2, goal=None):
+    def __init__(self, num_links=2, goal=None, rbf_n=500):
         self.num_links = num_links
         self.goal = np.array(goal)
         self.randomize_goal = goal is None
+        self.rbf_n = None
 
         utils.EzPickle.__init__(self)
         fullpath = os.path.join(os.path.dirname(__file__), "assets", f"reacher_{num_links}dof.xml")
         MujocoEnv.__init__(self, model_path=fullpath, frame_skip=2)
+        RBFEnv.__init__(self, rbf_n=rbf_n)
 
     def step(self, a):
         vec = self.get_body_com("fingertip") - self.get_body_com("target")
@@ -56,7 +59,7 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
 
     def _get_obs(self):
         theta = self.sim.data.qpos.flat[:self.num_links]
-        return np.concatenate(
+        ob = np.concatenate(
             [
                 np.cos(theta), # 4 cos(joint angles)
                 np.sin(theta), # 4 sin(joint angles
@@ -65,6 +68,9 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
                 self.get_body_com("fingertip") - self.get_body_com("target"), # (x,y,z) distance
             ]
         )
+        if self.rbf_n:
+            ob = self._rbf(ob)
+        return ob
 
     def obs_to_q(self, obs):
         k = self.num_links

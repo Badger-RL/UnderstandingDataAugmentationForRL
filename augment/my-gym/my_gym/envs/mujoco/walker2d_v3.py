@@ -130,8 +130,7 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         healthy_angle_range=(-1.0, 1.0),
         reset_noise_scale=5e-3,
         exclude_current_positions_from_observation=True,
-        latent_dim=-1,
-        model_class=None
+        rbf_n=None
     ):
         self.id = 'Walker2d-v3'
 
@@ -152,7 +151,7 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             exclude_current_positions_from_observation
         )
 
-        mujoco_env.MujocoEnv.__init__(self, xml_file, 4, id=self.id, latent_dim=latent_dim, model_class=model_class)
+        mujoco_env.MujocoEnv.__init__(self, xml_file, 4, rbf_n=rbf_n)
 
     @property
     def healthy_reward(self):
@@ -191,6 +190,10 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             position = position[1:]
 
         observation = np.concatenate((position, velocity)).ravel()
+
+        if self.rbf_n:
+            observation = self._rbf(observation)
+
         return observation
 
     def obs_to_q(self, obs):
@@ -212,12 +215,6 @@ class Walker2dEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return obs[:17]
 
     def step(self, action):
-        if self.model_class is not None:
-            state = None
-            if 'C' in self.model_class:
-                state = self._get_obs()
-            action = self.latent_to_native_mapping(s=state, z=action)
-
         x_position_before = self.sim.data.qpos[0]
         self.do_simulation(action, self.frame_skip)
         x_position_after = self.sim.data.qpos[0]

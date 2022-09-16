@@ -7,16 +7,11 @@ from my_gym.envs.mujoco.mujoco_env import MujocoEnv
 
 
 class SwimmerKEnv(MujocoEnv, utils.EzPickle):
-    def __init__(self, num_links=6,
-                 latent_dim=-1,
-                 model_class=None
-                 ):
+    def __init__(self, num_links=6, rbf_n=None):
         self.num_links = num_links
-        self.latent_dim = latent_dim
-        self.action_dim = self.latent_dim if self.latent_dim>0 else self.num_links-1
-        self.action_space = gym.spaces.Box(-1, +1, shape=(self.action_dim,))
+        self.action_space = gym.spaces.Box(-1, +1, shape=(self.num_links-1,))
 
-        MujocoEnv.__init__(self, f"swimmer{num_links}.xml", 4)
+        MujocoEnv.__init__(self, f"swimmer{num_links}.xml", 4, rbf_n=rbf_n)
 
         utils.EzPickle.__init__(self)
 
@@ -41,7 +36,11 @@ class SwimmerKEnv(MujocoEnv, utils.EzPickle):
     def _get_obs(self):
         qpos = self.sim.data.qpos
         qvel = self.sim.data.qvel
-        return np.concatenate([qpos.flat[2:], qvel.flat])
+
+        observation = np.concatenate([qpos.flat[2:], qvel.flat])
+        if self.rbf_n:
+            return self._rbf(observation)
+        return observation
 
     def get_obs(self):
         return self._get_obs()

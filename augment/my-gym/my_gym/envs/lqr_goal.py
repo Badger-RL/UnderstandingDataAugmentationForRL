@@ -27,17 +27,20 @@ class LQRGoalEnv(gym.Env):
     ):
 
         self.n = n
-        self.action_space = gym.spaces.Box(-1, +1, shape=(n,))
-        self.observation_space = gym.spaces.Box(-1, +1, shape=(2*n,))
+        # self.action_space = gym.spaces.Box(-1, +1, shape=(n,))
+        self.action_space = gym.spaces.Box(low=np.zeros(2), high=np.array([1, 2*np.pi]), shape=(n,))
+        self.observation_space = gym.spaces.Box(-np.inf, +np.inf, shape=(2*n,))
         self.step_num = 0
-        self.horizon = 50
+        self.horizon = 20
         self.sigma = sigma
-        self.delta = 0.05
+        self.delta = 0.1
 
         self.A = np.eye(n)
         self.B = np.eye(n)*self.delta
         self.Q = np.eye(n)
-        self.R = np.eye(n)*0.1
+        self.R = np.eye(n)*0.0
+
+        self.sparse = False
 
     def cost(self, x, u):
         # Wikipedia has an extra dot product at the end, but it doesn't make sense since x and u don't
@@ -54,9 +57,10 @@ class LQRGoalEnv(gym.Env):
         cost_goal = dist_x.T @ self.Q @ dist_x
         cost_ctrl = dist_u.T @ self.R @ dist_u
 
-        # if np.linalg.norm(dist_x) < 0.02: cost_goal = 0
-        # else: cost_goal = 1
-        # cost_ctrl = 0
+        if self.sparse:
+            if np.linalg.norm(dist_x) < 0.05: cost_goal = 0
+            else: cost_goal = 1
+            cost_ctrl = 0
         return cost_goal, cost_ctrl
 
     def next_state(self, x, u):
@@ -66,6 +70,9 @@ class LQRGoalEnv(gym.Env):
     
     def step(self, u):
         self.step_num += 1
+        ux = u[0]*np.cos(u[1])
+        uy = u[0]*np.sin(u[1])
+        u = np.array([ux, uy])
 
         self.x = self.next_state(self.x, u)
         # self.x = np.clip(self.x, -1, +1) # clipping makes dynamics nonlinear
@@ -84,11 +91,14 @@ class LQRGoalEnv(gym.Env):
 
     def reset(self):
 
-        self.x = np.zeros(self.n)
-        # self.x = np.random.uniform(-1, 1, size=(self.n,))
+        # self.x = np.zeros(self.n)
+        self.x = np.random.uniform(-1, 1, size=(self.n,))
+
         theta = np.random.uniform(-np.pi, +np.pi)
-        self.goal = np.array([np.cos(theta), np.sin(theta)])
-        self.obs = np.concatenate((self.goal, self.x))
+        r = np.random.uniform(-1, +1)
+        self.goal = np.array([r*np.cos(theta), r*np.sin(theta)])
+
+        self.obs = np.concatenate((self.x, self.goal))
         return self.obs
 
 if __name__ == "__main__":

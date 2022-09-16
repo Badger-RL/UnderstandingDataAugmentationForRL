@@ -4,8 +4,9 @@ import gym.spaces
 import numpy as np
 
 from gym import utils
-from gym.envs.mujoco import mujoco_env
 from gym.envs.mujoco import InvertedPendulumEnv as InvertedPendulumEnv_original
+
+from my_gym.envs.mujoco import mujoco_env
 
 
 class InvertedPendulumEnv(mujoco_env.MujocoEnv, utils.EzPickle):
@@ -98,7 +99,7 @@ class InvertedPendulumEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.rbf_n = rbf_n
         if self.rbf_n:
             self.observation_space = gym.spaces.Box(low=-1, high=+1, shape=(self.rbf_n,))
-            self.ob = self.observation_space.sample()
+            # self.ob = self.observation_space.sample()
 
             self.P = np.random.normal(loc=0, scale=1, size=(self.rbf_n,4))
             self.phi = np.random.uniform(low=-np.pi, high=np.pi, size=(self.rbf_n,))
@@ -139,6 +140,15 @@ class InvertedPendulumEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         if self.rbf_n:
             obs = self._rbf(obs)
         return obs
+
+    def get_obs(self):
+        return self._get_obs()
+
+    def obs_to_q(self, obs):
+        print(self.model.nq, self.model.nv)
+        qpos = obs[:2]
+        qvel = obs[2:]
+        return qpos, qvel
 
     def _rbf(self, obs):
         return np.sin(self.P.dot(obs)/1 + self.phi)

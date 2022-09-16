@@ -61,19 +61,25 @@ class CartPoleEnv(CartPoleEnv_original):
 
     metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 50}
 
-    def __init__(self):
+    def __init__(self, continuous=False):
         super().__init__()
+        self.continuous = continuous
+        if self.continuous:
+            self.action_space = spaces.Box(low=-1, high=+1, shape=(1,))
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
     def step(self, action):
-        err_msg = "%r (%s) invalid" % (action, type(action))
-        assert self.action_space.contains(action), err_msg
+        # err_msg = "%r (%s) invalid" % (action, type(action))
+        # assert self.action_space.contains(action[0]), err_msg
 
         x, x_dot, theta, theta_dot = self.state
-        force = self.force_mag if action == 1 else -self.force_mag
+        if self.continuous:
+            force = 2*self.force_mag*action[0]
+        else:
+            force = self.force_mag if action == 1 else -self.force_mag
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 
@@ -124,7 +130,8 @@ class CartPoleEnv(CartPoleEnv_original):
             self.steps_beyond_done += 1
             reward = 0.0
 
-        return self.state, reward, done, {}
+        state = self._get_obs()
+        return state, reward, done, {}
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
@@ -132,10 +139,23 @@ class CartPoleEnv(CartPoleEnv_original):
 
 
     def _get_obs(self):
-        self.state = np.array(self.state)
-        xs = [self.state]
-        for i in range(len(self.state)):
-            xs.append(self.state*self.state[i])
-            for j in range(len(self.state)):
-                xs.append(self.state * self.state[i] * self.state[j])
-        return np.concatenate(xs)
+        return np.array(self.state)
+        # self.state = np.array(self.state)
+        # xs = [self.state]
+        # for i in range(len(self.state)):
+        #     xs.append(self.state*self.state[i])
+        #     for j in range(len(self.state)):
+        #         xs.append(self.state * self.state[i] * self.state[j])
+        # return np.concatenate(xs)
+
+    def get_obs(self):
+        return self._get_obs()
+
+    def set_state(self, qpos, qvel):
+        self.state[:2] = qpos
+        self.state[2:] = qvel
+
+    def obs_to_q(self, obs):
+        qpos = self.state[:2]
+        qvel = self.state[2:]
+        return qpos, qvel
