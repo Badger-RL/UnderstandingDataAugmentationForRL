@@ -15,7 +15,7 @@ class Rotate(AugmentationFunction):
         self.k = k
 
 
-    def augment(self,
+    def _augment(self,
                 augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,

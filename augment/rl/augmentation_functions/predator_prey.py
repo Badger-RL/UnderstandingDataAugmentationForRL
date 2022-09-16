@@ -13,7 +13,7 @@ class PredatorPreyTranslate(AugmentationFunction):
         super().__init__(**kwargs)
         self.delta = delta
 
-    def augment(self,
+    def _augment(self,
                 augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
@@ -23,10 +23,6 @@ class PredatorPreyTranslate(AugmentationFunction):
                 infos: List[Dict[str, Any]],
                 p=None,
                 ):
-
-        if self.rbf_n:
-            obs = self.rbf_inverse(obs)
-            next_obs = self.rbf_inverse(next_obs)
 
         v = np.random.uniform(low=-0.1, high=+0.1, size=(augmentation_n,2))
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
@@ -55,10 +51,6 @@ class PredatorPreyTranslate(AugmentationFunction):
 
         # aug_obs = np.clip(aug_obs, -1, +1)
 
-        if self.rbf_n:
-            aug_obs = self.rbf(aug_obs)
-            aug_next_obs = self.rbf(aug_next_obs)
-
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
 class PredatorPreyRotate(AugmentationFunction):
@@ -77,10 +69,6 @@ class PredatorPreyRotate(AugmentationFunction):
                 infos: List[Dict[str, Any]],
                 p=None,
                 ):
-
-        if self.rbf_n:
-            obs = self.rbf_inverse(obs)
-            next_obs = self.rbf_inverse(next_obs)
 
         theta = np.random.choice(self.thetas, replace=False)
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
@@ -112,10 +100,6 @@ class PredatorPreyRotate(AugmentationFunction):
 
         aug_action[:, 1] += theta
         aug_action[:, 1] %= (2*np.pi)
-
-        if self.rbf_n:
-            aug_obs = self.rbf(aug_obs)
-            aug_next_obs = self.rbf(aug_next_obs)
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 

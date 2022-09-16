@@ -8,10 +8,11 @@ from my_gym import ENVS_DIR
 
 class AugmentationFunction:
 
-    def __init__(self, rbf_n=None, **kwargs):
+    def __init__(self, env=None, rbf_n=None, **kwargs):
         self.rbf_n = rbf_n
+        self.obs_dim = env.original_obs_dim
         if self.rbf_n:
-            load_dir = f'{ENVS_DIR}/rbf_basis/obs_dim_{4}/n_{rbf_n}'
+            load_dir = f'{ENVS_DIR}/rbf_basis/obs_dim_{self.obs_dim}/n_{rbf_n}'
 
             self.P = np.load(f'{load_dir}/P.npy')
             self.phi = np.load(f'{load_dir}/phi.npy')
@@ -51,6 +52,18 @@ class AugmentationFunction:
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
+    def _augment(self,
+                 aug_n: int,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 **kwargs,):
+
+        raise NotImplementedError("Augmentation function not implemented.")
+
     def augment(self,
                 aug_n: int,
                 obs: np.ndarray,
@@ -62,7 +75,17 @@ class AugmentationFunction:
                 **kwargs,
                 ):
 
-        raise NotImplementedError("Augmentation function not implemented.")
+        if self.rbf_n:
+            obs = self.rbf_inverse(obs)
+            next_obs = self.rbf_inverse(next_obs)
+
+        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._augment(aug_n, obs, next_obs, action, reward, done, infos, **kwargs)
+
+        if self.rbf_n:
+            aug_obs = self.rbf(aug_obs)
+            aug_next_obs = self.rbf(aug_next_obs)
+
+        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
 if __name__ == "__main__":
 

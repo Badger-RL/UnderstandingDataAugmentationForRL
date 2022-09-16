@@ -15,7 +15,7 @@ class TranslatePaddle(AugmentationFunction):
         if noise == 'uniform':
             self.noise_function = np.random.uniform
 
-    def augment(self,
+    def _augment(self,
                 augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
@@ -47,7 +47,7 @@ class InvertedPendulumTranslateUniform(AugmentationFunction):
         self.sigma = sigma
         self.clip = clip
 
-    def augment(self,
+    def _augment(self,
                 augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
@@ -80,7 +80,7 @@ class InvertedPendulumReflect(AugmentationFunction):
     def __init__(self, **kwargs):
         super().__init__()
 
-    def augment(
+    def _augment(
             self,
             aug_n: int,
             obs: np.ndarray,

@@ -11,7 +11,7 @@ class LQRTranslate(AugmentationFunction):
     def __init__(self, **kwargs):
         super().__init__()
 
-    def augment(self,
+    def _augment(self,
                 augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
@@ -37,7 +37,7 @@ class LQRRotate(AugmentationFunction):
     def __init__(self, **kwargs):
         super().__init__()
 
-    def augment(self,
+    def _augment(self,
                 augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
