@@ -148,6 +148,7 @@ register(
 register(
     id="PredatorPrey-v0",
     entry_point="my_gym.envs:PredatorPreyEnv",
+    max_episode_steps=100,
 )
 
 register(

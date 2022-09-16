@@ -43,8 +43,8 @@ class PredatorPreyEnv(gym.Env):
             reward = +1.0
             done = True
 
-        if self.step_num == self.horizon:
-            done = True
+        # if self.step_num == self.horizon:
+        #     done = True
 
         info = {}
         self.obs = np.concatenate((self.x, self.goal))
