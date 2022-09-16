@@ -10,7 +10,7 @@ import gym, my_gym
 class PredatorPreyTranslate(AugmentationFunction):
 
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
 
     def augment(self,
                 augmentation_n: int,
@@ -22,6 +22,10 @@ class PredatorPreyTranslate(AugmentationFunction):
                 infos: List[Dict[str, Any]],
                 p=None,
                 ):
+
+        if self.rbf_n:
+            obs = self.rbf_inverse(obs)
+            next_obs = self.rbf_inverse(next_obs)
 
         v = np.random.uniform(low=-0.1, high=+0.1, size=(augmentation_n,2))
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
@@ -50,12 +54,16 @@ class PredatorPreyTranslate(AugmentationFunction):
 
         # aug_obs = np.clip(aug_obs, -1, +1)
 
+        if self.rbf_n:
+            aug_obs = self.rbf(aug_obs)
+            aug_next_obs = self.rbf(aug_next_obs)
+
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
 class PredatorPreyRotate(AugmentationFunction):
 
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
         self.thetas = [np.pi/2, np.pi, np.pi*3/2]
 
     def augment(self,
@@ -69,26 +77,13 @@ class PredatorPreyRotate(AugmentationFunction):
                 p=None,
                 ):
 
+        if self.rbf_n:
+            obs = self.rbf_inverse(obs)
+            next_obs = self.rbf_inverse(next_obs)
 
         theta = np.random.choice(self.thetas, replace=False)
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
-
-        # R = np.array([[np.cos(theta), -np.sin(theta)],
-        #               [np.sin(theta),  np.cos(theta)]])
-        # R = np.concatenate((R,R), axis=1)
-
-        # v0
-        # aug_obs = R.dot(aug_obs.T)
-        # aug_next_obs = R.dot(aug_next_obs)
-
-        # obs0 = np.copy(aug_obs)
-        # v0 = obs0[:, :2]
-        # g0 = obs0[:, 2:]
-        #
-        # obs1 = np.copy(aug_obs)
-        # v1 = obs0[:, :2]
-        # g1 = obs0[:, 2:]
 
         # v0
         x = obs[:,0]
@@ -117,6 +112,9 @@ class PredatorPreyRotate(AugmentationFunction):
         aug_action[:, 1] += theta
         aug_action[:, 1] %= (2*np.pi)
 
+        if self.rbf_n:
+            aug_obs = self.rbf(aug_obs)
+            aug_next_obs = self.rbf(aug_next_obs)
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
@@ -195,9 +193,9 @@ if __name__ == "__main__":
     # done = np.array([[done]])
     # infos = [info]
 
-    # f = PredatorPreyRotate()
-    # f = PredatorPreyTranslate()
-    f = PredatorPreyRotateRBF(rbf_n=16)
+    f = PredatorPreyRotate(rbf_n=16)
+    f = PredatorPreyTranslate(rbf_n=16)
+    # f = PredatorPreyRotateRBF(rbf_n=16)
 
 
     for i in range(1000):
