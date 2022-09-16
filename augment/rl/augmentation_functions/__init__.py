@@ -1,7 +1,6 @@
 from augment.rl.augmentation_functions.inverted_pendulum import *
 from augment.rl.augmentation_functions.lqr import LQRTranslate, LQRRotate
-from augment.rl.augmentation_functions.predator_prey import PredatorPreyRotate, PredatorPreyTranslate, \
-    PredatorPreyRotateRBF
+from augment.rl.augmentation_functions.predator_prey import PredatorPreyRotate, PredatorPreyTranslate
 from augment.rl.augmentation_functions.reacher_k import *
 from augment.rl.augmentation_functions.swimmer_k import SwimmerReflect
 from augment.rl.augmentation_functions.walker2d import Walker2dReflect
@@ -41,8 +40,8 @@ AUGMENTATION_FUNCTIONS = {
         'translate': PredatorPreyTranslate,
     },
     'PredatorPreyEasy-v0': {
-        'rotate': PredatorPreyRotateRBF,
-        # 'translate': PredatorPreyTranslate,
+        'rotate': PredatorPreyRotate,
+        'translate': PredatorPreyTranslate,
     }
 }
 

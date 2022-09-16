@@ -9,8 +9,9 @@ import gym, my_gym
 
 class PredatorPreyTranslate(AugmentationFunction):
 
-    def __init__(self, **kwargs):
+    def __init__(self, delta=0.05, **kwargs):
         super().__init__(**kwargs)
+        self.delta = delta
 
     def augment(self,
                 augmentation_n: int,
@@ -37,8 +38,8 @@ class PredatorPreyTranslate(AugmentationFunction):
         # aug_next_obs[:, :2] = np.clip(v + delta_v, -1, +1)
         dx = aug_action[:,0]*np.cos(aug_action[:, 1])
         dy = aug_action[:,0]*np.sin(aug_action[:, 1])
-        aug_next_obs[:, 0] = v[:,0] + dx*0.05
-        aug_next_obs[:, 1] = v[:,1] + dy*0.05
+        aug_next_obs[:, 0] = v[:,0] + dx*self.delta
+        aug_next_obs[:, 1] = v[:,1] + dy*self.delta
         aug_next_obs[:, :2] = np.clip(aug_next_obs[:, :2], -1, +1)
 
         # print(delta_v)
@@ -117,64 +118,6 @@ class PredatorPreyRotate(AugmentationFunction):
             aug_next_obs = self.rbf(aug_next_obs)
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
-
-
-class PredatorPreyRotateRBF(AugmentationFunction):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.thetas = [np.pi/2, np.pi, np.pi*3/2]
-
-    def augment(self,
-                augmentation_n: int,
-                obs: np.ndarray,
-                next_obs: np.ndarray,
-                action: np.ndarray,
-                reward: np.ndarray,
-                done: np.ndarray,
-                infos: List[Dict[str, Any]],
-                p=None,
-                ):
-
-        obs = self.rbf_inverse(obs)
-        next_obs = self.rbf_inverse(next_obs)
-
-        theta = np.random.choice(self.thetas, replace=False)
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
-            augmentation_n, obs, next_obs, action, reward, done, infos)
-
-        # v0
-        x = obs[:,0]
-        y = obs[:,1]
-        aug_obs[:,0] = x*np.cos(theta) - y*np.sin(theta)
-        aug_obs[:,1] = x*np.sin(theta) + y*np.cos(theta)
-
-        # g0
-        x = obs[:,2]
-        y = obs[:,3]
-        aug_obs[:,2] = x*np.cos(theta) - y*np.sin(theta)
-        aug_obs[:,3] = x*np.sin(theta) + y*np.cos(theta)
-
-        # v1
-        x = next_obs[:,0]
-        y = next_obs[:,1]
-        aug_next_obs[:,0] = x*np.cos(theta) - y*np.sin(theta)
-        aug_next_obs[:,1] = x*np.sin(theta) + y*np.cos(theta)
-
-        # g1
-        x = next_obs[:,2]
-        y = next_obs[:,3]
-        aug_next_obs[:,2] = x*np.cos(theta) - y*np.sin(theta)
-        aug_next_obs[:,3] = x*np.sin(theta) + y*np.cos(theta)
-
-        aug_action[:, 1] += theta
-        aug_action[:, 1] %= (2*np.pi)
-
-        aug_obs = self.rbf(aug_obs)
-        aug_next_obs = self.rbf(aug_next_obs)
-
-        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
-
 
 if __name__ == "__main__":
 
