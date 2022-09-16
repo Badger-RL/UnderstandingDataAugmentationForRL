@@ -96,17 +96,9 @@ class InvertedPendulumEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             self.action_map = [-0.3, -0.2, -0.1, -0.01, -0.001, 0.5, 0.4, 0.3, 0.2, 0.1, 0.01, 0.001]
             self.action_space = gym.spaces.Discrete(len(self.action_map))
 
-        self.rbf_n = rbf_n
-        if self.rbf_n:
-            self.observation_space = gym.spaces.Box(low=-1, high=+1, shape=(self.rbf_n,))
-            # self.ob = self.observation_space.sample()
-
-            self.P = np.random.normal(loc=0, scale=1, size=(self.rbf_n,4))
-            self.phi = np.random.uniform(low=-np.pi, high=np.pi, size=(self.rbf_n,))
-
         utils.EzPickle.__init__(self)
         fullpath = os.path.join(os.path.dirname(__file__), "assets", "inverted_pendulum.xml")
-        mujoco_env.MujocoEnv.__init__(self, fullpath, 2)
+        mujoco_env.MujocoEnv.__init__(self, fullpath, 2, rbf_n=rbf_n)
 
 
     def step(self, a):
