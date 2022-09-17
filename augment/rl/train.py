@@ -31,6 +31,7 @@ if __name__ == '__main__':
     parser.add_argument("--env-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional keyword argument to pass to the env constructor")
     parser.add_argument("--eval-env-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional keyword argument to pass to the eval env constructor")
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
+    parser.add_argument("--linear", type=bool, default=False)
 
     # augmentation
     parser.add_argument("--aug-function", type=str, default=None)
@@ -152,6 +153,8 @@ if __name__ == '__main__':
     ####################################################################################################################
     # More preprocessing that depends on the env object
 
+    if args.linear:
+        hyperparams['policy_kwargs'] = {'net_arch':[]}
     preprocess_action_noise(hyperparams=hyperparams, env=env)
 
     algo_class = ALGOS[algo]
