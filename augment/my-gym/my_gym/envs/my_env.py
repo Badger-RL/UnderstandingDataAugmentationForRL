@@ -13,7 +13,7 @@ class MyEnv(gym.Env):
         self.rbf_n = rbf_n
         if self.rbf_n:
             self.original_obs_dim = self.observation_space.shape[-1]
-            self.observation_space = gym.spaces.Box(low=-1, high=+1, shape=(self.rbf_n,))
+            self.observation_space = gym.spaces.Box(low=-1, high=+1, shape=(2*self.rbf_n,))
 
             load_dir = f'{ENVS_DIR}/rbf_basis/obs_dim_{self.original_obs_dim}/n_{rbf_n}/'
             self.P = np.load(f'{load_dir}/P.npy')
@@ -31,7 +31,9 @@ class MyEnv(gym.Env):
             return self.obs
 
     def _rbf(self, obs):
-        return np.tanh(self.P.dot(obs)/1)
+        sin = np.sin(self.P.dot(obs)/np.sqrt(self.rbf_n) + self.phi)
+        cos = np.cos(self.P.dot(obs)/np.sqrt(self.rbf_n) + self.phi)
+        return np.concatenate((sin, cos))
 
     def _rbf_inverse(self, rbf_obs):
         return np.atanh(self.P.dot(rbf_obs)/self.nu + self.phi)
