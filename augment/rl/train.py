@@ -39,7 +39,6 @@ if __name__ == '__main__':
     parser.add_argument("--aug-n", type=int, default=1)
     parser.add_argument("--aug-ratio", type=float, default=1)
     parser.add_argument("--aug-schedule", type=str, default="constant")
-    # parser.add_argument("-aug-ratio-final", "--augmentation-ratio-final", type=Union[float, str], default=1)
     parser.add_argument("--aug-buffer", type=bool, default=True)
     parser.add_argument("--aug-constraint", type=bool, default=None)
     parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={},
@@ -128,9 +127,6 @@ if __name__ == '__main__':
         aug_func_kwargs = args.aug_function_kwargs
 
         aug_func_class = AUGMENTATION_FUNCTIONS[env_id][aug_func]
-        # buffer_scale = int(1+aug_ratio*aug_n)
-        # hyperparams['buffer_size'] = hyperparams['buffer_size'] * buffer_scale
-        # hyperparams['replay_buffer_class'] = DoubleReplayBuffer
         try:
             rbf_n = args.env_kwargs['rbf_n']
         except:
@@ -140,15 +136,6 @@ if __name__ == '__main__':
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
 
-        # try:
-        #     batch_size_scaled = int((1+args.aug_ratio)*hyperparams['batch_size'])
-        # except:
-        #     signature = inspect.signature(ALGOS[algo])
-        #     hyperparams['batch_size'] = signature.parameters['batch_size'].default
-        #     batch_size_scaled = int((1+args.aug_ratio)*hyperparams['batch_size'])
-        #
-        # print(f"Automatically scaling replay buffer: {hyperparams['batch_size']} --> {batch_size_scaled}")
-        # hyperparams['batch_size'] = batch_size_scaled
 
     ####################################################################################################################
     # More preprocessing that depends on the env object
