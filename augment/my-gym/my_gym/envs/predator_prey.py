@@ -7,7 +7,7 @@ from augment.rl.algs.td3 import TD3
 from my_gym.envs.my_env import MyEnv
 
 class PredatorPreyEnv(MyEnv):
-    def __init__(self, delta=0.05, sparse=1, rbf_n=None, neural=False):
+    def __init__(self, delta=0.05, sparse=1, rbf_n=None, neural=False, r=None):
 
         self.n = 2
         # self.action_space = gym.spaces.Box(-1, +1, shape=(n,))
@@ -19,6 +19,7 @@ class PredatorPreyEnv(MyEnv):
         self.delta = delta
 
         self.sparse = sparse
+        self.r = r
         super().__init__(rbf_n=rbf_n, neural=neural)
 
 
@@ -61,10 +62,15 @@ class PredatorPreyEnv(MyEnv):
         self.x = np.random.uniform(-1, 1, size=(self.n,))
         # self.x = np.zeros(2)
 
-        theta = np.random.uniform(-np.pi, +np.pi)
-        r = np.random.uniform(-1, +1)
-        self.goal = np.array([r * np.cos(theta), r * np.sin(theta)])
-        self.goal = np.random.uniform(-1, 1, size=(self.n,))
+
+
+        if self.r:
+            # theta = np.random.uniform(-np.pi, +np.pi)
+            # r = np.random.uniform(*self.r)
+            # self.goal = np.array([r * np.cos(theta), r * np.sin(theta)])
+            self.goal = np.random.uniform(low=-self.r, high=self.r, size=(self.n,))
+        else:
+            self.goal = np.random.uniform(-1, 1, size=(self.n,))
         # self.goal = np.ones(2)*0.5
 
         self.obs = np.concatenate((self.x, self.goal))
@@ -83,36 +89,3 @@ class PredatorPreyEnv(MyEnv):
 class PredatorPreyEasyEnv(PredatorPreyEnv):
     def __init__(self, rbf_n=None):
         super().__init__(delta=0.1, rbf_n=None)
-
-
-
-if __name__ == "__main__":
-
-    T = 200
-    env = LQRGoalEnv(n=2)
-    obs = env.reset()
-
-    pos = []
-    goal = []
-
-    model = TD3.load('../../../local/results/LQR-v0/td3/no_aug/run_1/best_model.zip', env, custom_objects={})
-
-    for t in range(T):
-        if model:
-            u, _ = model.predict(obs)
-        else:
-            u = np.random.uniform(-1, +1, size=(2,))
-        obs, reward, done, info = env.step(u)
-        pos.append(obs[:2])
-        goal.append(obs[2:])
-
-    t = np.arange(T)
-    pos = np.array(pos)
-    goal = np.array(goal)
-    plt.scatter(pos[:, 0], pos[:, 1], c=t)
-    plt.scatter(goal[:, 0], goal[:, 1])
-    plt.axis('equal')
-    plt.show()
-
-
-
