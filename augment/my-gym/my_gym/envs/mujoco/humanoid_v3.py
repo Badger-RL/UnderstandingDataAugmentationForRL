@@ -51,7 +51,7 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             exclude_current_positions_from_observation
         )
 
-        mujoco_env.MujocoEnv.__init__(self, xml_file, 5, id=self.id, latent_dim=latent_dim, model_class=model_class)
+        mujoco_env.MujocoEnv.__init__(self, xml_file, 5)
 
     @property
     def healthy_reward(self):

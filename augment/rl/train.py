@@ -33,6 +33,7 @@ if __name__ == '__main__':
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
     parser.add_argument("--linear", type=bool, default=False)
     parser.add_argument("--linear-neural", type=bool, default=False)
+    parser.add_argument("--data-factor", type=int, default=1)
 
 
     # augmentation
@@ -148,6 +149,10 @@ if __name__ == '__main__':
 
     preprocess_action_noise(hyperparams=hyperparams, env=env)
     # hyperparams['policy_kwargs'].update({'features_extractor_class': NeuralExtractor})
+
+    hyperparams['batch_size'] *= args.data_factor
+    hyperparams['train_freq'] *= args.data_factor
+    print(hyperparams['batch_size'], hyperparams['train_freq'])
 
     algo_class = ALGOS[algo]
     model = algo_class(env=env, **hyperparams)
