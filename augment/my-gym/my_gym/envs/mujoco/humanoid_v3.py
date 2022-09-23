@@ -31,8 +31,6 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         healthy_z_range=(1.0, 2.0),
         reset_noise_scale=1e-2,
         exclude_current_positions_from_observation=True,
-        latent_dim=-1,
-        model_class=None
     ):
         self.id = 'Humanoid-v3'
         utils.EzPickle.__init__(**locals())
@@ -113,11 +111,6 @@ class HumanoidEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return obs[:17]
 
     def step(self, action):
-        if self.model_class is not None:
-            state = None
-            if 'C' in self.model_class:
-                state = self._get_obs()
-            action = self.latent_to_native_mapping(s=state, z=action)
 
         xy_position_before = mass_center(self.model, self.sim)
         self.do_simulation(action, self.frame_skip)

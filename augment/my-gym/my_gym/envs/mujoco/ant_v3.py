@@ -21,8 +21,6 @@ class AntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         contact_force_range=(-1.0, 1.0),
         reset_noise_scale=0.1,
         exclude_current_positions_from_observation=True,
-        latent_dim=-1,
-        model_class=None
     ):
         self.id = 'Ant-v3'
         utils.EzPickle.__init__(**locals())
@@ -82,12 +80,6 @@ class AntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return done
 
     def step(self, action):
-
-        if self.model_class is not None:
-            state = None
-            if 'C' in self.model_class:
-                state = self._get_obs()
-            action = self.latent_to_native_mapping(s=state, z=action)
 
         xy_position_before = self.get_body_com("torso")[:2].copy()
         self.do_simulation(action, self.frame_skip)
