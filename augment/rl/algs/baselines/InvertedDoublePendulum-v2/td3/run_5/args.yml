@@ -1,0 +1,27 @@
+!!python/object:argparse.Namespace
+add_policy_kwargs: {}
+algo: td3
+aug_buffer: true
+aug_constraint: null
+aug_function: null
+aug_function_kwargs: {}
+aug_n: 1
+aug_ratio: 1
+aug_schedule: constant
+env: InvertedDoublePendulum-v2
+env_kwargs: {}
+eval_env_kwargs: {}
+eval_episodes: 10
+eval_freq: 1000
+experiment_name: ''
+hyperparams: null
+log_folder: results
+n_timesteps: 200000
+random_hyperparameters: false
+run_id: 5
+save_aug_replay_buffer: false
+save_best_model: true
+save_replay_buffer: false
+seed: 5
+trained_agent: ''
+verbose: 0
