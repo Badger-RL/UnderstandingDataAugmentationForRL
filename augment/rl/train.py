@@ -9,8 +9,8 @@ import yaml
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
+from augment.rl.algs.policies import NeuralExtractor
 from augment.rl.augmentation_functions import AUGMENTATION_FUNCTIONS
-from augment.rl.callbacks import SaveReplayDistribution
 from augment.rl.utils import ALGOS, StoreDict, get_save_dir, preprocess_action_noise, read_hyperparameters, SCHEDULES
 from stable_baselines3.common.utils import set_random_seed
 
@@ -32,6 +32,8 @@ if __name__ == '__main__':
     parser.add_argument("--eval-env-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional keyword argument to pass to the eval env constructor")
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
     parser.add_argument("--linear", type=bool, default=False)
+    parser.add_argument("--linear-neural", type=bool, default=False)
+
 
     # augmentation
     parser.add_argument("--aug-function", type=str, default=None)
@@ -140,12 +142,20 @@ if __name__ == '__main__':
     ####################################################################################################################
     # More preprocessing that depends on the env object
 
+    assert not(args.linear and args.linear_neural)
     if args.linear:
         hyperparams['policy_kwargs'] = {'net_arch':[]}
+
     preprocess_action_noise(hyperparams=hyperparams, env=env)
+    # hyperparams['policy_kwargs'].update({'features_extractor_class': NeuralExtractor})
 
     algo_class = ALGOS[algo]
     model = algo_class(env=env, **hyperparams)
+
+    # if args.linear_neural:
+    #     model.actor
+        # hyperparams['policy_kwargs'] = {'net_arch':[]}
+    # model = TD3.load("results/PredatorPreyEasy-v0/td3//run_201/best_model.zip", env)
 
     # save hyperparams and args
     with open(os.path.join(save_dir, "config.yml"), "w") as f:

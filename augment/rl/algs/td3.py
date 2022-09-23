@@ -15,6 +15,7 @@ from stable_baselines3.td3.policies import CnnPolicy, MlpPolicy, MultiInputPolic
 
 from augment.rl.algs.buffers import ReplayBuffer
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
+from augment.rl.algs.policies import TD3Policy, MlpPolicy
 from augment.rl.algs.rbf_policy import RBFExtractor
 from augment.rl.augmentation_functions import AugmentationFunction
 

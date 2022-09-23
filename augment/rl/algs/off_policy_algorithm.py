@@ -145,7 +145,8 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         self.aug_constraint = aug_constraint
 
         self.use_aug = self.aug_function is not None
-        self._setup_augmented_replay_buffer()
+        if self.use_aug:
+            self._setup_augmented_replay_buffer()
 
     def _setup_augmented_replay_buffer(self):
         self.aug_replay_buffer = ReplayBuffer(

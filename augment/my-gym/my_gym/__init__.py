@@ -152,8 +152,17 @@ register(
 register(
     id="PredatorPrey-v0",
     entry_point="my_gym.envs:PredatorPreyEnv",
-    max_episode_steps=200,
+    max_episode_steps=100,
 )
+# register(
+#     id="PredatorPreySimple-v0",
+#     entry_point="my_gym.envs:PredatorPreySimpleEnv",
+#     max_episode_steps=50,
+#     kwargs={
+#         'delta': 0.2
+#     },
+# )
+
 register(
     id="PredatorPreyEasy-v0",
     entry_point="my_gym.envs:PredatorPreyEnv",
