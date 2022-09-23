@@ -80,9 +80,6 @@ if __name__ == '__main__':
             closest_match = "'no close match found...'"
         raise ValueError(f"{env_id} not found in gym registry, you maybe meant {closest_match}?")
 
-    if args.trained_agent != "":
-        assert args.trained_agent.endswith(".zip") and os.path.isfile(args.trained_agent), "The trained_agent must be a valid path to a .zip file"
-
     ####################################################################################################################
     # Preprocess args
 
@@ -171,7 +168,11 @@ if __name__ == '__main__':
     print(hyperparams['batch_size'], hyperparams['train_freq'])
 
     algo_class = ALGOS[algo]
-    model = algo_class(env=env, **hyperparams)
+    if args.trained_agent != "":
+        assert args.trained_agent.endswith(".zip") and os.path.isfile(args.trained_agent), "The trained_agent must be a valid path to a .zip file"
+        model = algo_class.load(args.trained_agent, env=env)
+    else:
+        model = algo_class(env=env, **hyperparams)
 
     # if args.linear_neural:
     #     model.actor
