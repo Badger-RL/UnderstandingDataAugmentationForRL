@@ -10,14 +10,15 @@ class AugmentationFunction:
 
     def __init__(self, env=None, rbf_n=None, **kwargs):
         self.rbf_n = rbf_n
-        self.obs_dim = env.original_obs_dim
-        if self.rbf_n:
-            load_dir = f'{ENVS_DIR}/rbf_basis/obs_dim_{self.obs_dim}/n_{rbf_n}'
-
-            self.P = np.load(f'{load_dir}/P.npy')
-            self.phi = np.load(f'{load_dir}/phi.npy')
-            self.nu = np.load(f'{load_dir}/nu.npy')
-            self.Pinv = np.linalg.pinv(self.P)
+        self.env = env
+        # if self.rbf_n:
+        #     self.obs_dim = env.original_obs_dim
+        #     load_dir = f'{ENVS_DIR}/rbf_basis/obs_dim_{self.obs_dim}/n_{rbf_n}'
+        # 
+        #     self.P = np.load(f'{load_dir}/P.npy')
+        #     self.phi = np.load(f'{load_dir}/phi.npy')
+        #     self.nu = np.load(f'{load_dir}/nu.npy')
+        #     self.Pinv = np.linalg.pinv(self.P)
 
     def rbf(self, obs):
         x = obs.T
