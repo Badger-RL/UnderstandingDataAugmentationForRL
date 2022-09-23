@@ -1,5 +1,6 @@
 import argparse
 import difflib
+import inspect
 import os.path
 
 import gym, my_gym
@@ -110,6 +111,7 @@ if __name__ == '__main__':
     # set train_freq
     if "train_freq" in hyperparams and isinstance(hyperparams["train_freq"], list):
         hyperparams["train_freq"] = tuple(hyperparams["train_freq"])
+        assert args.data_factor == 1, "data_factor not supported for episodic train_freq"
     try:
         hyperparams['buffer_size'] = int(hyperparams['buffer_size'])
     except:
@@ -150,8 +152,22 @@ if __name__ == '__main__':
     preprocess_action_noise(hyperparams=hyperparams, env=env)
     # hyperparams['policy_kwargs'].update({'features_extractor_class': NeuralExtractor})
 
-    hyperparams['batch_size'] *= args.data_factor
-    hyperparams['train_freq'] *= args.data_factor
+    defaults = inspect.signature(ALGOS[algo]).parameters.items()
+    defaults = {
+        k: v.default
+        for k, v in defaults
+        if v.default is not inspect.Parameter.empty
+    }
+
+    try:
+        hyperparams['batch_size'] *= args.data_factor
+    except:
+        hyperparams['batch_size'] = defaults['batch_size'] * args.data_factor
+
+    try:
+        hyperparams['train_freq'] *= args.data_factor
+    except:
+        hyperparams['train_freq'] = defaults['train_freq'] * args.data_factor
     print(hyperparams['batch_size'], hyperparams['train_freq'])
 
     algo_class = ALGOS[algo]
