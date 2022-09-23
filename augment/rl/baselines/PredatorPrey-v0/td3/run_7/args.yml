@@ -1,0 +1,27 @@
+!!python/object:argparse.Namespace
+add_policy_kwargs: {}
+algo: td3
+aug_buffer: true
+aug_constraint: null
+aug_function: null
+aug_function_kwargs: {}
+aug_n: 1
+aug_ratio: 1
+aug_schedule: constant
+env: PredatorPrey-v0
+env_kwargs: {}
+eval_env_kwargs: {}
+eval_episodes: 100
+eval_freq: 10000
+experiment_name: no_aug
+hyperparams: null
+log_folder: results
+n_timesteps: 1000000
+random_hyperparameters: false
+run_id: 7
+save_aug_replay_buffer: false
+save_best_model: true
+save_replay_buffer: false
+seed: 7
+trained_agent: ''
+verbose: 0
