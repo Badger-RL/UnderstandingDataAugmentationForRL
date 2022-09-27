@@ -24,7 +24,7 @@ class PredatorPreyTranslate(AugmentationFunction):
                 p=None,
                 ):
 
-        v = np.random.uniform(low=-0.1, high=+0.1, size=(augmentation_n,2))
+        v = np.random.uniform(low=-1, high=+1, size=(augmentation_n,2))
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
