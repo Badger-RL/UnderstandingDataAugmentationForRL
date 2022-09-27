@@ -165,6 +165,11 @@ if __name__ == '__main__':
         hyperparams['train_freq'] *= args.data_factor
     except:
         hyperparams['train_freq'] = defaults['train_freq'] * args.data_factor
+
+    try:
+        hyperparams['buffer_size'] *= args.data_factor
+    except:
+        hyperparams['buffer_size'] = defaults['buffer_size'] * args.data_factor
     print(hyperparams['batch_size'], hyperparams['train_freq'])
 
     algo_class = ALGOS[algo]
