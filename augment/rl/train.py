@@ -34,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
     parser.add_argument("--linear", type=bool, default=False)
     parser.add_argument("--linear-neural", type=bool, default=False)
-    parser.add_argument("--data-factor", type=int, default=1)
+    parser.add_argument("--data-factor", type=float, default=1)
 
 
     # augmentation
@@ -157,19 +157,19 @@ if __name__ == '__main__':
     }
 
     try:
-        hyperparams['batch_size'] *= args.data_factor
+        hyperparams['batch_size'] = int(hyperparams['batch_size'] * args.data_factor)
     except:
-        hyperparams['batch_size'] = defaults['batch_size'] * args.data_factor
+        hyperparams['batch_size'] = int(defaults['batch_size'] * args.data_factor)
 
     try:
-        hyperparams['train_freq'] *= args.data_factor
+        hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
     except:
-        hyperparams['train_freq'] = defaults['train_freq'] * args.data_factor
+        hyperparams['train_freq'] = int(defaults['train_freq'] * args.data_factor)
 
     try:
-        hyperparams['buffer_size'] *= args.data_factor
+        hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * args.data_factor)
     except:
-        hyperparams['buffer_size'] = defaults['buffer_size'] * args.data_factor
+        hyperparams['buffer_size'] = int(defaults['buffer_size'] * args.data_factor)
     print(hyperparams['batch_size'], hyperparams['train_freq'])
 
     algo_class = ALGOS[algo]
