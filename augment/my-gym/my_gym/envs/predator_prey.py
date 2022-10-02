@@ -7,7 +7,7 @@ from augment.rl.algs.td3 import TD3
 from my_gym.envs.my_env import MyEnv
 
 class PredatorPreyEnv(MyEnv):
-    def __init__(self, delta=0.05, sparse=1, rbf_n=None, neural=False, r=None):
+    def __init__(self, delta=0.05, sparse=1, rbf_n=None, neural=False, r=1, init_dist='square'):
 
         self.n = 2
         # self.action_space = gym.spaces.Box(-1, +1, shape=(n,))
@@ -20,6 +20,7 @@ class PredatorPreyEnv(MyEnv):
 
         self.sparse = sparse
         self.r = r
+        self.init_dist = init_dist
         super().__init__(rbf_n=rbf_n, neural=neural)
 
 
@@ -33,53 +34,36 @@ class PredatorPreyEnv(MyEnv):
         self.x += u*self.delta
         self.x = np.clip(self.x, -1, +1) # clipping makes dynamics nonlinear
 
-        done = False
+        dist = np.linalg.norm(self.x - self.goal)
+        done = dist < 0.05
 
         if self.sparse:
-            reward = -0.1
-            if np.linalg.norm(self.x - self.goal) < 0.05:
-                reward = +1.0
-                done = True
+            reward = +1.0 if done else -0.1
         else:
-            reward = -np.linalg.norm(self.x - self.goal)
-            if np.linalg.norm(self.x - self.goal) < 0.05:
-                reward = 0
-                done = True
-
-        # if self.step_num == self.horizon:
-        #     done = True
+            reward = -dist
 
         info = {}
         self.obs = np.concatenate((self.x, self.goal))
-        # dist = self.x-self.goal
-        # theta = np.arctan2(dist[1], dist[0])
-        # self.obs = np.concatenate(([theta],))
         return self._get_obs(), reward, done, info
 
     def reset(self):
         self.step_num = 0
-        # self.x = np.zeros(self.n)
-        self.x = np.random.uniform(-1, 1, size=(self.n,))
-        # self.x = np.zeros(2)
 
 
 
-        if self.r:
-            # theta = np.random.uniform(-np.pi, +np.pi)
-            # r = np.random.uniform(*self.r)
-            # self.goal = np.array([r * np.cos(theta), r * np.sin(theta)])
+        if self.init_dist == 'square':
             self.goal = np.random.uniform(low=-self.r, high=self.r, size=(self.n,))
-        else:
-            self.goal = np.random.uniform(-1, 1, size=(self.n,))
-        # self.goal = np.ones(2)*0.5
+            self.x = np.random.uniform(-1, 1, size=(self.n,))
+        elif self.init_dist == 'disk':
+            theta = np.random.uniform(-np.pi, +np.pi)
+            r = np.random.uniform(self.r)
+            self.goal = np.array([r * np.cos(theta), r * np.sin(theta)])
+
+            theta = np.random.uniform(-np.pi, +np.pi)
+            r = np.random.uniform(self.r)
+            self.x = np.array([r * np.cos(theta), r * np.sin(theta)])
 
         self.obs = np.concatenate((self.x, self.goal))
-
-        # dist = self.x-self.goal
-        # theta = np.arctan2(dist[1], dist[0])
-        #
-        # self.obs = np.concatenate(([theta],))
-
         return self._get_obs()
 
     def set_state(self, pos, goal):
