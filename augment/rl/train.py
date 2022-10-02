@@ -23,7 +23,7 @@ if __name__ == '__main__':
     parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
     parser.add_argument("--env", type=str, default="PredatorPrey-v0", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
-    parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e5), type=int)
+    parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e6), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
     parser.add_argument("--eval-episodes", help="Number of episodes to use for evaluation", default=10, type=int)
     parser.add_argument("-i", "--trained-agent", help="Path to a pretrained agent to continue training", default="", type=str)
