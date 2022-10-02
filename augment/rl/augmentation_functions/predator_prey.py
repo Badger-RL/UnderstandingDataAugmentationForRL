@@ -103,6 +103,52 @@ class PredatorPreyRotate(AugmentationFunction):
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
+class PredatorPreyTranslateDense(AugmentationFunction):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.delta = 0.01
+
+    def _augment(self,
+                augmentation_n: int,
+                obs: np.ndarray,
+                next_obs: np.ndarray,
+                action: np.ndarray,
+                reward: np.ndarray,
+                done: np.ndarray,
+                infos: List[Dict[str, Any]],
+                p=None,
+                ):
+
+        v = np.random.uniform(low=-1, high=+1, size=(augmentation_n,2))
+        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
+            augmentation_n, obs, next_obs, action, reward, done, infos)
+
+        # delta_v = aug_next_obs[:, :2] - aug_obs[:, :2]
+        # delta_x = aug_next_obs[:,0] - aug_obs[:,0]
+        aug_obs[:, :2] = v
+        # aug_next_obs[:, :2] = np.clip(v + delta_v, -1, +1)
+        dx = aug_action[:,0]*np.cos(aug_action[:, 1])
+        dy = aug_action[:,0]*np.sin(aug_action[:, 1])
+        aug_next_obs[:, 0] = v[:,0] + dx*self.delta
+        aug_next_obs[:, 1] = v[:,1] + dy*self.delta
+        aug_next_obs[:, :2] = np.clip(aug_next_obs[:, :2], -1, +1)
+
+        # print(delta_v)
+        # if delta_v[0,1] > -1:
+        #     stop = 0
+
+        dist = np.linalg.norm(aug_next_obs[:, :2] - aug_next_obs[:, 2:], axis=-1)
+        at_goal = (dist < 0.05)
+        aug_done = at_goal | done
+
+        aug_reward = -dist
+
+        # aug_obs = np.clip(aug_obs, -1, +1)
+
+        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+
+
 if __name__ == "__main__":
 
     env = gym.make('PredatorPrey-v0', rbf_n=16)
