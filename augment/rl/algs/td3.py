@@ -83,7 +83,7 @@ class TD3(OffPolicyAlgorithmAugment):
         batch_size: int = 128,
         tau: float = 0.005,
         gamma: float = 0.99,
-        train_freq: Union[int, Tuple[int, str]] = 128,
+        train_freq: Union[int, Tuple[int, str]] = 1,
         gradient_steps: int = -1,
         action_noise: Optional[ActionNoise] = None,
         replay_buffer_class: Optional[ReplayBuffer] = None,
