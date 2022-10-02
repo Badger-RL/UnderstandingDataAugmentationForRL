@@ -156,28 +156,11 @@ if __name__ == '__main__':
     preprocess_action_noise(hyperparams=hyperparams, env=env)
     # hyperparams['policy_kwargs'].update({'features_extractor_class': NeuralExtractor})
 
-    defaults = inspect.signature(ALGOS[algo]).parameters.items()
-    defaults = {
-        k: v.default
-        for k, v in defaults
-        if v.default is not inspect.Parameter.empty
-    }
-
-    try:
-        hyperparams['batch_size'] = int(hyperparams['batch_size'] * args.data_factor)
-    except:
-        hyperparams['batch_size'] = int(defaults['batch_size'] * args.data_factor)
-
-    try:
-        hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
-    except:
-        hyperparams['train_freq'] = int(defaults['train_freq'] * args.data_factor)
-
-    try:
-        hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * args.data_factor)
-    except:
-        hyperparams['buffer_size'] = int(defaults['buffer_size'] * args.data_factor)
-    print(hyperparams['batch_size'], hyperparams['train_freq'])
+    # if args.data_factor
+    hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
+    hyperparams['batch_size'] = int(hyperparams['batch_size'] * args.data_factor)
+    hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * args.data_factor)
+    print(hyperparams['train_freq'], hyperparams['batch_size'], hyperparams['buffer_size'])
 
     algo_class = ALGOS[algo]
     if args.trained_agent != "":

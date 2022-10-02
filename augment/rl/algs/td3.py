@@ -13,7 +13,7 @@ from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedul
 from stable_baselines3.common.utils import polyak_update
 from stable_baselines3.td3.policies import CnnPolicy, MlpPolicy, MultiInputPolicy, TD3Policy
 
-from augment.rl.algs.buffers import ReplayBuffer
+from augment.rl.algs.buffers import ReplayBuffer, NStepReplayBuffer
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
 # from augment.rl.algs.policies import TD3Policy, MlpPolicy
 from augment.rl.algs.rbf_policy import RBFExtractor
@@ -79,11 +79,11 @@ class TD3(OffPolicyAlgorithmAugment):
         env: Union[GymEnv, str],
         learning_rate: Union[float, Schedule] = 1e-3,
         buffer_size: int = 1_000_000,  # 1e6
-        learning_starts: int = 100,
-        batch_size: int = 100,
+        learning_starts: int = 10000,
+        batch_size: int = 128,
         tau: float = 0.005,
         gamma: float = 0.99,
-        train_freq: Union[int, Tuple[int, str]] = (1, "episode"),
+        train_freq: Union[int, Tuple[int, str]] = 128,
         gradient_steps: int = -1,
         action_noise: Optional[ActionNoise] = None,
         replay_buffer_class: Optional[ReplayBuffer] = None,
@@ -209,6 +209,7 @@ class TD3(OffPolicyAlgorithmAugment):
                 polyak_update(self.critic.parameters(), self.critic_target.parameters(), self.tau)
                 polyak_update(self.actor.parameters(), self.actor_target.parameters(), self.tau)
 
+        # print(th.norm(self.actor.mu[0].weight))
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
         if len(actor_losses) > 0:
             self.logger.record("train/actor_loss", np.mean(actor_losses))
