@@ -86,8 +86,15 @@ if __name__ == '__main__':
     save_dir = get_save_dir(args.log_folder, env_id, algo, args.run_id, args.experiment_name)
     best_model_save_dir = save_dir if args.save_best_model else None
 
-    # update hyperparams
-    hyperparams = read_hyperparameters(env_id, algo)
+    # Get default parameters
+    hyperparams = inspect.signature(ALGOS[algo]).parameters.items()
+    hyperparams = {
+        k: v.default
+        for k, v in hyperparams
+        if v.default is not inspect.Parameter.empty
+    }
+    # Update hyperparams
+    hyperparams.update(read_hyperparameters(env_id, algo))
     if args.hyperparams is not None:
         hyperparams.update(args.hyperparams)
 
