@@ -9,9 +9,11 @@ import gym, my_gym
 
 class PredatorPreyTranslate(AugmentationFunction):
 
-    def __init__(self, delta=0.05, **kwargs):
+    def __init__(self, delta=0.05, d=1, **kwargs):
         super().__init__(**kwargs)
         self.delta = delta
+        self.d = d
+        print('d', d)
 
     def _augment(self,
                 augmentation_n: int,
@@ -24,7 +26,7 @@ class PredatorPreyTranslate(AugmentationFunction):
                 p=None,
                 ):
 
-        v = np.random.uniform(low=-1, high=+1, size=(augmentation_n,2))
+        v = np.random.uniform(low=-self.d, high=+self.d, size=(augmentation_n,2))
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
@@ -105,9 +107,11 @@ class PredatorPreyRotate(AugmentationFunction):
 
 class PredatorPreyTranslateDense(AugmentationFunction):
 
-    def __init__(self, **kwargs):
+    def __init__(self, d=1, **kwargs):
         super().__init__(**kwargs)
         self.delta = 0.01
+        self.d = d
+        print('d', d)
 
     def _augment(self,
                 augmentation_n: int,
@@ -120,7 +124,7 @@ class PredatorPreyTranslateDense(AugmentationFunction):
                 p=None,
                 ):
 
-        v = np.random.uniform(low=-1, high=+1, size=(augmentation_n,2))
+        v = np.random.uniform(low=-self.d, high=+self.d, size=(augmentation_n,2))
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
             augmentation_n, obs, next_obs, action, reward, done, infos)
 
@@ -139,8 +143,8 @@ class PredatorPreyTranslateDense(AugmentationFunction):
         #     stop = 0
 
         dist = np.linalg.norm(aug_next_obs[:, :2] - aug_next_obs[:, 2:], axis=-1)
-        at_goal = (dist < 0.05)
-        aug_done = at_goal | done
+        # at_goal = (dist < 0.05)
+        # aug_done = at_goal | done
 
         aug_reward = -dist
 
