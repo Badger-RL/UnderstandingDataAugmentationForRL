@@ -9,7 +9,7 @@ import gym, my_gym
 
 class PredatorPreyTranslate(AugmentationFunction):
 
-    def __init__(self, delta=0.05, d=1, **kwargs):
+    def __init__(self, delta=0.05, d=1.0, **kwargs):
         super().__init__(**kwargs)
         self.delta = delta
         self.d = d
@@ -107,7 +107,7 @@ class PredatorPreyRotate(AugmentationFunction):
 
 class PredatorPreyTranslateDense(AugmentationFunction):
 
-    def __init__(self, d=1, **kwargs):
+    def __init__(self, d=1.0, **kwargs):
         super().__init__(**kwargs)
         self.delta = 0.01
         self.d = d
@@ -152,6 +152,13 @@ class PredatorPreyTranslateDense(AugmentationFunction):
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
+class PredatorPreyTranslate02(PredatorPreyTranslate):
+    def __init__(self, **kwargs):
+        super().__init__(d=0.2, **kwargs)
+
+class PredatorPreyTranslateDense02(PredatorPreyTranslateDense):
+    def __init__(self, **kwargs):
+        super().__init__(d=0.2, **kwargs)
 
 if __name__ == "__main__":
 
