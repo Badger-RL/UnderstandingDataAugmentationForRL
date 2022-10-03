@@ -141,6 +141,9 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         self.aug_function = aug_function
         self.aug_ratio = aug_ratio
         self.aug_n = aug_n
+        self.aug_n_floor = int(np.floor(aug_n))
+        self.aug_prob = aug_n - self.aug_n_floor
+
         self.separate_aug_buffer = aug_buffer
         self.aug_constraint = aug_constraint
 
@@ -150,7 +153,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
 
     def _setup_augmented_replay_buffer(self):
         self.aug_replay_buffer = ReplayBuffer(
-            self.buffer_size * self.aug_n,
+            int(self.buffer_size * self.aug_n),
             self.observation_space,
             self.action_space,
             device=self.device,
@@ -167,7 +170,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             dist /= dist.sum()
 
         aug_transition = self.aug_function.augment(
-            self.aug_n,
+            self.aug_n_floor + int(np.random.random() < self.aug_prob),
             obs,
             next_obs,
             action,

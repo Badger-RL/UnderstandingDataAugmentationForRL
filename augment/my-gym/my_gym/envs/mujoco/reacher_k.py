@@ -17,7 +17,6 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
         utils.EzPickle.__init__(self)
         fullpath = os.path.join(os.path.dirname(__file__), "assets", f"reacher_{num_links}dof.xml")
         MujocoEnv.__init__(self, model_path=fullpath, frame_skip=2)
-        RBFEnv.__init__(self, rbf_n=rbf_n)
 
     def step(self, a):
         vec = self.get_body_com("fingertip") - self.get_body_com("target")
