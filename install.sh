@@ -13,6 +13,8 @@ source $ENVDIR/bin/activate
 source ./mujoco_setup.sh
 
 git clone https://github.com/DLR-RM/stable-baselines3.git
+git clone https://github.com/Farama-Foundation/Gymnasium-Robotics.git
 pip install -e .
 pip install -e stable-baselines3
 pip install -e augment/my-gym
+pip install -e Gymnasium-Robotics
