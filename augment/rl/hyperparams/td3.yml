@@ -270,7 +270,7 @@ PredatorPreyEasy-v0:
 PredatorPreySimple-v0:
   <<: *predator_prey
 
-FetchPickandPlace-v1:
+FetchPickAndPlace-v1:
   n_timesteps: !!float 1e6
   policy: 'MultiInputPolicy'
   gamma: 0.99
