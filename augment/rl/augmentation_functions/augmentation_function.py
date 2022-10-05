@@ -37,10 +37,9 @@ class AugmentationFunction:
                  infos: List[Dict[str, Any]],
                  **kwargs,):
 
-        v = self._augment(aug_n, *self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos))
+        v = self._augment(*self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos))
         return v
     def _augment(self,
-                 aug_n: int,
                  obs: np.ndarray,
                  next_obs: np.ndarray,
                  action: np.ndarray,

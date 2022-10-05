@@ -37,7 +37,6 @@ class Walker2dReflect(AugmentationFunction):
 
 
     def _augment(self,
-                augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
                 action: np.ndarray,
@@ -47,9 +46,6 @@ class Walker2dReflect(AugmentationFunction):
                 delta = None,
                 p=None
                 ):
-
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
-            augmentation_n, obs, next_obs, action, reward, done, infos)
 
         rpos = obs[:, 2:5]
         lpos = obs[:, 5:8]

@@ -16,7 +16,6 @@ class Rotate(AugmentationFunction):
 
 
     def _augment(self,
-                augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
                 action: np.ndarray,
@@ -30,10 +29,6 @@ class Rotate(AugmentationFunction):
         if delta is None:
             delta = np.random.uniform(low=-self.sigma, high=+self.sigma)
 
-
-
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
-            augmentation_n, obs, next_obs, action, reward, done, infos)
 
         M = np.array([[np.cos(delta), -np.sin(delta)],
                       [np.sin(delta), np.cos(delta)]])

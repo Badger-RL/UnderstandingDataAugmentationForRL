@@ -19,7 +19,6 @@ class InvertedPendulumTranslate(AugmentationFunction):
             self.noise_function = np.random.uniform
 
     def _augment(self,
-                augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
                 action: np.ndarray,
@@ -32,16 +31,13 @@ class InvertedPendulumTranslate(AugmentationFunction):
         # state_dim = obs.shape[-1]
         # delta = self.noise_function(low=-self.sigma, high=+self.sigma, size=(augmentation_n,))
         if done[0]: self.delta = np.random.uniform(-1, 1)
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
-            augmentation_n, obs, next_obs, action, reward, done, infos)
+        obs[:,0] += self.delta
+        next_obs[:,0] += self.delta
 
-        aug_obs[:,0] += self.delta
-        aug_next_obs[:,0] += self.delta
+        obs[:,0].clip(-1, +1, obs[:,0])
+        next_obs[:,0].clip(-1, +1, next_obs[:,0])
 
-        aug_obs[:,0].clip(-1, +1, aug_obs[:,0])
-        aug_next_obs[:,0].clip(-1, +1, aug_next_obs[:,0])
-
-        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+        return obs, next_obs, action, reward, done, infos
 
 class InvertedPendulumTranslateUniform(AugmentationFunction):
 
@@ -51,7 +47,6 @@ class InvertedPendulumTranslateUniform(AugmentationFunction):
         self.clip = clip
 
     def _augment(self,
-                augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
                 action: np.ndarray,
@@ -61,26 +56,24 @@ class InvertedPendulumTranslateUniform(AugmentationFunction):
                 p=None,
                 ):
 
+        n = obs.shape[0]
         if p is not None:
-            bin = torch.from_numpy(np.random.multinomial(augmentation_n, pvals=p[0]))
+            bin = torch.from_numpy(np.random.multinomial(n, pvals=p[0]))
             bin = np.argwhere(bin)[0]
             bin_width = 2/len(p[0])
             delta = -1 + bin*bin_width
-            delta +=  torch.from_numpy(np.random.uniform(low=0, high=bin_width, size=(augmentation_n,)))
+            delta +=  torch.from_numpy(np.random.uniform(low=0, high=bin_width, size=(n,)))
             # print(p)
         else:
-            delta = np.random.uniform(low=-0.95, high=+0.95, size=(augmentation_n,))
+            delta = np.random.uniform(low=-0.95, high=+0.95, size=(n,))
 
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
-            augmentation_n, obs, next_obs, action, reward, done, infos)
-
-        delta_x = aug_next_obs[:,0] - aug_obs[:,0]
+        delta_x = next_obs[:,0] - obs[:,0]
         # delta_x = torch.from_numpy(delta_x)
-        aug_obs[:,0] = delta
+        obs[:,0] = delta
         # print(delta_x, delta)
-        aug_next_obs[:,0] = np.clip(delta_x + delta, -1, 1)
+        next_obs[:,0] = np.clip(delta_x + delta, -1, 1)
 
-        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+        return obs, next_obs, action, reward, done, infos
 
 class InvertedPendulumReflect(AugmentationFunction):
     def __init__(self, **kwargs):
@@ -88,7 +81,6 @@ class InvertedPendulumReflect(AugmentationFunction):
 
     def _augment(
             self,
-            aug_n: int,
             obs: np.ndarray,
             next_obs: np.ndarray,
             action: np.ndarray,
@@ -98,17 +90,14 @@ class InvertedPendulumReflect(AugmentationFunction):
             **kwargs,
     ):
 
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
-            aug_n, obs, next_obs, action, reward, done, infos)
+        delta_x = next_obs[:, 0] - obs[:,0]
 
-        delta_x = aug_next_obs[:, 0] - aug_obs[:,0]
+        obs[:,0:] *= -1
+        next_obs[:,0:] *= -1
+        # next_obs[:,0] -= 2*delta_x
+        action = ~action
 
-        aug_obs[:,0:] *= -1
-        aug_next_obs[:,0:] *= -1
-        # aug_next_obs[:,0] -= 2*delta_x
-        aug_action = ~aug_action
-
-        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+        return obs, next_obs, action, reward, done, infos
 
 
 
@@ -172,35 +161,3 @@ if __name__ == "__main__":
         assert np.allclose(aug_obs, obs2)
         assert np.allclose(aug_next_obs, next_obs2)
         assert np.allclose(aug_reward, reward2)
-
-#
-# if __name__ == "__main__":
-#     env = gym.make('InvertedPendulum-v2')
-#     env = gym.make('CartPole-v1')
-#
-#     f = InvertedPendulumReflect()
-#
-#     for i in range(1000):
-#         env.reset()
-#         # set initial qpos, qvel
-#         # qpos = np.copy(env.sim.data.qpos)
-#         # qvel = np.copy(env.sim.data.qvel)
-#
-#         qpos = np.array([0, 0])
-#         qvel = np.zeros(2)
-#         env.set_state(qpos, qvel)
-#         obs = env.get_obs()
-#
-#         # get transition
-#         action = 0
-#         next_obs, reward, done, info = env.step(action)
-#         obs = obs.reshape(1, -1)
-#         next_obs = next_obs.reshape(1, -1)
-#         reward = np.array([reward])
-#         # action = action.reshape(1, -1)
-#         done = np.array([done]).reshape(1, -1)
-#
-#         print(obs)
-#         print(next_obs)
-#         print()
-#         continue

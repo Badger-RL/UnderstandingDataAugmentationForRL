@@ -16,7 +16,6 @@ class SwimmerReflect(AugmentationFunction):
 
 
     def _augment(self,
-                augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
                 action: np.ndarray,
@@ -28,22 +27,19 @@ class SwimmerReflect(AugmentationFunction):
                 ):
 
         k = (obs.shape[-1]-2)//2
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
-            augmentation_n, obs, next_obs, action, reward, done, infos)
-
-        aug_obs[:,:k] *= -1
-        aug_obs[:,-k:] *= -1
-        aug_obs[:,k+1] *= -1
+        obs[:,:k] *= -1
+        obs[:,-k:] *= -1
+        obs[:,k+1] *= -1
 
 
-        aug_next_obs[:,:k] *= -1
-        aug_next_obs[:,-k:] *= -1
-        aug_next_obs[:,k+1] *= -1
+        next_obs[:,:k] *= -1
+        next_obs[:,-k:] *= -1
+        next_obs[:,k+1] *= -1
 
 
-        aug_action *= -1
+        action *= -1
 
-        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+        return obs, next_obs, action, reward, done, infos
 
 
 import gym, my_gym

@@ -12,7 +12,6 @@ class LQRTranslate(AugmentationFunction):
         super().__init__()
 
     def _augment(self,
-                augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
                 action: np.ndarray,
@@ -22,15 +21,13 @@ class LQRTranslate(AugmentationFunction):
                 p=None,
                 ):
 
-        delta = torch.from_numpy(np.random.uniform(low=-1, high=+1, size=(augmentation_n, 2)))
+        n = obs.shape[0]
+        delta = torch.from_numpy(np.random.uniform(low=-1, high=+1, size=(n, 2)))
 
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
-            augmentation_n, obs, next_obs, action, reward, done, infos)
+        obs[:,:2] = delta
+        # next_obs[:,0] = delta
 
-        aug_obs[:,:2] = delta
-        # aug_next_obs[:,0] = delta
-
-        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+        return obs, next_obs, action, reward, done, infos
 
 class LQRRotate(AugmentationFunction):
 
@@ -38,7 +35,6 @@ class LQRRotate(AugmentationFunction):
         super().__init__()
 
     def _augment(self,
-                augmentation_n: int,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
                 action: np.ndarray,
@@ -47,37 +43,34 @@ class LQRRotate(AugmentationFunction):
                 infos: List[Dict[str, Any]],
                 p=None,
                 ):
+        n = obs.shape[0]
+        delta = torch.from_numpy(np.random.uniform(low=-np.pi, high=+np.pi, size=(n,)))
 
-        delta = torch.from_numpy(np.random.uniform(low=-np.pi, high=+np.pi, size=(augmentation_n,)))
+        # print('before:', obs, next_obs)
+    # TODO NEED DEEPCOPY
+        x = torch.from_numpy(obs[:,0])
+        y = torch.from_numpy(obs[:,1])
+        obs[:,0] = x*torch.cos(delta) - y*torch.sin(delta)
+        obs[:,1] = x*torch.sin(delta) + y*torch.cos(delta)
 
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._deepcopy_transition(
-            augmentation_n, obs, next_obs, action, reward, done, infos)
+        x = torch.from_numpy(obs[:,2])
+        y = torch.from_numpy(obs[:,3])
+        obs[:,2] = x*torch.cos(delta) - y*torch.sin(delta)
+        obs[:,3] = x*torch.sin(delta) + y*torch.cos(delta)
 
-        # print('before:', aug_obs, aug_next_obs)
+        x = torch.from_numpy(next_obs[:,0])
+        y = torch.from_numpy(next_obs[:,1])
+        next_obs[:,0] = x*torch.cos(delta) - y*torch.sin(delta)
+        next_obs[:,1] = x*torch.sin(delta) + y*torch.cos(delta)
 
-        x = torch.from_numpy(aug_obs[:,0])
-        y = torch.from_numpy(aug_obs[:,1])
-        aug_obs[:,0] = x*torch.cos(delta) - y*torch.sin(delta)
-        aug_obs[:,1] = x*torch.sin(delta) + y*torch.cos(delta)
-
-        x = torch.from_numpy(aug_obs[:,2])
-        y = torch.from_numpy(aug_obs[:,3])
-        aug_obs[:,2] = x*torch.cos(delta) - y*torch.sin(delta)
-        aug_obs[:,3] = x*torch.sin(delta) + y*torch.cos(delta)
-
-        x = torch.from_numpy(aug_next_obs[:,0])
-        y = torch.from_numpy(aug_next_obs[:,1])
-        aug_next_obs[:,0] = x*torch.cos(delta) - y*torch.sin(delta)
-        aug_next_obs[:,1] = x*torch.sin(delta) + y*torch.cos(delta)
-
-        x = torch.from_numpy(aug_next_obs[:,2])
-        y = torch.from_numpy(aug_next_obs[:,3])
-        aug_next_obs[:,2] = x*torch.cos(delta) - y*torch.sin(delta)
-        aug_next_obs[:,3] = x*torch.sin(delta) + y*torch.cos(delta)
-        # aug_next_obs[:,0] = delta
+        x = torch.from_numpy(next_obs[:,2])
+        y = torch.from_numpy(next_obs[:,3])
+        next_obs[:,2] = x*torch.cos(delta) - y*torch.sin(delta)
+        next_obs[:,3] = x*torch.sin(delta) + y*torch.cos(delta)
+        # next_obs[:,0] = delta
 
 
-        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+        return obs, next_obs, action, reward, done, infos
 
 import gym, my_gym
 
