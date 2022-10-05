@@ -3,9 +3,6 @@ from typing import Dict, List, Any
 
 import numpy as np
 
-from my_gym import ENVS_DIR
-
-
 class AugmentationFunction:
 
     def __init__(self, env=None, **kwargs):
@@ -52,19 +49,4 @@ class AugmentationFunction:
                  infos: List[Dict[str, Any]],
                  **kwargs,):
         raise NotImplementedError("Augmentation function not implemented.")
-
-if __name__ == "__main__":
-
-    f = AugmentationFunction(rbf_n=16)
-
-    m = 1000
-    observations = np.random.uniform(-1, +1, size=(m, 4))
-    rbf_observations = []
-    for i in range(m):
-        rbf_observations.append(f.rbf(observations[i]))
-    rbf_observations = np.array(rbf_observations)
-
-    inv_rbf_observations = f.rbf_inverse(rbf_observations)
-
-    assert np.allclose(observations, inv_rbf_observations)
 
