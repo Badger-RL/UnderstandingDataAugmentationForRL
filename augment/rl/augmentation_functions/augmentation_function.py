@@ -8,31 +8,8 @@ from my_gym import ENVS_DIR
 
 class AugmentationFunction:
 
-    def __init__(self, env=None, rbf_n=None, **kwargs):
-        self.rbf_n = rbf_n
+    def __init__(self, env=None, **kwargs):
         self.env = env
-        # if self.rbf_n:
-        #     self.obs_dim = env.original_obs_dim
-        #     load_dir = f'{ENVS_DIR}/rbf_basis/obs_dim_{self.obs_dim}/n_{rbf_n}'
-        # 
-        #     self.P = np.load(f'{load_dir}/P.npy')
-        #     self.phi = np.load(f'{load_dir}/phi.npy')
-        #     self.nu = np.load(f'{load_dir}/nu.npy')
-        #     self.Pinv = np.linalg.pinv(self.P)
-
-    def rbf(self, obs):
-        x = obs.T
-        x = self.P.dot(x)
-        # x += self.phi
-        x = np.tanh(x)
-        return x.T
-
-    def rbf_inverse(self, rbf_obs):
-        x = rbf_obs
-        x = np.arctanh(x)
-        # x -= self.phi
-        x = self.Pinv.dot(x.T)
-        return x.T
 
     def _deepcopy_transition(
             self,
@@ -49,11 +26,11 @@ class AugmentationFunction:
         aug_action = deepcopy(action).repeat(augmentation_n, axis=0)
         aug_reward = deepcopy(reward).repeat(augmentation_n, axis=0)
         aug_done = deepcopy(done).repeat(augmentation_n, axis=0)
-        aug_infos = [deepcopy(infos) for _ in range(augmentation_n)]
+        aug_infos = [deepcopy([infos[i]]*augmentation_n) for i in range(len(infos))]
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
-    def _augment(self,
+    def augment(self,
                  aug_n: int,
                  obs: np.ndarray,
                  next_obs: np.ndarray,
@@ -63,30 +40,18 @@ class AugmentationFunction:
                  infos: List[Dict[str, Any]],
                  **kwargs,):
 
+        v = self._augment(aug_n, *self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos))
+        return v
+    def _augment(self,
+                 aug_n: int,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 **kwargs,):
         raise NotImplementedError("Augmentation function not implemented.")
-
-    def augment(self,
-                aug_n: int,
-                obs: np.ndarray,
-                next_obs: np.ndarray,
-                action: np.ndarray,
-                reward: np.ndarray,
-                done: np.ndarray,
-                infos: List[Dict[str, Any]],
-                **kwargs,
-                ):
-
-        if self.rbf_n:
-            obs = self.rbf_inverse(obs)
-            next_obs = self.rbf_inverse(next_obs)
-
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = self._augment(aug_n, obs, next_obs, action, reward, done, infos, **kwargs)
-
-        if self.rbf_n:
-            aug_obs = self.rbf(aug_obs)
-            aug_next_obs = self.rbf(aug_next_obs)
-
-        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
 if __name__ == "__main__":
 
