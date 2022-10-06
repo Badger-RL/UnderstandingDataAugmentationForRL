@@ -8,49 +8,70 @@ from stable_baselines3 import TD3
 from augment.rl.utils import ALGOS
 
 
-def simulate(env, model, num_episodes, seed=0, render=False):
+def simulate(env, model, num_episodes, seed=0, render=False, flatten=True, verbose=0):
     env.seed(seed)
     np.random.seed(seed)
 
-    returns = []
     observations = []
+    next_observations = []
     actions = []
+    rewards = []
+    returns = []
+    dones = []
+    infos = []
 
     for i in range(num_episodes):
+        ep_observations, ep_next_observations, ep_actions, ep_rewards, ep_dones, ep_infos,  = [], [], [], [], [], []
         obs = env.reset()
         done = False
 
-        step_count = 0
-        ret = 0
         while not done:
 
             if model:
                 action, _ = model.predict(obs, deterministic=True)
             else:
                 action = env.action_space.sample() # np.random.uniform(-1, +1, size=env.action_space.shape)
-            actions.append(action)
-            observations.append((obs))
 
-            obs, reward, done, _ = env.step(action)
+            ep_actions.append(action)
+            ep_observations.append(obs)
 
-            # print(obs)
+            obs, reward, done, info = env.step(action)
+
+            ep_next_observations.append(obs)
+            ep_rewards.append(reward)
+            ep_dones.append(done)
+            ep_infos.append(info)
+
             if render: env.render()
-            ret += reward
 
-            step_count += 1
-            # print(reward)
-        returns.append(ret)
+        returns.append(sum(ep_rewards))
 
-        print(f'episode {i}: return={ret}',)
+        if flatten:
+            observations.extend(ep_observations)
+            next_observations.extend(ep_next_observations)
+            actions.extend(ep_actions)
+            rewards.extend(ep_rewards)
+            dones.extend(ep_dones)
+            infos.extend(ep_infos)
+        else:
+            observations.append(ep_observations)
+            next_observations.append(ep_next_observations)
+            actions.append(ep_actions)
+            rewards.append(ep_rewards)
+            dones.append(ep_dones)
+            infos.append(ep_infos)
+        if verbose:
+            print(f'episode {i}: return={returns[-1]}',)
 
-    return np.array(actions), np.array(observations)
+    # return np.array(observations), np.array(actions), np.array(rewards), np.array(infos)
+    return np.array(observations), np.array(next_observations), np.array(actions), np.array(rewards), np.array(dones), np.array(infos)
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--algo", help="RL Algorithm", default='dqn', type=str)
-    parser.add_argument("--env-id", type=str, default="LunarLander-v2", help="environment ID")
+    parser.add_argument("--algo", help="RL Algorithm", default='td3', type=str)
+    parser.add_argument("--env-id", type=str, default="PredatorPrey-v0", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     args = parser.parse_args()
 
@@ -60,10 +81,9 @@ if __name__ == "__main__":
     env = gym.make(args.env_id, **env_kwargs)
 
     algo_class = ALGOS[args.algo]
-    model = algo_class.load(f'rl/results/{args.env_id}/{args.algo}/run_4/best_model.zip', env, custom_objects={})
-    actions = simulate(env=env, model=model, num_episodes=10, render=True)
+    model = algo_class.load(f'rl/baselines/{args.env_id}/{args.algo}/run_0/best_model.zip', env, custom_objects={})
+    actions = simulate(env=env, model=None, num_episodes=1, render=False)
 
-    print(actions)
 
     save_dir = f'experts/{args.env_id}/'
     if not os.path.exists(save_dir):

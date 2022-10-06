@@ -7,9 +7,6 @@ from matplotlib import pyplot as plt
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
 import gym, my_gym
 
-from augment.simulate import simulate
-
-
 class PredatorPreyTranslate(AugmentationFunction):
 
     def __init__(self, delta=0.05, d=1.0, **kwargs):
@@ -44,10 +41,14 @@ class PredatorPreyTranslate(AugmentationFunction):
                  p=None,
                  ):
         self._translate(obs, next_obs, action)
-        at_goal = self._get_at_goal(next_obs)
+        dist = np.linalg.norm(next_obs[:, :2] - next_obs[:, 2:], axis=-1)
+        at_goal = (dist < 0.05)
         done |= at_goal
         reward[at_goal] = +1
         reward[~at_goal] = -0.1
+
+        infos[done & ~at_goal] = [{'TimeLimit.truncated': True}]
+        infos[done & at_goal] = [{'TimeLimit.truncated': False}]
 
         return obs, next_obs, action, reward, done, infos
 
@@ -75,8 +76,7 @@ class PredatorPreyRotate(AugmentationFunction):
         action[:, 1] += theta
         action[:, 1] %= (2 * np.pi)
 
-    def augment(self,
-                augmentation_n: int,
+    def _augment(self,
                 obs: np.ndarray,
                 next_obs: np.ndarray,
                 action: np.ndarray,
@@ -85,8 +85,9 @@ class PredatorPreyRotate(AugmentationFunction):
                 infos: List[Dict[str, Any]],
                 p=None,
                 ):
-        theta = np.random.choice(self.thetas, replace=False)
-        # v0
+        n = obs.shape[0]
+        theta = np.random.choice(self.thetas, replace=False, size=(n,))
+
         self._rotate_obs(obs, theta)
         self._rotate_obs(next_obs, theta)
         self._rotate_action(action, theta)
@@ -124,3 +125,35 @@ class PredatorPreyTranslate02(PredatorPreyTranslate):
 class PredatorPreyTranslateDense02(PredatorPreyTranslateDense):
     def __init__(self, **kwargs):
         super().__init__(d=0.2, **kwargs)
+
+class PredatorPreyTranslateProximal(PredatorPreyTranslate):
+    def __init__(self, p=0.5, **kwargs):
+        super().__init__( **kwargs)
+        self.p = p
+
+    def _translate(self, obs, next_obs, action):
+        n = obs.shape[0]
+        if np.random.random() < self.p:
+            # guaranteed success
+            goal = next_obs[:,2:]
+            r = np.random.uniform(0, self.delta, size=(n,))
+            theta = np.random.uniform(low=-np.pi, high=+np.pi, size=(n,))
+            disp = r*np.array([np.cos(theta), np.sin(theta)])
+            v = np.clip(goal + disp.T, -1, +1)
+            # dist = np.linalg.norm(v - goal, axis=-1)
+            # assert np.all(dist < 0.05)
+
+        else:
+            # guaranteed failure
+            v = np.random.uniform(low=-self.d, high=+self.d, size=(n, 2))
+            dist = np.linalg.norm(v-next_obs[:, 2:], axis=-1)
+            while np.any(dist < 0.05):
+                v = np.random.uniform(low=-self.d, high=+self.d, size=(n, 2))
+                dist = np.linalg.norm(v-next_obs[:, 2:])
+            # assert np.all(dist > 0.05)
+        next_obs[:, :2] = v
+        dx = action[:, 0] * np.cos(action[:, 1])
+        dy = action[:, 0] * np.sin(action[:, 1])
+        obs[:, 0] = v[:, 0] - dx * self.delta
+        obs[:, 1] = v[:, 1] - dy * self.delta
+
