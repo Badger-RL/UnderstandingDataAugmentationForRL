@@ -7,7 +7,7 @@ from augment.rl.algs.td3 import TD3
 from my_gym.envs.my_env import MyEnv
 
 class PredatorPreyEnv(MyEnv):
-    def __init__(self, delta=0.05, sparse=1, rbf_n=None, neural=False, r=1, init_dist='disk'):
+    def __init__(self, delta=0.025, sparse=1, rbf_n=None, neural=False, r=1, init_dist='disk'):
 
         self.n = 2
         # self.action_space = gym.spaces.Box(-1, +1, shape=(n,))

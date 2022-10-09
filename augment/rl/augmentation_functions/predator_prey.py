@@ -11,9 +11,10 @@ class PredatorPreyTranslate(AugmentationFunction):
 
     def __init__(self, delta=0.05, d=1.0, **kwargs):
         super().__init__(**kwargs)
-        self.delta = delta
+        self.delta = self.env.delta
         self.d = d
-        print('d', d)
+        print('delta:', self.delta)
+        print('d:', self.d)
 
     def _translate(self, obs, next_obs, action):
         n = obs.shape[0]
@@ -55,9 +56,11 @@ class PredatorPreyTranslate(AugmentationFunction):
 
 class PredatorPreyRotate(AugmentationFunction):
 
-    def __init__(self, **kwargs):
+    def __init__(self, restricted=True, **kwargs):
         super().__init__(**kwargs)
+        self.restricted = restricted
         self.thetas = [np.pi / 2, np.pi, np.pi * 3 / 2]
+        print('restructed:', restricted)
 
     def _rotate_obs(self, obs, theta):
         # rotate agent position
@@ -86,7 +89,10 @@ class PredatorPreyRotate(AugmentationFunction):
                 p=None,
                 ):
         n = obs.shape[0]
-        theta = np.random.choice(self.thetas, replace=False, size=(n,))
+        if self.restricted:
+            theta = np.random.choice(self.thetas, replace=False, size=(n,))
+        else:
+            theta = np.random.uniform(-np.pi, np.pi, size=(n,))
 
         self._rotate_obs(obs, theta)
         self._rotate_obs(next_obs, theta)
@@ -99,9 +105,6 @@ class PredatorPreyTranslateDense(PredatorPreyTranslate):
 
     def __init__(self, d=1.0, **kwargs):
         super().__init__(**kwargs)
-        self.delta = 0.01
-        self.d = d
-        print('d', d)
 
     def _augment(self,
                  obs: np.ndarray,
@@ -130,6 +133,7 @@ class PredatorPreyTranslateProximal(PredatorPreyTranslate):
     def __init__(self, p=0.5, **kwargs):
         super().__init__( **kwargs)
         self.p = p
+        print('p:', self.p)
 
     def _translate(self, obs, next_obs, action):
         n = obs.shape[0]

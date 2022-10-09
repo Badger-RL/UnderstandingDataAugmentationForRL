@@ -23,7 +23,7 @@ class AugmentationFunction:
         aug_action = deepcopy(action).repeat(augmentation_n, axis=0)
         aug_reward = deepcopy(reward).repeat(augmentation_n, axis=0)
         aug_done = deepcopy(done).repeat(augmentation_n, axis=0)
-        aug_infos = np.repeat(deepcopy(infos), augmentation_n, axis=0)
+        aug_infos = np.repeat(deepcopy([infos]), augmentation_n, axis=0)
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
@@ -37,7 +37,7 @@ class AugmentationFunction:
                  infos: List[Dict[str, Any]],
                  **kwargs,):
 
-        return self._augment(*self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos))
+        return self._augment(*self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos), **kwargs)
 
     def _augment(self,
                  obs: np.ndarray,
