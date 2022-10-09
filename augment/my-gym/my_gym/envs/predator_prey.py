@@ -72,8 +72,8 @@ class PredatorPreyEnv(MyEnv):
 
 class PredatorPreyEasyEnv(PredatorPreyEnv):
     def __init__(self, rbf_n=None):
-        super().__init__(delta=0.1, rbf_n=None)
+        super().__init__(delta=0.25, rbf_n=None)
 
 class PredatorPreyDenseEnv(PredatorPreyEnv):
-    def __init__(self, r=1, init_dist='square', rbf_n=None, neural=False):
-        super().__init__(delta=0.01, sparse=0, rbf_n=rbf_n, neural=neural, r=r, init_dist=init_dist)
+    def __init__(self, r=1, init_dist='disk', rbf_n=None, neural=False):
+        super().__init__(delta=0.025, sparse=0, rbf_n=rbf_n, neural=neural, r=r, init_dist=init_dist)
