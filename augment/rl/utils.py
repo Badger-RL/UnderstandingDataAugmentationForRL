@@ -83,7 +83,7 @@ def get_latest_run_id(save_dir: str) -> int:
 
 def get_save_dir(log_folder, env_id, algo, run_id, exp=""):
     # set save directory
-    save_dir = f'{log_folder}/{env_id}/{algo}/{exp}'
+    save_dir = f'{log_folder}/{env_id}/{exp}/{algo}/'
     if run_id is not None:
         save_dir += f'/run_{run_id}'
     else:
