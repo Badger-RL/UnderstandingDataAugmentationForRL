@@ -7,7 +7,7 @@ from augment.rl.algs.td3 import TD3
 from my_gym.envs.my_env import MyEnv
 
 class PredatorPreyEnv(MyEnv):
-    def __init__(self, delta=0.05, sparse=1, rbf_n=None, neural=False, r=1, init_dist='square'):
+    def __init__(self, delta=0.05, sparse=1, rbf_n=None, neural=False, r=1, init_dist='disk'):
 
         self.n = 2
         # self.action_space = gym.spaces.Box(-1, +1, shape=(n,))
@@ -56,11 +56,11 @@ class PredatorPreyEnv(MyEnv):
             self.x = np.random.uniform(-1, 1, size=(self.n,))
         elif self.init_dist == 'disk':
             theta = np.random.uniform(-np.pi, +np.pi)
-            r = np.random.uniform(self.r)
+            r = np.random.uniform(0, self.r)
             self.goal = np.array([r * np.cos(theta), r * np.sin(theta)])
 
             theta = np.random.uniform(-np.pi, +np.pi)
-            r = np.random.uniform(self.r)
+            r = np.random.uniform(0, self.r)
             self.x = np.array([r * np.cos(theta), r * np.sin(theta)])
 
         self.obs = np.concatenate((self.x, self.goal))
