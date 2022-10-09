@@ -56,7 +56,7 @@ class PredatorPreyTranslate(AugmentationFunction):
 
 class PredatorPreyRotate(AugmentationFunction):
 
-    def __init__(self, restricted=True, **kwargs):
+    def __init__(self, restricted=False, **kwargs):
         super().__init__(**kwargs)
         self.restricted = restricted
         self.thetas = [np.pi / 2, np.pi, np.pi * 3 / 2]
@@ -161,3 +161,35 @@ class PredatorPreyTranslateProximal(PredatorPreyTranslate):
         obs[:, 0] = v[:, 0] - dx * self.delta
         obs[:, 1] = v[:, 1] - dy * self.delta
 
+
+class PredatorPreyDenseTranslateProximal(PredatorPreyTranslateDense):
+    def __init__(self, p=0.5, **kwargs):
+        super().__init__( **kwargs)
+        self.p = p
+        print('p:', self.p)
+
+    def _translate(self, obs, next_obs, action):
+        n = obs.shape[0]
+        if np.random.random() < self.p:
+            # guaranteed success
+            goal = next_obs[:,2:]
+            r = np.random.uniform(0, self.delta, size=(n,))
+            theta = np.random.uniform(low=-np.pi, high=+np.pi, size=(n,))
+            disp = r*np.array([np.cos(theta), np.sin(theta)])
+            v = np.clip(goal + disp.T, -1, +1)
+            # dist = np.linalg.norm(v - goal, axis=-1)
+            # assert np.all(dist < 0.05)
+
+        else:
+            # guaranteed failure
+            v = np.random.uniform(low=-self.d, high=+self.d, size=(n, 2))
+            dist = np.linalg.norm(v-next_obs[:, 2:], axis=-1)
+            while np.any(dist < 0.05):
+                v = np.random.uniform(low=-self.d, high=+self.d, size=(n, 2))
+                dist = np.linalg.norm(v-next_obs[:, 2:])
+            # assert np.all(dist > 0.05)
+        next_obs[:, :2] = v
+        dx = action[:, 0] * np.cos(action[:, 1])
+        dy = action[:, 0] * np.sin(action[:, 1])
+        obs[:, 0] = v[:, 0] - dx * self.delta
+        obs[:, 1] = v[:, 1] - dy * self.delta

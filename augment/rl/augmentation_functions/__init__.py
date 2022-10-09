@@ -46,6 +46,7 @@ AUGMENTATION_FUNCTIONS = {
         'rotate': PredatorPreyRotate,
         'translate': PredatorPreyTranslateDense,
         'translate02': PredatorPreyTranslateDense02,
+        'translate_proximal': PredatorPreyTranslateProximal,
     },
     # 'PredatorPreyEasy-v0': {
     #     'rotate': PredatorPreyRotate,
