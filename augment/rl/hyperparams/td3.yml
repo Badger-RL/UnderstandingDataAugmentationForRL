@@ -261,13 +261,13 @@ PredatorPrey-v0: &predator_prey
   learning_rate: !!float 1e-3
   policy_kwargs: "dict(net_arch=[64,64])"
 
+PredatorPreyBox-v0:
+  <<: *predator_prey
+
 PredatorPreyDense-v0:
   <<: *predator_prey
 
-PredatorPreyEasy-v0:
-  <<: *predator_prey
-
-PredatorPreySimple-v0:
+PredatorPreyBoxDense-v0:
   <<: *predator_prey
 
 FetchPickAndPlace-v1:
