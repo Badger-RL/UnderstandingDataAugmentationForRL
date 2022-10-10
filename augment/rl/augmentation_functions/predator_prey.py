@@ -7,6 +7,14 @@ from matplotlib import pyplot as plt
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
 import gym, my_gym
 
+def random_sample_on_disk(d, n):
+    r = np.random.uniform(0, d, size=(n,))
+    theta = np.random.uniform(-np.pi, np.pi, size=(n,))
+    return r*np.array([np.cos(theta), np.sin(theta)]).T
+
+def random_sample_on_box(d, size):
+    return np.random.uniform(-d, d, size=size)
+
 class PredatorPreyAugmentationFunction(AugmentationFunction):
     def __init__(self, d=1.0, **kwargs):
         super().__init__(**kwargs)
@@ -122,7 +130,7 @@ PredatorPreyDenseRotate = PredatorPreyRotate # reward not chaanged after rotatio
 
 class PredatorPreyDenseTranslate(PredatorPreyTranslate):
 
-    def __init__(self, d=1.0, **kwargs):
+    def __init__(self, d=0.5, **kwargs):
         super().__init__(d=d, **kwargs)
 
     def _set_reward(self, reward, next_obs, **kwargs):
@@ -145,7 +153,7 @@ class PredatorPreyDenseTranslate(PredatorPreyTranslate):
         return obs, next_obs, action, reward, done, infos
 
 class PredatorPreyTranslateProximal(PredatorPreyTranslate):
-    def __init__(self, p=1, d=1, **kwargs):
+    def __init__(self, p=0.5, d=1, **kwargs):
         super().__init__(d=d, **kwargs)
         self.p = p
         print('p:', self.p)
@@ -153,20 +161,13 @@ class PredatorPreyTranslateProximal(PredatorPreyTranslate):
     def _translate_proximal(self, obs):
         n = obs.shape[0]
         goal = obs[:, 2:]
-        r = np.random.uniform(0, self.delta, size=(n,))
-        theta = np.random.uniform(low=-np.pi, high=+np.pi, size=(n,))
-        disp = r * np.array([np.cos(theta), np.sin(theta)])
-        v = goal + disp.T
+        disp = random_sample_on_disk(self.delta, n)
+        v = goal + disp
         return v
 
     def _translate_uniform(self, obs):
         n = obs.shape[0]
-        v = np.random.uniform(low=-self.d, high=+self.d, size=(n, 2))
-        dist = np.linalg.norm(v - obs[:, 2:], axis=-1)
-        while np.any(dist < 0.05):
-            v = np.random.uniform(low=-self.d, high=+self.d, size=(n, 2))
-            dist = np.linalg.norm(v - obs[:, 2:])
-        # assert np.all(dist > 0.05)
+        v = random_sample_on_disk(self.d, n)
         return v
 
     def _translate(self, obs, next_obs, action):
@@ -181,7 +182,7 @@ class PredatorPreyTranslateProximal(PredatorPreyTranslate):
         obs[:, 1] = v[:, 1] - dy * self.delta
 
 class PredatorPreyDenseTranslateProximal(PredatorPreyTranslateProximal):
-    def __init__(self, p=1, **kwargs):
+    def __init__(self, p=0.5, **kwargs):
         super().__init__( **kwargs)
         self.p = p
         print('p:', self.p)
