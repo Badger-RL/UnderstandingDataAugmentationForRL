@@ -7,8 +7,8 @@ def random_sample_on_disk(d, n):
     theta = np.random.uniform(-np.pi, np.pi, size=(n,))
     return r*np.array([np.cos(theta), np.sin(theta)]).T
 
-def random_sample_on_box(d, size):
-    return np.random.uniform(-d, d, size=size)
+def random_sample_on_box(d, n):
+    return np.random.uniform(-d, d, size=(n,2))
 
 class PredatorPreyAugmentationFunction(AugmentationFunction):
     def __init__(self, aug_d=1.0, **kwargs):
@@ -16,10 +16,12 @@ class PredatorPreyAugmentationFunction(AugmentationFunction):
         self.delta = self.env.delta
         self.boundary = self.env.boundary
         self.sparse = self.env.sparse
+        self.shape = self.env.shape
         self.aug_d = aug_d
         print('delta:', self.delta)
         print('boundary:', self.boundary)
         print('sparse:', self.sparse)
+        print('shape:', self.shape)
         print('aug_d:', self.aug_d)
 
         if self.sparse:
@@ -27,8 +29,27 @@ class PredatorPreyAugmentationFunction(AugmentationFunction):
         else:
             self._set_reward_function = self._set_dense_reward
 
+        assert self.shape in ['disk', 'box']
+        if self.shape == 'disk':
+            self._sampling_function = random_sample_on_disk
+            self._clipping_function = self._clip_to_disk
+        elif self.shape == 'box':
+            self._sampling_function = random_sample_on_box
+            self._clipping_function = self._clip_to_box
+
     def _set_dynamics(self, obs, next_obs, action):
         raise NotImplementedError
+
+    def _clip_to_disk(self, obs):
+        x_norm = np.linalg.norm(obs[:, :2])
+        if x_norm > self.boundary:
+            obs[:, :2] /= x_norm
+
+    def _clip_to_box(self, obs):
+        obs[:, :2] = np.clip(obs[:, :2], -self.boundary, +self.boundary)
+
+    def _clip_obs(self, obs):
+        self._clipping_function(obs)
 
     def _get_at_goal(self, next_obs):
         dist = np.linalg.norm(next_obs[:, 2:] - next_obs[:, :2], axis=-1)
@@ -61,6 +82,7 @@ class PredatorPreyAugmentationFunction(AugmentationFunction):
                  p=None,
                  ):
         self._set_dynamics(obs, next_obs, action)
+        self._clip_obs(next_obs)
         at_goal = self._get_at_goal(next_obs)
         self._set_reward(reward, next_obs, at_goal)
         self._set_done_and_info(done, infos, at_goal)
@@ -83,10 +105,6 @@ class PredatorPreyTranslate(PredatorPreyAugmentationFunction):
         next_obs[:, 1] = v[:, 1] + dy * self.delta
         # next_obs[:, :2] = np.clip(next_obs[:, :2], -self.boundary, self.boundary)
 
-        norm = np.linalg.norm(next_obs[:, :2])
-        if norm > self.boundary:
-            next_obs[:, :2] /= norm
-
 
 class PredatorPreyRotate(PredatorPreyAugmentationFunction):
 
@@ -97,18 +115,11 @@ class PredatorPreyRotate(PredatorPreyAugmentationFunction):
         print('restricted:', restricted)
         print('thetas:', self.thetas)
 
-    def _rotate_obs(self, obs, theta):
-        # rotate agent position
-        x = np.copy(obs[:, 0])
-        y = np.copy(obs[:, 1])
-        obs[:, 0] = x * np.cos(theta) - y * np.sin(theta)
-        obs[:, 1] = x * np.sin(theta) + y * np.cos(theta)
-
-        # rotate goal position
-        x = np.copy(obs[:, 2])
-        y = np.copy(obs[:, 3])
-        obs[:, 2] = x * np.cos(theta) - y * np.sin(theta)
-        obs[:, 3] = x * np.sin(theta) + y * np.cos(theta)
+    def _rotate_position(self, pos, theta):
+        x = np.copy(pos[:, 0])
+        y = np.copy(pos[:, 1])
+        pos[:, 0] = x * np.cos(theta) - y * np.sin(theta)
+        pos[:, 1] = x * np.sin(theta) + y * np.cos(theta)
 
     def _rotate_action(self, action, theta):
         action[:, 1] += theta
@@ -121,9 +132,18 @@ class PredatorPreyRotate(PredatorPreyAugmentationFunction):
         else:
             theta = np.random.uniform(-np.pi, np.pi, size=(n,))
 
-        self._rotate_obs(obs, theta)
-        self._rotate_obs(next_obs, theta)
+        self._rotate_position(obs[:,:2], theta)
+        self._rotate_position(obs[:,2:], theta)
         self._rotate_action(action, theta)
+
+        # recompute next agent position, since clipping behavior differs near the boundaries for shape=='box'
+        dx = action[:, 0] * np.cos(action[:, 1])
+        dy = action[:, 0] * np.sin(action[:, 1])
+        next_obs[:, 0] = obs[:, 0] + dx * self.delta
+        next_obs[:, 1] = obs[:, 1] + dy * self.delta
+
+        self._rotate_position(next_obs[:, 2:], theta)
+
 
 class PredatorPreyTranslateProximal(PredatorPreyTranslate):
     def __init__(self, p=0.5, aug_d=1, **kwargs):
@@ -134,13 +154,13 @@ class PredatorPreyTranslateProximal(PredatorPreyTranslate):
     def _translate_proximal(self, obs):
         n = obs.shape[0]
         goal = obs[:, 2:]
-        disp = random_sample_on_disk(self.delta, n)
+        disp = self._sampling_function(self.delta, n)
         v = goal + disp
         return v
 
     def _translate_uniform(self, obs):
         n = obs.shape[0]
-        v = random_sample_on_disk(self.aug_d, n)
+        v = self._sampling_function(self.aug_d, n)
         return v
 
     def _set_dynamics(self, obs, next_obs, action):

@@ -135,23 +135,17 @@ for k in [4,8,12,16,20]:
         kwargs={'num_links': k},
         max_episode_steps=100,
     )
-#
-# ###########################################################################
-#
-register(
-    id="LQR-v0",
-    entry_point="my_gym.envs:LQREnv",
-    max_episode_steps=200,
-)
 
-register(
-    id="LQRGoal-v0",
-    entry_point="my_gym.envs:LQRGoalEnv",
-    max_episode_steps=100,
-)
+############################################################################
+
 register(
     id="PredatorPrey-v0",
     entry_point="my_gym.envs:PredatorPreyEnv",
+    max_episode_steps=100,
+)
+register(
+    id="PredatorPreyBox-v0",
+    entry_point="my_gym.envs:PredatorPreyBoxEnv",
     max_episode_steps=100,
 )
 register(
@@ -159,45 +153,8 @@ register(
     entry_point="my_gym.envs:PredatorPreyDenseEnv",
     max_episode_steps=500,
 )
-# register(
-#     id="PredatorPreySimple-v0",
-#     entry_point="my_gym.envs:PredatorPreySimpleEnv",
-#     max_episode_steps=50,
-#     kwargs={
-#         'delta': 0.05
-#     },
-# )
-
 register(
-    id="PredatorPreyEasy-v0",
-    entry_point="my_gym.envs:PredatorPreyEnv",
-    max_episode_steps=50,
-    kwargs={
-        'delta': 0.1
-    },
+    id="PredatorPreyBoxDense-v0",
+    entry_point="my_gym.envs:PredatorPreyBoxDenseEnv",
+    max_episode_steps=500,
 )
-
-register(
-    id="PredatorPreyDiscrete-v0",
-    entry_point="my_gym.envs:PredatorPreyDiscreteEnv",
-    max_episode_steps=50,
-)
-
-
-# register(
-#     id="Bandit-v0",
-#     entry_point="my_gym.envs:BanditEnv",
-#     max_episode_steps=100,
-# )
-#
-# register(
-#     id="Chain-v0",
-#     entry_point="my_gym.envs:ChainEnv",
-#     max_episode_steps=100,
-# )
-#
-# register(
-#     id="Chain-Continuous-v0",
-#     entry_point="my_gym.envs:ChainContinuousEnv",
-#     max_episode_steps=100,
-# )

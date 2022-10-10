@@ -7,7 +7,7 @@ from augment.simulate import simulate
 def make_assertions(aug_next_obs, aug_reward, aug_done, aug_info,
                     next_obs_true, reward_true, done_true, info_true):
 
-    # print(aug_next_obs, next_obs_true, next_obs_true-aug_next_obs)
+    print(aug_next_obs, next_obs_true, next_obs_true-aug_next_obs)
     assert np.allclose(aug_next_obs, next_obs_true, atol=1e-7)
 
     # aug_info != info_true in general.
@@ -61,8 +61,8 @@ if __name__ == "__main__":
     for env_id, aug_function_classes in AUGMENTATION_FUNCTIONS.items():
         for aug_function_name, aug_function_class in aug_function_classes.items():
             print(env_id, aug_function_name)
-            if 'Predator' in env_id and aug_function_name == 'translate_proximal':
-                env = gym.make(env_id)
+            if 'Predator' in env_id and aug_function_name == 'translate':
+                env = gym.make(env_id, shape='box')
                 aug_function = aug_function_class(env=env)
                 test_augmentation(env, aug_function)
 

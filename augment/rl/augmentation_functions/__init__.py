@@ -7,6 +7,12 @@ from augment.rl.augmentation_functions.reacher_k import *
 from augment.rl.augmentation_functions.swimmer_k import SwimmerReflect
 from augment.rl.augmentation_functions.walker2d import Walker2dReflect
 
+predator_prey_augmentation_functions = {
+        'rotate': PredatorPreyRotate,
+        'translate': PredatorPreyTranslate,
+        'translate_proximal': PredatorPreyTranslateProximal,
+    }
+
 AUGMENTATION_FUNCTIONS = {
     'InvertedPendulum-v2': {
         'translate': InvertedPendulumTranslateUniform,
@@ -37,16 +43,10 @@ AUGMENTATION_FUNCTIONS = {
     'Walker2d-v3': {
         'reflect': Walker2dReflect,
     },
-    'PredatorPrey-v0': {
-        'rotate': PredatorPreyRotate,
-        'translate': PredatorPreyTranslate,
-        'translate_proximal': PredatorPreyTranslateProximal,
-    },
-    'PredatorPreyDense-v0': {
-        'rotate': PredatorPreyRotate,
-        'translate': PredatorPreyTranslate,
-        'translate_proximal': PredatorPreyTranslateProximal,
-    },
+    'PredatorPrey-v0': predator_prey_augmentation_functions,
+    'PredatorPreyBox-v0': predator_prey_augmentation_functions,
+    'PredatorPreyDense-v0': predator_prey_augmentation_functions,
+    'PredatorPreyBoxDense-v0': predator_prey_augmentation_functions,
     'FetchReach-v1': {
         'her': FetchReachHER,
     }
