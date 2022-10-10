@@ -9,7 +9,7 @@ from augment.rl.augmentation_functions.walker2d import Walker2dReflect
 
 predator_prey_augmentation_functions = {
         'rotate': PredatorPreyRotate,
-        'rotate_restriced': PredatorPreyRotateRestricted,
+        'rotate_restricted': PredatorPreyRotateRestricted,
         'translate': PredatorPreyTranslate,
         'translate_proximal': PredatorPreyTranslateProximal,
     }
