@@ -144,6 +144,9 @@ class PredatorPreyRotate(PredatorPreyAugmentationFunction):
 
         self._rotate_position(next_obs[:, 2:], theta)
 
+class PredatorPreyRotateRestricted(PredatorPreyRotate):
+    def __init__(self, **kwargs):
+        super().__init__(restricted=True, **kwargs)
 
 class PredatorPreyTranslateProximal(PredatorPreyTranslate):
     def __init__(self, p=0.5, aug_d=1, **kwargs):

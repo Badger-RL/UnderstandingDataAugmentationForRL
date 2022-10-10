@@ -2,13 +2,14 @@ from augment.rl.augmentation_functions.fetch import FetchReachHER
 from augment.rl.augmentation_functions.inverted_pendulum import *
 from augment.rl.augmentation_functions.lqr import LQRTranslate, LQRRotate
 from augment.rl.augmentation_functions.predator_prey import PredatorPreyRotate, PredatorPreyTranslate, \
-    PredatorPreyTranslateProximal
+    PredatorPreyTranslateProximal, PredatorPreyRotateRestricted
 from augment.rl.augmentation_functions.reacher_k import *
 from augment.rl.augmentation_functions.swimmer_k import SwimmerReflect
 from augment.rl.augmentation_functions.walker2d import Walker2dReflect
 
 predator_prey_augmentation_functions = {
         'rotate': PredatorPreyRotate,
+        'rotate_restriced': PredatorPreyRotateRestricted,
         'translate': PredatorPreyTranslate,
         'translate_proximal': PredatorPreyTranslateProximal,
     }
