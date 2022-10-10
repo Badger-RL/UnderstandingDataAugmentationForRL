@@ -12,7 +12,8 @@ class PredatorPreyEnv(MyEnv):
         self.n = 2
         # self.action_space = gym.spaces.Box(-1, +1, shape=(n,))
         self.action_space = gym.spaces.Box(low=np.zeros(2), high=np.array([1, 2 * np.pi]), shape=(self.n,))
-        self.observation_space = gym.spaces.Box(-1, +1, shape=(2 * self.n,))
+        self.boundary = 1.05
+        self.observation_space = gym.spaces.Box(-self.boundary, +self.boundary, shape=(2 * self.n,))
         # self.observation_space = gym.spaces.Box(-np.inf, +np.inf, shape=(1,))
 
         self.step_num = 0
@@ -32,7 +33,7 @@ class PredatorPreyEnv(MyEnv):
         u = np.array([ux, uy])
 
         self.x += u*self.delta
-        self.x = np.clip(self.x, -1, +1) # clipping makes dynamics nonlinear
+        self.x = np.clip(self.x, -self.boundary, +self.boundary) # clipping makes dynamics nonlinear
 
         dist = np.linalg.norm(self.x - self.goal)
         done = dist < 0.05
