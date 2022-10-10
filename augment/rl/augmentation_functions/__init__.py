@@ -50,10 +50,6 @@ AUGMENTATION_FUNCTIONS = {
     'FetchReach-v1': {
         'her': FetchReachHER,
     }
-    # 'PredatorPreyEasy-v0': {
-    #     'rotate': PredatorPreyRotate,
-    #     'translate': PredatorPreyTranslate,
-    # }
 }
 
 for k in range(2,20+1):

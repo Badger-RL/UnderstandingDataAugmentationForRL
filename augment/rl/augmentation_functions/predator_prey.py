@@ -1,11 +1,6 @@
-from typing import Dict, List, Any
-
 import numpy as np
-import torch
-from matplotlib import pyplot as plt
-
+from typing import Dict, List, Any
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
-import gym, my_gym
 
 def random_sample_on_disk(d, n):
     r = np.random.uniform(0, d, size=(n,))
