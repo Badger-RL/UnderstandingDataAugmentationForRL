@@ -1,7 +1,9 @@
+from augment.rl.augmentation_functions.fetch import FetchReachHER
 from augment.rl.augmentation_functions.inverted_pendulum import *
 from augment.rl.augmentation_functions.lqr import LQRTranslate, LQRRotate
 from augment.rl.augmentation_functions.predator_prey import PredatorPreyRotate, PredatorPreyTranslate, \
-    PredatorPreyTranslateDense, PredatorPreyTranslateDense02, PredatorPreyTranslate02, PredatorPreyTranslateProximal
+    PredatorPreyDenseTranslate, PredatorPreyTranslateProximal, PredatorPreyDenseTranslateProximal, \
+    PredatorPreyDenseRotate
 from augment.rl.augmentation_functions.reacher_k import *
 from augment.rl.augmentation_functions.swimmer_k import SwimmerReflect
 from augment.rl.augmentation_functions.walker2d import Walker2dReflect
@@ -39,15 +41,16 @@ AUGMENTATION_FUNCTIONS = {
     'PredatorPrey-v0': {
         'rotate': PredatorPreyRotate,
         'translate': PredatorPreyTranslate,
-        'translate02': PredatorPreyTranslate02,
         'translate_proximal': PredatorPreyTranslateProximal,
     },
     'PredatorPreyDense-v0': {
-        'rotate': PredatorPreyRotate,
-        'translate': PredatorPreyTranslateDense,
-        'translate02': PredatorPreyTranslateDense02,
-        'translate_proximal': PredatorPreyTranslateProximal,
+        'rotate': PredatorPreyDenseRotate,
+        'translate': PredatorPreyDenseTranslate,
+        'translate_proximal': PredatorPreyDenseTranslateProximal,
     },
+    'FetchReach-v1': {
+        'her': FetchReachHER,
+    }
     # 'PredatorPreyEasy-v0': {
     #     'rotate': PredatorPreyRotate,
     #     'translate': PredatorPreyTranslate,

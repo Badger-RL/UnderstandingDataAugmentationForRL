@@ -22,18 +22,23 @@ class PredatorPreyEnv(MyEnv):
         self.sparse = sparse
         self.r = r
         self.init_dist = init_dist
+        self.position_norm = None
         super().__init__(rbf_n=rbf_n, neural=neural)
 
 
 
-    def step(self, u):
+    def step(self, a):
         self.step_num += 1
-        ux = u[0] * np.cos(u[1])
-        uy = u[0] * np.sin(u[1])
+        ux = a[0] * np.cos(a[1])
+        uy = a[0] * np.sin(a[1])
         u = np.array([ux, uy])
 
         self.x += u*self.delta
-        self.x = np.clip(self.x, -self.boundary, +self.boundary) # clipping makes dynamics nonlinear
+        # self.x = np.clip(self.x, -self.boundary, +self.boundary) # clipping makes dynamics nonlinear
+        self.x_norm = np.linalg.norm(self.x)
+        if self.x_norm > self.boundary:
+            self.x /= self.x_norm
+            self.x_norm = 1
 
         dist = np.linalg.norm(self.x - self.goal)
         done = dist < 0.05
@@ -50,8 +55,6 @@ class PredatorPreyEnv(MyEnv):
     def reset(self):
         self.step_num = 0
 
-
-
         if self.init_dist == 'square':
             self.goal = np.random.uniform(low=-self.r, high=self.r, size=(self.n,))
             self.x = np.random.uniform(-1, 1, size=(self.n,))
@@ -65,10 +68,12 @@ class PredatorPreyEnv(MyEnv):
             self.x = np.array([r * np.cos(theta), r * np.sin(theta)])
 
         self.obs = np.concatenate((self.x, self.goal))
+        self.x_norm = np.linalg.norm(self.x)
         return self._get_obs()
 
     def set_state(self, pos, goal):
         self.x = pos
+        self.x_norm = np.linalg.norm(self.x)
         self.goal = goal
 
 class PredatorPreyEasyEnv(PredatorPreyEnv):
