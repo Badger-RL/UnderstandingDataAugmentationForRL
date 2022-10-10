@@ -151,10 +151,10 @@ register(
 register(
     id="PredatorPreyDense-v0",
     entry_point="my_gym.envs:PredatorPreyDenseEnv",
-    max_episode_steps=500,
+    max_episode_steps=100,
 )
 register(
     id="PredatorPreyBoxDense-v0",
     entry_point="my_gym.envs:PredatorPreyBoxDenseEnv",
-    max_episode_steps=500,
+    max_episode_steps=100,
 )

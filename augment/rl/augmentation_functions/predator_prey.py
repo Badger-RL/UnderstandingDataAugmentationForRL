@@ -115,6 +115,9 @@ class PredatorPreyRotate(PredatorPreyAugmentationFunction):
         print('restricted:', restricted)
         print('thetas:', self.thetas)
 
+        if self.shape == 'box':
+            self.restricted = True
+
     def _rotate_position(self, pos, theta):
         x = np.copy(pos[:, 0])
         y = np.copy(pos[:, 1])
