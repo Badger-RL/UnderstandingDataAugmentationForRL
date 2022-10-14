@@ -5,7 +5,7 @@ from augment.rl.augmentation_functions.augmentation_function import Augmentation
 def random_sample_on_disk(d, n):
     r = np.random.uniform(0, d, size=(n,))
     theta = np.random.uniform(-np.pi, np.pi, size=(n,))
-    return r*np.array([np.cos(theta), np.sin(theta)]).T
+    return np.array([r*np.cos(theta), r*np.sin(theta)]).T
 
 def random_sample_on_box(d, n):
     return np.random.uniform(-d, d, size=(n,2))
@@ -41,9 +41,10 @@ class PredatorPreyAugmentationFunction(AugmentationFunction):
         raise NotImplementedError
 
     def _clip_to_disk(self, obs):
-        x_norm = np.linalg.norm(obs[:, :2])
-        if x_norm > self.boundary:
-            obs[:, :2] /= x_norm
+        x_norm = np.linalg.norm(obs[:, :2], axis=-1)
+        mask = x_norm > 1
+        obs[mask, 0] /= x_norm[mask]
+        obs[mask, 1] /= x_norm[mask]
 
     def _clip_to_box(self, obs):
         obs[:, :2] = np.clip(obs[:, :2], -self.boundary, +self.boundary)
