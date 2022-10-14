@@ -16,18 +16,15 @@ predator_prey_augmentation_functions = {
 
 AUGMENTATION_FUNCTIONS = {
     'InvertedPendulum-v2': {
-        'translate': InvertedPendulumTranslateUniform,
-        'translate_uniform': InvertedPendulumTranslateUniform,
+        'translate': InvertedPendulumTranslate,
         'reflect': InvertedPendulumReflect,
     },
     'InvertedDoublePendulum-v2': {
-        'translate': InvertedPendulumTranslateUniform,
-        'translate_uniform': InvertedPendulumTranslateUniform,
+        'translate': InvertedPendulumTranslate,
         'reflect': InvertedPendulumReflect,
     },
     'CartPole-v1': {
         'translate': InvertedPendulumTranslate,
-        'translate_uniform': InvertedPendulumTranslateUniform,
         'reflect': InvertedPendulumReflect,
     },
     'LQR-v0': {
