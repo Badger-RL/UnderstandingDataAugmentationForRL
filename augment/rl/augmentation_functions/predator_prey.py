@@ -163,7 +163,12 @@ class PredatorPreyTranslateProximal(PredatorPreyTranslate):
 
     def _translate_uniform(self, obs):
         n = obs.shape[0]
+        goal = obs[:, 2:]
         v = self._sampling_function(self.aug_d, n)
+        norm = np.linalg.norm(goal-v)
+        while norm < 0.05:
+            v = self._sampling_function(self.aug_d, n)
+            norm = np.linalg.norm(goal-v)
         return v
 
     def _set_dynamics(self, obs, next_obs, action):
