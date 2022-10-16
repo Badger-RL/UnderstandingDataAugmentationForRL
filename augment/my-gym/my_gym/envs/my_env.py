@@ -14,8 +14,9 @@ class MyEnv(gym.Env):
     def __init__(self, rbf_n, d_fourier=None, neural=False):
 
         self.rbf_n = rbf_n
+        self.d_fourier = d_fourier
         self.neural_features = None
-        if d_fourier:
+        if self.d_fourier:
             print(d_fourier)
             self.d_fourier, self.sigma = d_fourier
             self.original_obs_dim = self.observation_space.shape[-1]
