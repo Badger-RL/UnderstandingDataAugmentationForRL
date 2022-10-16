@@ -5,16 +5,26 @@ import gym
 import numpy as np
 import torch
 
+from augment.dim_reduction.autoencoders import VAE
 from augment.rl.algs.td3 import TD3
 from my_gym import ENVS_DIR
 
 
 class MyEnv(gym.Env):
-    def __init__(self, rbf_n, neural=False):
+    def __init__(self, rbf_n, d_fourier=None, neural=False):
 
         self.rbf_n = rbf_n
         self.neural_features = None
-        if self.rbf_n:
+        if d_fourier:
+            print(d_fourier)
+            self.d_fourier, self.sigma = d_fourier
+            self.original_obs_dim = self.observation_space.shape[-1]
+            self.observation_space = gym.spaces.Box(low=-np.inf, high=+np.inf, shape=(self.d_fourier+self.original_obs_dim,))
+
+            load_dir = f'{ENVS_DIR}/fourier_basis/obs_dim_{self.original_obs_dim}/d_fourier_{self.d_fourier}/sigma_{self.sigma}'
+            self.B = np.load(f'{load_dir}/B.npy')
+
+        elif self.rbf_n:
             self.original_obs_dim = self.observation_space.shape[-1]
             self.observation_space = gym.spaces.Box(low=-1, high=+1, shape=(2*self.rbf_n,))
 
@@ -28,18 +38,34 @@ class MyEnv(gym.Env):
             print(self.nu)
 
             self.obs = None
-        if neural:
-            print(os.getcwd())
-            model = TD3.load(path='../../condor/predator_prey_time_limit/results/PredatorPrey-v0/td3/no_aug/run_0/best_model.zip', env=self)
-            self.neural_features = model.actor.mu[:-2]
-            self.neural_features.requires_grad_(False)
-            self.neural_features.eval()
-            self.original_obs_dim = self.observation_space.shape[-1]
-            self.observation_space = gym.spaces.Box(low=0, high=+1, shape=(self.neural_features[0].weight.shape[0],))
+        # elif neural:
+        #     print(os.getcwd())
+        #     vae = VAE(4,4)
+        #     state_dict = torch.load('/Users/nicholascorrado/code/augment/augment/dim_reduction/autoencoders/PredatorPreyBox-v0/VAE/4/autoencoder.pt')
+        #     vae.load_state_dict(state_dict)
+        #     vae.encoder.requires_grad_(False)
+        #     vae.eval()
+        #     self.vae = vae
+        #     self.original_obs_dim = self.observation_space.shape[-1]
+        #     self.observation_space = gym.spaces.Box(low=-1.05, high=+1.05, shape=(256,))
+
+
+            # print(os.getcwd())
+            # model = TD3.load(path='../../condor/pp_proximal_100/results/PredatorPreyBox-v0/no_aug/td3/run_0/best_model.zip', env=self)
+            # self.neural_features = model.actor.mu[:-3]
+            # self.neural_features.requires_grad_(False)
+            # self.neural_features.eval()
+            # self.original_obs_dim = self.observation_space.shape[-1]
+            # self.observation_space = gym.spaces.Box(low=-1, high=+1, shape=(self.neural_features[0].weight.shape[0],))
 
 
     def _get_obs(self):
-        if self.rbf_n:
+        if self.d_fourier:
+            x = self.obs
+            Bx = self.B.dot(x)
+            fourier_obs = np.concatenate([np.sin(2*np.pi*Bx), np.cos(2*np.pi*Bx), x])
+            return fourier_obs
+        elif self.rbf_n:
             return self._rbf(self.obs)
         elif self.neural_features:
             obs = torch.from_numpy(self.obs).float()

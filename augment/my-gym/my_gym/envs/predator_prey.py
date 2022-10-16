@@ -2,18 +2,22 @@
 
 import gym
 import numpy as np
+# import torch
 
 from matplotlib import pyplot as plt
 
+# from augment.dim_reduction.autoencoders import VAE
 from augment.rl.algs.td3 import TD3
 from my_gym.envs.my_env import MyEnv
 
 
 class PredatorPreyEnv(MyEnv):
-    def __init__(self, delta=0.025, sparse=1, rbf_n=None, neural=False, d=1, shape='disk'):
+    def __init__(self, delta=0.025, sparse=1, rbf_n=None, d_fourier=None, neural=False, d=1, shape='disk'):
 
         self.n = 2
         self.action_space = gym.spaces.Box(low=np.zeros(2), high=np.array([1, 2 * np.pi]), shape=(self.n,))
+        # self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1,))
+
         self.boundary = 1.05
         self.observation_space = gym.spaces.Box(-self.boundary, +self.boundary, shape=(2 * self.n,))
 
@@ -24,7 +28,15 @@ class PredatorPreyEnv(MyEnv):
         self.d = d
         self.shape = shape
         self.x_norm = None
-        super().__init__(rbf_n=rbf_n, neural=neural)
+        super().__init__(rbf_n=rbf_n, d_fourier=d_fourier, neural=neural)
+
+        # vae = VAE(2, 1)
+        # state_dict = torch.load(
+        #     '/Users/nicholascorrado/code/augment/augment/dim_reduction/autoencoders/PredatorPreyBox-v0/VAE/1/autoencoder.pt')
+        # vae.load_state_dict(state_dict)
+        # vae.decoder.requires_grad_(False)
+        # vae.eval()
+        # self.vae = vae
 
     def _clip_position(self):
         # Note: clipping makes dynamics nonlinear
@@ -37,6 +49,14 @@ class PredatorPreyEnv(MyEnv):
             self.x = np.clip(self.x, -self.boundary, +self.boundary)
 
     def step(self, a):
+        #
+        # a = torch.from_numpy(a).float()
+        # a, _ = self.vae.decode(a)
+        # # features = self.neural_features(obs)
+        # # print(features.detach().numpy())
+        # a = a.detach().numpy()
+        # print(a)
+
         self.step_num += 1
         ux = a[0] * np.cos(a[1])
         uy = a[0] * np.sin(a[1])
@@ -84,13 +104,13 @@ class PredatorPreyEnv(MyEnv):
             self.x_norm = np.linalg.norm(self.x)
 
 class PredatorPreyBoxEnv(PredatorPreyEnv):
-    def __init__(self, d=1, shape='box', rbf_n=None, neural=False):
-        super().__init__(delta=0.025, sparse=1, rbf_n=rbf_n, neural=neural, d=d, shape=shape)
+    def __init__(self, d=1, shape='box', rbf_n=None, d_fourier=None, neural=False):
+        super().__init__(delta=0.025, sparse=1, rbf_n=rbf_n, d_fourier=d_fourier, neural=neural, d=d, shape=shape)
 
 class PredatorPreyDenseEnv(PredatorPreyEnv):
-    def __init__(self, d=1, shape='disk', rbf_n=None, neural=False):
-        super().__init__(delta=0.025, sparse=0, rbf_n=rbf_n, neural=neural, d=d, shape=shape)
+    def __init__(self, d=1, shape='disk', rbf_n=None, d_fourier=None, neural=False):
+        super().__init__(delta=0.025, sparse=0, rbf_n=rbf_n, d_fourier=d_fourier, neural=neural, d=d, shape=shape)
 
 class PredatorPreyBoxDenseEnv(PredatorPreyEnv):
-    def __init__(self, d=1, shape='box', rbf_n=None, neural=False):
-        super().__init__(delta=0.025, sparse=0, rbf_n=rbf_n, neural=neural, d=d, shape=shape)
+    def __init__(self, d=1, shape='box', rbf_n=None, d_fourier=None, neural=False):
+        super().__init__(delta=0.025, sparse=0, rbf_n=rbf_n, d_fourier=d_fourier, neural=neural, d=d, shape=shape)

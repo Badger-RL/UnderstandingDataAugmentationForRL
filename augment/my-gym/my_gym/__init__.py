@@ -121,7 +121,7 @@ register(
     max_episode_steps=1000,
 )
 
-for k in [4,8,12,16,20]:
+for k in [2,4,8,12,16,20]:
     # register(
     #     id=f'ReacherTracker{k}-v3',
     #     entry_point='my_gym.envs.mujoco:ReacherTrackerEnv',
@@ -158,3 +158,9 @@ register(
     entry_point="my_gym.envs:PredatorPreyBoxDenseEnv",
     max_episode_steps=100,
 )
+#
+# register(
+#     id="PredatorPreySimple-v0",
+#     entry_point="my_gym.envs:PredatorPreySimpleEnv",
+#     max_episode_steps=100,
+# )
