@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # basic
     parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="PredatorPrey-v0", help="environment ID")
+    parser.add_argument("--env", type=str, default="PredatorPreyBox-v0", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e6), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     assert not(args.linear and args.linear_neural)
     if args.linear:
-        hyperparams['policy_kwargs'] = {'net_arch':[]}
+        hyperparams['policy_kwargs'] = {'net_arch':{'pi':[], 'qf':[]}}
 
     preprocess_action_noise(hyperparams=hyperparams, env=env)
     # hyperparams['policy_kwargs'].update({'features_extractor_class': NeuralExtractor})
