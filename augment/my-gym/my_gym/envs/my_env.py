@@ -20,7 +20,7 @@ class MyEnv(gym.Env):
             print(d_fourier)
             self.d_fourier, self.sigma = d_fourier
             self.original_obs_dim = self.observation_space.shape[-1]
-            self.observation_space = gym.spaces.Box(low=-np.inf, high=+np.inf, shape=(self.d_fourier+self.original_obs_dim,))
+            self.observation_space = gym.spaces.Box(low=-1, high=+1, shape=(self.d_fourier+self.original_obs_dim,))
 
             load_dir = f'{ENVS_DIR}/fourier_basis/obs_dim_{self.original_obs_dim}/d_fourier_{self.d_fourier}/sigma_{self.sigma}'
             self.B = np.load(f'{load_dir}/B.npy')
