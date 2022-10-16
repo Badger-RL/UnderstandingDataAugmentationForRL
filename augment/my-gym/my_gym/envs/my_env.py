@@ -5,7 +5,7 @@ import gym
 import numpy as np
 import torch
 
-from augment.dim_reduction.autoencoders import VAE
+# from augment.dim_reduction.autoencoders import VAE
 from augment.rl.algs.td3 import TD3
 from my_gym import ENVS_DIR
 
