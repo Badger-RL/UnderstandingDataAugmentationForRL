@@ -324,7 +324,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             if truncate_last_traj:
                 self.aug_replay_buffer.truncate_last_trajectory()
 
-    def sample_replay_buffers(self) -> ReplayBufferSamples:
+    def sample_replay_buffers(self):
         alpha = 0
         if self.use_aug:
             alpha = self.aug_ratio(self._current_progress_remaining)
@@ -332,7 +332,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         if alpha >= 0:
             observed_batch = self.replay_buffer.sample(self.batch_size, env=self._vec_normalize_env)
             if alpha == 0:
-                return observed_batch
+                return observed_batch, None, None
 
         aug_batch_size = int(np.abs(alpha) * self.batch_size)
         aug_batch = self.aug_replay_buffer.sample(aug_batch_size, env=self._vec_normalize_env)
@@ -345,4 +345,4 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         rewards = th.concat((observed_batch.rewards, aug_batch.rewards))
         dones = th.concat((observed_batch.dones, aug_batch.dones))
 
-        return ReplayBufferSamples(observations, actions, next_observations, dones, rewards)
+        return ReplayBufferSamples(observations, actions, next_observations, dones, rewards), observed_batch, aug_batch

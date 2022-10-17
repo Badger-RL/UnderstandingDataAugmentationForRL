@@ -47,6 +47,8 @@ if __name__ == '__main__':
     parser.add_argument("--aug-constraint", type=bool, default=None)
     parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={},
                         help="Optional ADDITIONAL keyword argument to pass to the policy constructor")
+    parser.add_argument("--freeze-features-for-aug-update", type=int, default=0)
+
 
     # saving
     parser.add_argument("-f", "--log-folder", help="Log folder", type=str, default="results")
@@ -144,6 +146,7 @@ if __name__ == '__main__':
         hyperparams['aug_function'] = aug_func_class(env=env, rbf_n=rbf_n, **aug_func_kwargs)
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
+        hyperparams['freeze_features_for_aug_update'] = args.freeze_features_for_aug_update
 
 
     ####################################################################################################################

@@ -1,3 +1,4 @@
+import copy
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import gym
@@ -104,6 +105,7 @@ class TD3(OffPolicyAlgorithmAugment):
         aug_n: Optional[int] = 1,
         aug_buffer: Optional[bool] = True,
         aug_constraint: Optional[float] = 0,
+        freeze_features_for_aug_update: Optional[bool] = True
     ):
 
         # policy_kwargs.update({'features_extractor_class': RBFExtractor})
@@ -141,6 +143,7 @@ class TD3(OffPolicyAlgorithmAugment):
         self.policy_delay = policy_delay
         self.target_noise_clip = target_noise_clip
         self.target_policy_noise = target_policy_noise
+        self._freeze_features_for_aug_update = freeze_features_for_aug_update
 
         if _init_setup_model:
             self._setup_model()
@@ -157,6 +160,139 @@ class TD3(OffPolicyAlgorithmAugment):
         self.critic = self.policy.critic
         self.critic_target = self.policy.critic_target
 
+    def _freeze_actor_features(self):
+        params = []
+        for parameter in self.actor.parameters():
+            parameter.requires_grad = False
+            params.append(parameter)
+
+        for parameter in params[-2:]:
+            parameter.requires_grad = True
+
+    def _freeze_critic_features(self):
+        qf0_params = []
+        qf1_params = []
+
+        for qf0_param, qf1_param in zip(self.critic.qf0.parameters(), self.critic.qf1.parameters()):
+            qf0_param.requires_grad = False
+            qf1_param.requires_grad = False
+            qf0_params.append(qf0_param)
+            qf1_params.append(qf1_param)
+
+        for qf0_param, qf1_param in zip(qf0_params[-2:], qf1_params[-2:]):
+            qf0_param.requires_grad = True
+            qf1_param.requires_grad = True
+
+    def _unfreeze(self, model):
+        for parameter in model.parameters():
+            parameter.requires_grad = True
+
+    def _critic_loss(self, replay_data, ):
+        with th.no_grad():
+            # Select action according to policy and add clipped noise
+            noise = replay_data.actions.clone().data.normal_(0, self.target_policy_noise)
+            noise = noise.clamp(-self.target_noise_clip, self.target_noise_clip)
+            next_actions = (self.actor_target(replay_data.next_observations) + noise).clamp(-1, 1)
+
+            # Compute the next Q-values: min over all critics targets
+            next_q_values = th.cat(self.critic_target(replay_data.next_observations, next_actions), dim=1)
+            next_q_values, _ = th.min(next_q_values, dim=1, keepdim=True)
+            target_q_values = replay_data.rewards + (1 - replay_data.dones) * self.gamma * next_q_values
+
+        # Get current Q-values estimates for each critic network
+        current_q_values = self.critic(replay_data.observations, replay_data.actions)
+
+        # Compute critic loss
+        return sum(F.mse_loss(current_q, target_q_values) for current_q in current_q_values)
+
+    def _critic_q(self, replay_data, ):
+        with th.no_grad():
+            # Select action according to policy and add clipped noise
+            noise = replay_data.actions.clone().data.normal_(0, self.target_policy_noise)
+            noise = noise.clamp(-self.target_noise_clip, self.target_noise_clip)
+            next_actions = (self.actor_target(replay_data.next_observations) + noise).clamp(-1, 1)
+
+            # Compute the next Q-values: min over all critics targets
+            next_q_values = th.cat(self.critic_target(replay_data.next_observations, next_actions), dim=1)
+            next_q_values, _ = th.min(next_q_values, dim=1, keepdim=True)
+            target_q_values = replay_data.rewards + (1 - replay_data.dones) * self.gamma * next_q_values
+
+        # Get current Q-values estimates for each critic network
+        current_q_values = self.critic(replay_data.observations, replay_data.actions)
+
+        # Compute critic loss
+        return current_q_values, target_q_values
+
+    def _update_freeze_features_for_aug(self, replay_data_observed, replay_data_aug, actor_losses, critic_losses):
+        # zero gradients
+        self.actor.optimizer.zero_grad()
+        self.critic.optimizer.zero_grad()
+
+        # actor_prev = copy.deepcopy(self.actor)
+        # critic_prev = copy.deepcopy(self.critic)
+
+        # accumulate observed critic gradients
+        current_q_values_obs, target_q_values_obs = self._critic_q(replay_data_observed)
+        self._freeze_critic_features()
+        current_q_values_aug, target_q_values_aug = self._critic_q(replay_data_aug)
+        self._unfreeze(self.critic)
+        current_q_values = (
+            th.concat([current_q_values_obs[0], current_q_values_aug[0]]),
+            th.concat([current_q_values_obs[1], current_q_values_aug[1]]),
+        )
+        target_q_values = th.concat([target_q_values_obs, target_q_values_aug])
+        # current_q_values = current_q_values_aug
+        # target_q_values = target_q_values_aug
+        critic_loss = sum(F.mse_loss(current_q, target_q_values) for current_q in current_q_values)
+        critic_loss.backward()
+        self.critic.optimizer.step()
+        critic_losses.append(critic_loss.item())
+
+        # Delayed policy updates
+        if self._n_updates % self.policy_delay == 0:
+            # accumulate obs actor gradients
+            actor_loss_obs = -self.critic.q1_forward(replay_data_observed.observations, self.actor(replay_data_observed.observations))
+            self._freeze_actor_features()
+            actor_loss_aug = -self.critic.q1_forward(replay_data_aug.observations, self.actor(replay_data_aug.observations))
+            self._unfreeze(self.actor)
+            actor_loss = th.concat([actor_loss_obs, actor_loss_aug]).mean()
+            # actor_loss = actor_loss_aug.mean()
+            actor_loss.backward()
+            self.actor.optimizer.step()
+            actor_losses.append(actor_loss.item())
+
+            polyak_update(self.critic.parameters(), self.critic_target.parameters(), self.tau)
+            polyak_update(self.actor.parameters(), self.actor_target.parameters(), self.tau)
+            # print('Actor')
+            # for prev, curr in zip(actor_prev.parameters(), self.actor.parameters()):
+            #     print(prev.shape, curr.shape, th.allclose(prev, curr))
+            # print()
+            # print('Critic')
+            # for prev, curr in zip(critic_prev.parameters(), self.critic.parameters()):
+            #     print(prev.shape, curr.shape, th.allclose(prev, curr))
+            # print()
+
+    def _update(self, replay_data, actor_losses, critic_losses):
+        # zero gradients
+        self.actor.optimizer.zero_grad()
+        self.critic.optimizer.zero_grad()
+
+        # critic update
+        critic_loss = self._critic_loss(replay_data)
+        critic_losses.append(critic_loss.item())
+        critic_loss.backward()
+        self.critic.optimizer.step()
+
+        # Delayed policy updates
+        if self._n_updates % self.policy_delay == 0:
+            actor_loss = -self.critic.q1_forward(replay_data.observations, self.actor(replay_data.observations)).mean()
+            actor_losses.append(actor_loss.item())
+            actor_loss.backward()
+            self.actor.optimizer.step()
+
+            polyak_update(self.critic.parameters(), self.critic_target.parameters(), self.tau)
+            polyak_update(self.actor.parameters(), self.actor_target.parameters(), self.tau)
+
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
@@ -170,79 +306,14 @@ class TD3(OffPolicyAlgorithmAugment):
 
             self._n_updates += 1
             # Sample observed and augmented replay buffers
-            replay_data = self.sample_replay_buffers()
+            replay_data, observed_replay_data, aug_replay_data = self.sample_replay_buffers()
+            if self._freeze_features_for_aug_update:
+                assert self.use_aug == True
+                self._update_freeze_features_for_aug(observed_replay_data, aug_replay_data, actor_losses, critic_losses)
+            else:
+                self._update(replay_data, actor_losses, critic_losses)
 
-            with th.no_grad():
-                # Select action according to policy and add clipped noise
-                noise = replay_data.actions.clone().data.normal_(0, self.target_policy_noise)
-                noise = noise.clamp(-self.target_noise_clip, self.target_noise_clip)
-                next_actions = (self.actor_target(replay_data.next_observations) + noise).clamp(-1, 1)
-
-                # Compute the next Q-values: min over all critics targets
-                next_q_values = th.cat(self.critic_target(replay_data.next_observations, next_actions), dim=1)
-                next_q_values, _ = th.min(next_q_values, dim=1, keepdim=True)
-                target_q_values = replay_data.rewards + (1 - replay_data.dones) * self.gamma * next_q_values
-
-            # Get current Q-values estimates for each critic network
-            current_q_values = self.critic(replay_data.observations, replay_data.actions)
-
-            # Compute critic loss
-            critic_loss = sum(F.mse_loss(current_q, target_q_values) for current_q in current_q_values)
-            critic_losses.append(critic_loss.item())
-
-            # Optimize the critics
-            self.critic.optimizer.zero_grad()
-            critic_loss.backward()
-            self.critic.optimizer.step()
-
-            # Delayed policy updates
-            if self._n_updates % self.policy_delay == 0:
-                # Compute actor loss
-                actor_loss = -self.critic.q1_forward(replay_data.observations, self.actor(replay_data.observations)).mean()
-                actor_losses.append(actor_loss.item())
-
-                # Optimize the actor
-                self.actor.optimizer.zero_grad()
-                actor_loss.backward()
-                self.actor.optimizer.step()
-
-                polyak_update(self.critic.parameters(), self.critic_target.parameters(), self.tau)
-                polyak_update(self.actor.parameters(), self.actor_target.parameters(), self.tau)
-
-        # print(th.norm(self.actor.mu[0].weight))
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
         if len(actor_losses) > 0:
             self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
-
-    def learn(
-        self,
-        total_timesteps: int,
-        callback: MaybeCallback = None,
-        log_interval: int = 4,
-        eval_env: Optional[GymEnv] = None,
-        eval_freq: int = -1,
-        n_eval_episodes: int = 5,
-        tb_log_name: str = "TD3",
-        eval_log_path: Optional[str] = None,
-        reset_num_timesteps: bool = True,
-    ) -> OffPolicyAlgorithmAugment:
-
-        return super().learn(
-            total_timesteps=total_timesteps,
-            callback=callback,
-            log_interval=log_interval,
-            eval_env=eval_env,
-            eval_freq=eval_freq,
-            n_eval_episodes=n_eval_episodes,
-            tb_log_name=tb_log_name,
-            eval_log_path=eval_log_path,
-            reset_num_timesteps=reset_num_timesteps,
-        )
-
-    def _excluded_save_params(self) -> List[str]:
-        return super()._excluded_save_params() + ["actor", "critic", "actor_target", "critic_target"]
-
-    def _get_torch_save_params(self) -> Tuple[List[str], List[str]]:
-        state_dicts = ["policy", "actor.optimizer", "critic.optimizer"]
-        return state_dicts, []
