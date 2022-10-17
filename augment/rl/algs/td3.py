@@ -105,7 +105,7 @@ class TD3(OffPolicyAlgorithmAugment):
         aug_n: Optional[int] = 1,
         aug_buffer: Optional[bool] = True,
         aug_constraint: Optional[float] = 0,
-        freeze_features_for_aug_update: Optional[bool] = True
+        freeze_features_for_aug_update: Optional[bool] = False
     ):
 
         # policy_kwargs.update({'features_extractor_class': RBFExtractor})
