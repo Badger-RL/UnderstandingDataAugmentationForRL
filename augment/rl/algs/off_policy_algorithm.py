@@ -169,8 +169,10 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             dist = self.replay_buffer.marginal_hist + self.aug_constraint*self.replay_buffer.num_states
             dist /= dist.sum()
 
+        aug_n = self.aug_n_floor + int(np.random.random() < self.aug_prob)
+        if aug_n < 1: return None, None, None, None, None, None
         aug_transition = self.aug_function.augment(
-            self.aug_n_floor + int(np.random.random() < self.aug_prob),
+            aug_n,
             obs,
             next_obs,
             action,
@@ -254,8 +256,9 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                 dones,
                 infos,
             )
-            aug_action = self.policy.scale_action(aug_unscaled_action)
-            self.aug_replay_buffer.extend(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info)
+            if aug_obs is not None: # When aug_n < 1, we only augment a fraction of transitions.
+                aug_action = self.policy.scale_action(aug_unscaled_action)
+                self.aug_replay_buffer.extend(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info)
 
         self._last_obs = new_obs
         # Save the unnormalized observation
