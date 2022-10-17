@@ -143,7 +143,7 @@ class TD3(OffPolicyAlgorithmAugment):
         self.policy_delay = policy_delay
         self.target_noise_clip = target_noise_clip
         self.target_policy_noise = target_policy_noise
-        self._freeze_features_for_aug_update = freeze_features_for_aug_update
+        self.freeze_features_for_aug_update = freeze_features_for_aug_update
 
         if _init_setup_model:
             self._setup_model()
@@ -307,7 +307,7 @@ class TD3(OffPolicyAlgorithmAugment):
             self._n_updates += 1
             # Sample observed and augmented replay buffers
             replay_data, observed_replay_data, aug_replay_data = self.sample_replay_buffers()
-            if self._freeze_features_for_aug_update:
+            if self.freeze_features_for_aug_update:
                 assert self.use_aug == True
                 self._update_freeze_features_for_aug(observed_replay_data, aug_replay_data, actor_losses, critic_losses)
             else:
