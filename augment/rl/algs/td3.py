@@ -307,9 +307,12 @@ class TD3(OffPolicyAlgorithmAugment):
             self._n_updates += 1
             # Sample observed and augmented replay buffers
             replay_data, observed_replay_data, aug_replay_data = self.sample_replay_buffers()
-            if self.freeze_features_for_aug_update:
+            if self.freeze_features_for_aug_update == 1:
                 assert self.use_aug == True
                 self._update_freeze_features_for_aug(observed_replay_data, aug_replay_data, actor_losses, critic_losses)
+            elif self.freeze_features_for_aug_update == -1:
+                assert self.use_aug == True
+                self._update_freeze_features_for_aug(aug_replay_data, observed_replay_data, actor_losses, critic_losses)
             else:
                 self._update(replay_data, actor_losses, critic_losses)
 
