@@ -11,6 +11,7 @@ import torch as th
 
 # from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3 import HerReplayBuffer
+from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy
@@ -18,7 +19,7 @@ from stable_baselines3.common.save_util import save_to_pkl, load_from_pkl
 from stable_baselines3.common.type_aliases import GymEnv, Schedule, ReplayBufferSamples
 from stable_baselines3.common.vec_env import VecNormalize
 
-from augment.rl.algs.buffers import ReplayBuffer
+# from augment.rl.algs.buffers import ReplayBuffer
 from augment.rl.augmentation_functions import AugmentationFunction
 
 
