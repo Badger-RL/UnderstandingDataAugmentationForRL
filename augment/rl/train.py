@@ -48,6 +48,7 @@ if __name__ == '__main__':
     parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={},
                         help="Optional ADDITIONAL keyword argument to pass to the policy constructor")
     parser.add_argument("--freeze-features-for-aug-update", type=int, default=0)
+    parser.add_argument("--aug-freq", type=str, default=1)
 
 
     # saving
@@ -130,6 +131,8 @@ if __name__ == '__main__':
 
     # augmentation
     if args.aug_function:
+        if 'her' in args.aug_function:
+            assert args.aug_freq == 'episode'
         aug_buffer = args.aug_buffer
         aug_ratio = args.aug_ratio
         aug_schedule = args.aug_schedule #
@@ -147,6 +150,10 @@ if __name__ == '__main__':
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
         hyperparams['freeze_features_for_aug_update'] = args.freeze_features_for_aug_update
+        if args.aug_freq == 'episode':
+            hyperparams['aug_freq'] = args.aug_freq
+        else:
+            hyperparams['aug_freq'] = int(args.aug_freq)
 
 
     ####################################################################################################################
