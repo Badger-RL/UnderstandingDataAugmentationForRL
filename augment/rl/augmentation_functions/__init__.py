@@ -1,6 +1,7 @@
 from augment.rl.augmentation_functions.fetch import FetchReachHER
 from augment.rl.augmentation_functions.inverted_pendulum import *
 from augment.rl.augmentation_functions.lqr import LQRTranslate, LQRRotate
+from augment.rl.augmentation_functions.meetup import MeetUpTranslate, MeetUpRotate, MeetUpRotateTranslate
 from augment.rl.augmentation_functions.predator_prey import *
 from augment.rl.augmentation_functions.reacher_k import *
 from augment.rl.augmentation_functions.swimmer_k import SwimmerReflect
@@ -52,6 +53,11 @@ AUGMENTATION_FUNCTIONS = {
     'PredatorPreyBox-v0': predator_prey_box_augmentation_functions,
     'PredatorPreyDense-v0': predator_prey_disk_augmentation_functions,
     'PredatorPreyBoxDense-v0': predator_prey_box_augmentation_functions,
+    'MeetUp-v0': {
+        'translate': MeetUpTranslate,
+        'rotate': MeetUpRotate,
+        'rotate_translate': MeetUpRotateTranslate,
+    },
     'FetchReach-v1': {
         'her': FetchReachHER,
     }

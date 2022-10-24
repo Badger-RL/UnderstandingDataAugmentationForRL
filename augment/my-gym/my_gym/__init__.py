@@ -164,3 +164,9 @@ register(
 #     entry_point="my_gym.envs:PredatorPreySimpleEnv",
 #     max_episode_steps=100,
 # )
+###############################################################################
+register(
+    id="MeetUp-v0",
+    entry_point="my_gym.envs:MeetUpEnv",
+    max_episode_steps=100,
+)

@@ -58,7 +58,7 @@ class PredatorPreyAugmentationFunction(AugmentationFunction):
         return at_goal
 
     def _set_dense_reward(self, reward, next_obs, at_goal):
-        dist = np.linalg.norm(next_obs[:, :2] - next_obs[:, 2:], axis=-1)
+        dist = np.linalg.norm(next_obs[:, 2:] - next_obs[:, :2], axis=-1)
         reward[:] = -dist
 
     def _set_sparse_reward(self, reward, next_obs, at_goal):
