@@ -110,7 +110,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         aug_n: Optional[int] = 1,
         aug_buffer: Optional[bool] = True,
         aug_constraint: Optional[float] = None,
-        aug_freq: Optional[Union[int, str]] = 'episode',
+        aug_freq: Optional[Union[int, str]] = 1,
     ):
 
         super().__init__(

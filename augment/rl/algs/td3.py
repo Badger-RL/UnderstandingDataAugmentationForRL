@@ -103,6 +103,7 @@ class TD3(OffPolicyAlgorithmAugment):
         aug_function: Optional[AugmentationFunction] = None,
         aug_ratio: Optional[Union[float, Schedule]] = None,
         aug_n: Optional[int] = 1,
+        aug_freq: Optional[Union[int, str]] = 1,
         aug_buffer: Optional[bool] = True,
         aug_constraint: Optional[float] = 0,
         freeze_features_for_aug_update: Optional[bool] = False
@@ -137,7 +138,8 @@ class TD3(OffPolicyAlgorithmAugment):
             aug_ratio=aug_ratio,
             aug_n=aug_n,
             aug_buffer=aug_buffer,
-            aug_constraint=aug_constraint
+            aug_constraint=aug_constraint,
+            aug_freq=aug_freq
         )
 
         self.policy_delay = policy_delay
@@ -159,33 +161,6 @@ class TD3(OffPolicyAlgorithmAugment):
         self.actor_target = self.policy.actor_target
         self.critic = self.policy.critic
         self.critic_target = self.policy.critic_target
-
-    def _freeze_actor_features(self):
-        params = []
-        for parameter in self.actor.parameters():
-            parameter.requires_grad = False
-            params.append(parameter)
-
-        for parameter in params[-2:]:
-            parameter.requires_grad = True
-
-    def _freeze_critic_features(self):
-        qf0_params = []
-        qf1_params = []
-
-        for qf0_param, qf1_param in zip(self.critic.qf0.parameters(), self.critic.qf1.parameters()):
-            qf0_param.requires_grad = False
-            qf1_param.requires_grad = False
-            qf0_params.append(qf0_param)
-            qf1_params.append(qf1_param)
-
-        for qf0_param, qf1_param in zip(qf0_params[-2:], qf1_params[-2:]):
-            qf0_param.requires_grad = True
-            qf1_param.requires_grad = True
-
-    def _unfreeze(self, model):
-        for parameter in model.parameters():
-            parameter.requires_grad = True
 
     def _critic_loss(self, replay_data, ):
         with th.no_grad():
@@ -320,3 +295,30 @@ class TD3(OffPolicyAlgorithmAugment):
         if len(actor_losses) > 0:
             self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
+
+    def _freeze_actor_features(self):
+        params = []
+        for parameter in self.actor.parameters():
+            parameter.requires_grad = False
+            params.append(parameter)
+
+        for parameter in params[-2:]:
+            parameter.requires_grad = True
+
+    def _freeze_critic_features(self):
+        qf0_params = []
+        qf1_params = []
+
+        for qf0_param, qf1_param in zip(self.critic.qf0.parameters(), self.critic.qf1.parameters()):
+            qf0_param.requires_grad = False
+            qf1_param.requires_grad = False
+            qf0_params.append(qf0_param)
+            qf1_params.append(qf1_param)
+
+        for qf0_param, qf1_param in zip(qf0_params[-2:], qf1_params[-2:]):
+            qf0_param.requires_grad = True
+            qf1_param.requires_grad = True
+
+    def _unfreeze(self, model):
+        for parameter in model.parameters():
+            parameter.requires_grad = True

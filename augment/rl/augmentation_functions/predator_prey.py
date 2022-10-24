@@ -221,3 +221,42 @@ class PredatorPreyHER(PredatorPreyAugmentationFunction):
         self._set_done_and_info(done, infos, at_goal)
 
         return obs, next_obs, action, reward, done, infos
+
+class PredatorPreyRotateRestrictedHER(PredatorPreyRotateRestricted):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _set_goal(self, obs, next_obs, action):
+        final_pos = next_obs[-1, :2].copy()
+        obs[:, 2:] = final_pos
+        next_obs[:, 2:] = final_pos
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 ):
+
+
+        self._set_dynamics(obs, next_obs, action)
+        self._set_goal(obs, next_obs, action)
+        self._clip_obs(next_obs)
+        at_goal = self._get_at_goal(next_obs)
+        final_step = np.argmax(at_goal)
+        obs = obs[:final_step+1]
+        next_obs = next_obs[:final_step+1]
+        action = action[:final_step+1]
+        reward = reward[:final_step+1]
+        done = done[:final_step+1]
+        infos = infos[:final_step+1]
+        at_goal = at_goal[:final_step+1]
+
+        self._set_reward(reward, next_obs, at_goal)
+        self._set_done_and_info(done, infos, at_goal)
+
+        return obs, next_obs, action, reward, done, infos

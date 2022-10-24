@@ -10,7 +10,8 @@ predator_prey_box_augmentation_functions = {
         'rotate': PredatorPreyRotateRestricted,
         'translate': PredatorPreyTranslate,
         'translate_proximal': PredatorPreyTranslateProximal,
-        'her': PredatorPreyHER
+        'her': PredatorPreyHER,
+        'rotate_her': PredatorPreyRotateRestrictedHER,
 }
 
 predator_prey_disk_augmentation_functions = {
