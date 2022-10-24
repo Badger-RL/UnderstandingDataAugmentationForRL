@@ -96,7 +96,7 @@ class PredatorPreyTranslate(PredatorPreyAugmentationFunction):
         super().__init__(aug_d=aug_d, **kwargs)
 
     def _set_dynamics(self, obs, next_obs, action):
-        n = obs.shape[0]
+        n = 1
         v = np.random.uniform(low=-self.aug_d, high=+self.aug_d, size=(n, 2))
 
         obs[:, :2] = v
@@ -104,7 +104,7 @@ class PredatorPreyTranslate(PredatorPreyAugmentationFunction):
         dy = action[:, 0] * np.sin(action[:, 1])
         next_obs[:, 0] = v[:, 0] + dx * self.delta
         next_obs[:, 1] = v[:, 1] + dy * self.delta
-        # next_obs[:, :2] = np.clip(next_obs[:, :2], -self.boundary, self.boundary)
+        next_obs[:, :2] = np.clip(next_obs[:, :2], -self.boundary, self.boundary)
 
 
 class PredatorPreyRotate(PredatorPreyAugmentationFunction):
@@ -127,7 +127,7 @@ class PredatorPreyRotate(PredatorPreyAugmentationFunction):
         action[:, 1] %= (2 * np.pi)
 
     def _set_dynamics(self, obs, next_obs, action):
-        n = obs.shape[0]
+        n = 1
         if self.restricted:
             theta = np.random.choice(self.thetas, replace=False, size=(n,))
         else:
@@ -156,14 +156,14 @@ class PredatorPreyTranslateProximal(PredatorPreyTranslate):
         print('p:', self.p)
 
     def _translate_proximal(self, obs):
-        n = obs.shape[0]
+        n = 1
         goal = obs[:, 2:]
         disp = self._sampling_function(self.delta, n)
         v = goal + disp
         return v
 
     def _translate_uniform(self, obs):
-        n = obs.shape[0]
+        n = 1
         goal = obs[:, 2:]
         v = self._sampling_function(self.aug_d, n)
         norm = np.linalg.norm(goal-v)
@@ -183,3 +183,41 @@ class PredatorPreyTranslateProximal(PredatorPreyTranslate):
         obs[:, 0] = v[:, 0] - dx * self.delta
         obs[:, 1] = v[:, 1] - dy * self.delta
 
+
+class PredatorPreyHER(PredatorPreyAugmentationFunction):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _set_dynamics(self, obs, next_obs, action):
+        final_pos = next_obs[-1, :2].copy()
+        obs[:, 2:] = final_pos
+        next_obs[:, 2:] = final_pos
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 ):
+
+
+        self._set_dynamics(obs, next_obs, action)
+        self._clip_obs(next_obs)
+        at_goal = self._get_at_goal(next_obs)
+        final_step = np.argmax(at_goal)
+        obs = obs[:final_step+1]
+        next_obs = next_obs[:final_step+1]
+        action = action[:final_step+1]
+        reward = reward[:final_step+1]
+        done = done[:final_step+1]
+        infos = infos[:final_step+1]
+        at_goal = at_goal[:final_step+1]
+
+        self._set_reward(reward, next_obs, at_goal)
+        self._set_done_and_info(done, infos, at_goal)
+
+        return obs, next_obs, action, reward, done, infos

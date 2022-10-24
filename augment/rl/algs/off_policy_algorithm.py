@@ -110,7 +110,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         aug_n: Optional[int] = 1,
         aug_buffer: Optional[bool] = True,
         aug_constraint: Optional[float] = None,
-        aug_freq: Optional[Union[int, str]] = 1,
+        aug_freq: Optional[Union[int, str]] = 'episode',
     ):
 
         super().__init__(
@@ -154,6 +154,8 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
 
         self.use_aug = self.aug_function is not None
         if self.use_aug:
+            assert self._vec_normalize_env is None
+            assert not self.optimize_memory_usage
             self._setup_augmented_replay_buffer()
 
     def _setup_augmented_replay_buffer(self):
@@ -436,11 +438,12 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             self._store_transition(replay_buffer, buffer_actions, new_obs, rewards, dones, infos)
 
             aug_indices.append(self.replay_buffer.size()-1)
-            if self.use_aug:
-                assert self._vec_normalize_env is None
-                assert not self.optimize_memory_usage
-                transitions = self.replay_buffer._get_samples(np.array(aug_indices), env=self._vec_normalize_env)
-                # unscaled_action = self.policy.unscale_action(transitions.actions)
+            if self.aug_freq == 'episode':
+                do_aug = self.use_aug and dones.all()
+            else:
+                do_aug = self.use_aug and (num_collected_steps % self.aug_freq == 0)
+
+            if do_aug:
                 env_indices = np.random.randint(0, high=self.n_envs, size=(len(aug_indices),))
                 obs = self.replay_buffer.observations[aug_indices, env_indices, :]
                 next_obs = self.replay_buffer.next_observations[aug_indices, env_indices, :]
