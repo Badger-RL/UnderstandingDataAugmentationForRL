@@ -22,8 +22,8 @@ class AugmentationFunction:
         aug_next_obs = np.repeat(deepcopy(next_obs), augmentation_n, axis=0)
         aug_action = np.repeat(deepcopy(action), augmentation_n, axis=0)
         aug_reward = np.repeat(deepcopy(reward), augmentation_n, axis=0)
-        aug_done = np.repeat(deepcopy(done), augmentation_n, axis=0)
-        aug_infos = np.repeat(deepcopy([infos]), augmentation_n, axis=0)
+        aug_done = np.repeat(deepcopy(done), augmentation_n, axis=0).astype(np.bool)
+        aug_infos = np.repeat(deepcopy(infos), augmentation_n, axis=0)
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
