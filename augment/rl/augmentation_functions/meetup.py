@@ -63,10 +63,11 @@ class MeetUpTranslate(MeetUpAugmentationFunction):
 
     def __init__(self, aug_d=1.0, **kwargs):
         super().__init__(aug_d=aug_d, **kwargs)
+        self.aug_d = aug_d
 
     def _set_dynamics(self, obs, next_obs, action):
         n = 1
-        v = np.random.uniform(low=-0.25, high=+0.25, size=(n, 2))
+        v = np.random.uniform(low=-self.aug_d, high=+self.aug_d, size=(n, 2))
         obs[:, :2] += v
         obs[:, 2:] += v
 
