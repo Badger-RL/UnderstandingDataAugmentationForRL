@@ -7,11 +7,11 @@ import gym, my_gym, gymnasium
 import numpy as np
 import torch
 import yaml
-from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
 from augment.rl.algs.policies import NeuralExtractor
 from augment.rl.augmentation_functions import AUGMENTATION_FUNCTIONS
+from augment.rl.callbacks import EvalCallback
 from augment.rl.utils import ALGOS, StoreDict, get_save_dir, preprocess_action_noise, read_hyperparameters, SCHEDULES
 from stable_baselines3.common.utils import set_random_seed
 
@@ -54,6 +54,7 @@ if __name__ == '__main__':
     # saving
     parser.add_argument("-f", "--log-folder", help="Log folder", type=str, default="results")
     parser.add_argument("--save-best-model", default=True, type=bool)
+    parser.add_argument("--model-save-freq", default=None, type=int)
     parser.add_argument("-exp", "--experiment-name", help="<log folder>/<env_id>/<algo>/<experiment name>/run_<run_id>", type=str, default="")
     parser.add_argument("--run-id", help="Run id to append to env save directory", default=None, type=int)
     parser.add_argument("--save-replay-buffer", type=bool, default=False)
@@ -194,7 +195,9 @@ if __name__ == '__main__':
     torch.set_num_threads(1)
 
 
-    eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq, log_path=save_dir, best_model_save_path=best_model_save_dir)
+    eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq,
+                                 model_save_freq=args.model_save_freq,
+                                 log_path=save_dir, best_model_save_path=best_model_save_dir)
     callbacks = [eval_callback]
     # if args.save_replay_buffer:
     #     hist_callback = SaveReplayDistribution(log_path=save_dir, save_freq=args.eval_freq)
