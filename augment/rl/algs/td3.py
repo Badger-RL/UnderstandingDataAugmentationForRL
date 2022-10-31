@@ -107,7 +107,8 @@ class TD3(OffPolicyAlgorithmAugment):
         aug_buffer: Optional[bool] = True,
         aug_constraint: Optional[float] = 0,
         freeze_features_for_aug_update: Optional[int] = 0,
-        separate_actor_critic_aug: Optional[int] = 0,
+        actor_data_source: Optional[str] = 'both',
+        critic_data_source: Optional[str] = 'both'
     ):
 
         # policy_kwargs.update({'features_extractor_class': RBFExtractor})
@@ -147,7 +148,14 @@ class TD3(OffPolicyAlgorithmAugment):
         self.target_noise_clip = target_noise_clip
         self.target_policy_noise = target_policy_noise
         self.freeze_features_for_aug_update = freeze_features_for_aug_update
-        self.separate_actor_critic_aug = separate_actor_critic_aug
+
+        assert actor_data_source == 'obs' or actor_data_source == 'aug' or actor_data_source == 'both'
+        assert critic_data_source == 'obs' or critic_data_source == 'aug' or critic_data_source == 'both'
+        if actor_data_source != 'both' or critic_data_source != 'both':
+            assert self.use_aug
+
+        self.actor_data_source = actor_data_source
+        self.critic_data_source = critic_data_source
 
         if _init_setup_model:
             self._setup_model()
@@ -269,27 +277,6 @@ class TD3(OffPolicyAlgorithmAugment):
             polyak_update(self.critic.parameters(), self.critic_target.parameters(), self.tau)
             polyak_update(self.actor.parameters(), self.actor_target.parameters(), self.tau)
 
-    def _update(self, replay_data, actor_losses, critic_losses):
-        # zero gradients
-        self.actor.optimizer.zero_grad()
-        self.critic.optimizer.zero_grad()
-
-        # critic update
-        critic_loss = self._critic_loss(replay_data)
-        critic_losses.append(critic_loss.item())
-        critic_loss.backward()
-        self.critic.optimizer.step()
-
-        # Delayed policy updates
-        if self._n_updates % self.policy_delay == 0:
-            actor_loss = -self.critic.q1_forward(replay_data.observations, self.actor(replay_data.observations)).mean()
-            actor_losses.append(actor_loss.item())
-            actor_loss.backward()
-            self.actor.optimizer.step()
-
-            polyak_update(self.critic.parameters(), self.critic_target.parameters(), self.tau)
-            polyak_update(self.actor.parameters(), self.actor_target.parameters(), self.tau)
-
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
@@ -304,32 +291,33 @@ class TD3(OffPolicyAlgorithmAugment):
             self._n_updates += 1
             # Sample observed and augmented replay buffers
             replay_data, observed_replay_data, aug_replay_data = self.sample_replay_buffers()
+
+            actor_data = replay_data
+            critic_data = replay_data
+
+            if self.critic_data_source == 'both':
+                critic_data = replay_data
+            elif self.critic_data_source == 'obs':
+                critic_data = replay_data
+            elif self.critic_data_source == 'aug':
+                critic_data = replay_data
+
+            if self.actor_data_source == 'both':
+                actor_data = replay_data
+            elif self.actor_data_source == 'obs':
+                actor_data = replay_data
+            elif self.actor_data_source == 'aug':
+                actor_data = replay_data
+
             if self.freeze_features_for_aug_update == 1:
                 assert self.use_aug == True
                 self._update_freeze_features_for_aug(observed_replay_data, aug_replay_data, actor_losses, critic_losses)
             elif self.freeze_features_for_aug_update == -1:
                 assert self.use_aug == True
                 self._update_freeze_features_for_aug(aug_replay_data, observed_replay_data, actor_losses, critic_losses)
-            elif self.separate_actor_critic_aug == 1:
-                self._update_separate(actor_replay_data=observed_replay_data, critic_replay_data=aug_replay_data,
-                                      actor_losses=actor_losses, critic_losses=critic_losses)
-            elif self.separate_actor_critic_aug == 2:
-                self._update_separate(actor_replay_data=observed_replay_data, critic_replay_data=replay_data,
-                                      actor_losses=actor_losses, critic_losses=critic_losses)
-            elif self.separate_actor_critic_aug == 3:
-                self._update_separate(actor_replay_data=aug_replay_data, critic_replay_data=observed_replay_data,
-                                      actor_losses=actor_losses, critic_losses=critic_losses)
-            elif self.separate_actor_critic_aug == 4:
-                self._update_separate(actor_replay_data=aug_replay_data, critic_replay_data=replay_data,
-                                      actor_losses=actor_losses, critic_losses=critic_losses)
-            elif self.separate_actor_critic_aug == 5:
-                self._update_separate(actor_replay_data=replay_data, critic_replay_data=aug_replay_data,
-                                      actor_losses=actor_losses, critic_losses=critic_losses)
-            elif self.separate_actor_critic_aug == 6:
-                self._update_separate(actor_replay_data=replay_data, critic_replay_data=observed_replay_data,
-                                      actor_losses=actor_losses, critic_losses=critic_losses)
-            else:
-                self._update(replay_data, actor_losses, critic_losses)
+
+            self._update_separate(actor_replay_data=actor_data, critic_replay_data=critic_data,
+                                  actor_losses=actor_losses, critic_losses=critic_losses)
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
         if len(actor_losses) > 0:
