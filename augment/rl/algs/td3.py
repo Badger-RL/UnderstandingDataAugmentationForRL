@@ -106,7 +106,8 @@ class TD3(OffPolicyAlgorithmAugment):
         aug_freq: Optional[Union[int, str]] = 1,
         aug_buffer: Optional[bool] = True,
         aug_constraint: Optional[float] = 0,
-        freeze_features_for_aug_update: Optional[bool] = False
+        freeze_features_for_aug_update: Optional[int] = 0,
+        separate_actor_critic_aug: Optional[int] = 0,
     ):
 
         # policy_kwargs.update({'features_extractor_class': RBFExtractor})
@@ -146,6 +147,7 @@ class TD3(OffPolicyAlgorithmAugment):
         self.target_noise_clip = target_noise_clip
         self.target_policy_noise = target_policy_noise
         self.freeze_features_for_aug_update = freeze_features_for_aug_update
+        self.separate_actor_critic_aug = separate_actor_critic_aug
 
         if _init_setup_model:
             self._setup_model()
@@ -246,6 +248,26 @@ class TD3(OffPolicyAlgorithmAugment):
             # for prev, curr in zip(critic_prev.parameters(), self.critic.parameters()):
             #     print(prev.shape, curr.shape, th.allclose(prev, curr))
             # print()
+    def _update_separate(self, actor_replay_data, critic_replay_data, actor_losses, critic_losses):
+        # zero gradients
+        self.actor.optimizer.zero_grad()
+        self.critic.optimizer.zero_grad()
+
+        # critic update
+        critic_loss = self._critic_loss(critic_replay_data)
+        critic_losses.append(critic_loss.item())
+        critic_loss.backward()
+        self.critic.optimizer.step()
+
+        # Delayed policy updates
+        if self._n_updates % self.policy_delay == 0:
+            actor_loss = -self.critic.q1_forward(actor_replay_data.observations, self.actor(actor_replay_data.observations)).mean()
+            actor_losses.append(actor_loss.item())
+            actor_loss.backward()
+            self.actor.optimizer.step()
+
+            polyak_update(self.critic.parameters(), self.critic_target.parameters(), self.tau)
+            polyak_update(self.actor.parameters(), self.actor_target.parameters(), self.tau)
 
     def _update(self, replay_data, actor_losses, critic_losses):
         # zero gradients
@@ -288,6 +310,12 @@ class TD3(OffPolicyAlgorithmAugment):
             elif self.freeze_features_for_aug_update == -1:
                 assert self.use_aug == True
                 self._update_freeze_features_for_aug(aug_replay_data, observed_replay_data, actor_losses, critic_losses)
+            elif self.separate_actor_critic_aug == 1:
+                self._update_separate(actor_replay_data=observed_replay_data, critic_replay_data=aug_replay_data,
+                                      actor_losses=actor_losses, critic_losses=critic_losses)
+            elif self.separate_actor_critic_aug == -1:
+                self._update_separate(actor_replay_data=aug_replay_data, critic_replay_data=observed_replay_data,
+                                      actor_losses=actor_losses, critic_losses=critic_losses)
             else:
                 self._update(replay_data, actor_losses, critic_losses)
 

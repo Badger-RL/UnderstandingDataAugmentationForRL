@@ -48,6 +48,7 @@ if __name__ == '__main__':
     parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={},
                         help="Optional ADDITIONAL keyword argument to pass to the policy constructor")
     parser.add_argument("--freeze-features-for-aug-update", type=int, default=0)
+    parser.add_argument("--separate-actor-critic-aug", type=int, default=0)
     parser.add_argument("--aug-freq", type=str, default=1)
 
 
@@ -151,6 +152,8 @@ if __name__ == '__main__':
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
         hyperparams['freeze_features_for_aug_update'] = args.freeze_features_for_aug_update
+        hyperparams['separate_actor_critic_aug'] = args.separate_actor_critic_aug
+
         if args.aug_freq == 'episode':
             hyperparams['aug_freq'] = args.aug_freq
         else:
