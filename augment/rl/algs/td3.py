@@ -316,10 +316,16 @@ class TD3(OffPolicyAlgorithmAugment):
             elif self.separate_actor_critic_aug == 2:
                 self._update_separate(actor_replay_data=observed_replay_data, critic_replay_data=replay_data,
                                       actor_losses=actor_losses, critic_losses=critic_losses)
-            elif self.separate_actor_critic_aug == -1:
+            elif self.separate_actor_critic_aug == 3:
                 self._update_separate(actor_replay_data=aug_replay_data, critic_replay_data=observed_replay_data,
                                       actor_losses=actor_losses, critic_losses=critic_losses)
-            elif self.separate_actor_critic_aug == -2:
+            elif self.separate_actor_critic_aug == 4:
+                self._update_separate(actor_replay_data=aug_replay_data, critic_replay_data=replay_data,
+                                      actor_losses=actor_losses, critic_losses=critic_losses)
+            elif self.separate_actor_critic_aug == 5:
+                self._update_separate(actor_replay_data=replay_data, critic_replay_data=aug_replay_data,
+                                      actor_losses=actor_losses, critic_losses=critic_losses)
+            elif self.separate_actor_critic_aug == 6:
                 self._update_separate(actor_replay_data=replay_data, critic_replay_data=observed_replay_data,
                                       actor_losses=actor_losses, critic_losses=critic_losses)
             else:
