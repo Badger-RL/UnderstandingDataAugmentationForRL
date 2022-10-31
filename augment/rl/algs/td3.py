@@ -106,9 +106,11 @@ class TD3(OffPolicyAlgorithmAugment):
         aug_freq: Optional[Union[int, str]] = 1,
         aug_buffer: Optional[bool] = True,
         aug_constraint: Optional[float] = 0,
-        freeze_features_for_aug_update: Optional[int] = 0,
         actor_data_source: Optional[str] = 'both',
-        critic_data_source: Optional[str] = 'both'
+        critic_data_source: Optional[str] = 'both',
+        # freeze_layers: Optional[List[str]] = ('both', 'both', 'both'),
+        obs_active_layer_mask: Optional[List[int]] = (),
+        aug_active_layer_mask: Optional[List[int]] = (),
     ):
 
         # policy_kwargs.update({'features_extractor_class': RBFExtractor})
@@ -147,7 +149,6 @@ class TD3(OffPolicyAlgorithmAugment):
         self.policy_delay = policy_delay
         self.target_noise_clip = target_noise_clip
         self.target_policy_noise = target_policy_noise
-        self.freeze_features_for_aug_update = freeze_features_for_aug_update
 
         assert actor_data_source == 'obs' or actor_data_source == 'aug' or actor_data_source == 'both'
         assert critic_data_source == 'obs' or critic_data_source == 'aug' or critic_data_source == 'both'
@@ -157,10 +158,23 @@ class TD3(OffPolicyAlgorithmAugment):
         self.actor_data_source = actor_data_source
         self.critic_data_source = critic_data_source
 
+        self.obs_active_layer_mask = []
+        self.aug_active_layer_mask = []
+        for i, j in zip(obs_active_layer_mask, aug_active_layer_mask):
+            self.obs_active_layer_mask.extend([i, i])
+            self.aug_active_layer_mask.extend([j, j])
+        # 3 layers with 3 biases
+        # self.actor_freeze_layers = []
+        # self.critic_freeze_layers = []
+        # for i, j in zip(actor_freeze_layers, critic_freeze_layers):
+        #     self.actor_freeze_layers.extend([2*i, 2*i+1])
+        #     self.critic_freeze_layers.extend([2*j, 2*j+1])
+        self.freeze_layers = len(self.obs_active_layer_mask) > 0 or len(self.aug_active_layer_mask) > 0
+        if self.freeze_layers:
+            assert self.use_aug == True
+
         if _init_setup_model:
             self._setup_model()
-
-        self.aug_critic_only = False
 
     def _setup_model(self) -> None:
         super()._setup_model()
@@ -208,26 +222,32 @@ class TD3(OffPolicyAlgorithmAugment):
         # Compute critic loss
         return current_q_values, target_q_values
 
-    def _update_freeze_features_for_aug(self, replay_data_observed, replay_data_aug, actor_losses, critic_losses):
+    def _update_freeze(self, replay_data_observed, replay_data_aug, actor_losses, critic_losses):
         # zero gradients
         self.actor.optimizer.zero_grad()
         self.critic.optimizer.zero_grad()
 
+        # uncomment to test freezing
         # actor_prev = copy.deepcopy(self.actor)
         # critic_prev = copy.deepcopy(self.critic)
 
         # accumulate observed critic gradients
-        current_q_values_obs, target_q_values_obs = self._critic_q(replay_data_observed)
-        self._freeze_critic_features()
+        self._freeze_critic_features(active_layer_mask=self.obs_active_layer_mask)
+        current_q_values_obs, target_q_values_obs = self._critic_q(replay_data_observed) # comment out to test freezing
+        self._unfreeze(self.critic)
+
+        # accumulate aug critic gradients
+        self._freeze_critic_features(active_layer_mask=self.aug_active_layer_mask)
         current_q_values_aug, target_q_values_aug = self._critic_q(replay_data_aug)
         self._unfreeze(self.critic)
-        current_q_values = (
+
+        current_q_values = ( # comment out to test freezing
             th.concat([current_q_values_obs[0], current_q_values_aug[0]]),
             th.concat([current_q_values_obs[1], current_q_values_aug[1]]),
         )
-        target_q_values = th.concat([target_q_values_obs, target_q_values_aug])
-        # current_q_values = current_q_values_aug
-        # target_q_values = target_q_values_aug
+        target_q_values = th.concat([target_q_values_obs, target_q_values_aug]) # comment out to test freezing
+        # current_q_values = current_q_values_aug # uncomment to test freezing
+        # target_q_values = target_q_values_aug # # uncomment to test freezing
         critic_loss = sum(F.mse_loss(current_q, target_q_values) for current_q in current_q_values)
         critic_loss.backward()
         self.critic.optimizer.step()
@@ -236,8 +256,12 @@ class TD3(OffPolicyAlgorithmAugment):
         # Delayed policy updates
         if self._n_updates % self.policy_delay == 0:
             # accumulate obs actor gradients
+            self._freeze_actor_features(active_layer_mask=self.obs_active_layer_mask)
             actor_loss_obs = -self.critic.q1_forward(replay_data_observed.observations, self.actor(replay_data_observed.observations))
-            self._freeze_actor_features()
+            self._unfreeze(self.actor)
+
+            # accumulate aug actor gradients
+            self._freeze_actor_features(active_layer_mask=self.aug_active_layer_mask)
             actor_loss_aug = -self.critic.q1_forward(replay_data_aug.observations, self.actor(replay_data_aug.observations))
             self._unfreeze(self.actor)
             actor_loss = th.concat([actor_loss_obs, actor_loss_aug]).mean()
@@ -256,7 +280,8 @@ class TD3(OffPolicyAlgorithmAugment):
             # for prev, curr in zip(critic_prev.parameters(), self.critic.parameters()):
             #     print(prev.shape, curr.shape, th.allclose(prev, curr))
             # print()
-    def _update_separate(self, actor_replay_data, critic_replay_data, actor_losses, critic_losses):
+
+    def _update(self, actor_replay_data, critic_replay_data, actor_losses, critic_losses):
         # zero gradients
         self.actor.optimizer.zero_grad()
         self.critic.optimizer.zero_grad()
@@ -309,43 +334,27 @@ class TD3(OffPolicyAlgorithmAugment):
             elif self.actor_data_source == 'aug':
                 actor_data = replay_data
 
-            if self.freeze_features_for_aug_update == 1:
-                assert self.use_aug == True
-                self._update_freeze_features_for_aug(observed_replay_data, aug_replay_data, actor_losses, critic_losses)
-            elif self.freeze_features_for_aug_update == -1:
-                assert self.use_aug == True
-                self._update_freeze_features_for_aug(aug_replay_data, observed_replay_data, actor_losses, critic_losses)
-
-            self._update_separate(actor_replay_data=actor_data, critic_replay_data=critic_data,
-                                  actor_losses=actor_losses, critic_losses=critic_losses)
+            if self.freeze_layers:
+                self._update_freeze(observed_replay_data, aug_replay_data, actor_losses, critic_losses)
+            else:
+                self._update(actor_replay_data=actor_data, critic_replay_data=critic_data,
+                         actor_losses=actor_losses, critic_losses=critic_losses)
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
         if len(actor_losses) > 0:
             self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
 
-    def _freeze_actor_features(self):
-        params = []
-        for parameter in self.actor.parameters():
-            parameter.requires_grad = False
-            params.append(parameter)
+    def _freeze_actor_features(self, active_layer_mask):
+        for is_active, param in zip(active_layer_mask, self.actor.parameters()):
+            if not is_active:
+                param.requires_grad = False
 
-        for parameter in params[-2:]:
-            parameter.requires_grad = True
-
-    def _freeze_critic_features(self):
-        qf0_params = []
-        qf1_params = []
-
-        for qf0_param, qf1_param in zip(self.critic.qf0.parameters(), self.critic.qf1.parameters()):
-            qf0_param.requires_grad = False
-            qf1_param.requires_grad = False
-            qf0_params.append(qf0_param)
-            qf1_params.append(qf1_param)
-
-        for qf0_param, qf1_param in zip(qf0_params[-2:], qf1_params[-2:]):
-            qf0_param.requires_grad = True
-            qf1_param.requires_grad = True
+    def _freeze_critic_features(self, active_layer_mask):
+        for is_active, qf0_param, qf1_param in zip(active_layer_mask, self.critic.qf0.parameters(), self.critic.qf1.parameters()):
+            if not is_active:
+                qf0_param.requires_grad = False
+                qf1_param.requires_grad = False
 
     def _unfreeze(self, model):
         for parameter in model.parameters():

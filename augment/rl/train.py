@@ -38,19 +38,22 @@ if __name__ == '__main__':
 
 
     # augmentation
-    parser.add_argument("--aug-function", type=str, default=None)
+    parser.add_argument("--aug-function", type=str, default='translate')
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-n", type=float, default=1)
     parser.add_argument("--aug-ratio", type=float, default=1)
+    parser.add_argument("--aug-freq", type=str, default=1)
     parser.add_argument("--aug-schedule", type=str, default="constant")
     parser.add_argument("--aug-buffer", type=bool, default=True)
     parser.add_argument("--aug-constraint", type=bool, default=None)
-    parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={},
-                        help="Optional ADDITIONAL keyword argument to pass to the policy constructor")
     parser.add_argument("--freeze-features-for-aug-update", type=int, default=0)
     parser.add_argument("--actor-data-source", type=str, default='both')
     parser.add_argument("--critic-data-source", type=str, default='both')
-    parser.add_argument("--aug-freq", type=str, default=1)
+    parser.add_argument("--obs-active-layer-mask", type=str, nargs='+', default=[])
+    parser.add_argument("--aug-active-layer-mask", type=str, nargs='+', default=[])
+    parser.add_argument("--add-policy-kwargs", type=str, nargs="*", action=StoreDict, default={},
+                        help="Optional ADDITIONAL keyword argument to pass to the policy constructor")
+
 
 
     # saving
@@ -132,6 +135,9 @@ if __name__ == '__main__':
     if not args.eval_env_kwargs: args.eval_env_kwargs = args.env_kwargs
     env_eval = Monitor(gym.make(env_id, **args.eval_env_kwargs), filename=save_dir)
 
+    hyperparams['obs_active_layer_mask'] = args.obs_active_layer_mask
+    hyperparams['aug_active_layer_mask'] = args.aug_active_layer_mask
+
     # augmentation
     if args.aug_function:
         if 'her' in args.aug_function:
@@ -152,7 +158,7 @@ if __name__ == '__main__':
         hyperparams['aug_function'] = aug_func_class(env=env, rbf_n=rbf_n, **aug_func_kwargs)
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
-        hyperparams['freeze_features_for_aug_update'] = args.freeze_features_for_aug_update
+        # hyperparams['freeze_features_for_aug_update'] = args.freeze_features_for_aug_update
         hyperparams['actor_data_source'] = args.actor_data_source
         hyperparams['critic_data_source'] = args.critic_data_source
 
