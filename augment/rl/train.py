@@ -213,6 +213,9 @@ if __name__ == '__main__':
     # if args.save_replay_buffer:
     #     hist_callback = SaveReplayDistribution(log_path=save_dir, save_freq=args.eval_freq)
     #     callbacks.append(hist_callback)
+
+    if args.model_save_freq:
+        model.save(f"{save_dir}/model_0")
     model.learn(total_timesteps=int(n_timesteps), callback=callbacks)
 
     print(f"Saving to {save_dir}/{env_id}")
