@@ -45,11 +45,9 @@ class InvertedPendulumReflect(AugmentationFunction):
             **kwargs,
     ):
 
-        delta_x = next_obs[:, 0] - obs[:,0]
-
         obs[:,0:] *= -1
         next_obs[:,0:] *= -1
         # next_obs[:,0] -= 2*delta_x
-        action = ~action
+        action *= -1
 
         return obs, next_obs, action, reward, done, infos
