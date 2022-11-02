@@ -184,7 +184,7 @@ Swimmer-v3:
 
 ### Custom Reacher
 
-Reacher4-v3: &reacher-defaults
+Reacher2-v3: &reacher-defaults
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
   learning_rate: !!float 1e-3
@@ -192,6 +192,9 @@ Reacher4-v3: &reacher-defaults
   buffer_size: !!float 1e6
   noise_type: 'normal'
   noise_std: 0.1
+
+Reacher4-v3:
+  <<: *reacher-defaults
 
 Reacher8-v3:
   <<: *reacher-defaults

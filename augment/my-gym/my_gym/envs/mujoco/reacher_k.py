@@ -8,10 +8,11 @@ from my_gym.envs.mujoco.mujoco_env import MujocoEnv
 
 
 class ReacherEnv(MujocoEnv, utils.EzPickle):
-    def __init__(self, num_links=2, goal=None, rbf_n=500):
+    def __init__(self, num_links=2, goal=None, sparse=True, rbf_n=500):
         self.num_links = num_links
         self.goal = np.array(goal)
         self.randomize_goal = goal is None
+        self.sparse = sparse
         self.rbf_n = None
 
         utils.EzPickle.__init__(self)
@@ -20,10 +21,15 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
 
     def step(self, a):
         vec = self.get_body_com("fingertip") - self.get_body_com("target")
-        reward_dist = -np.linalg.norm(vec)*self.num_links
-        reward_ctrl = -np.square(a).sum()
 
-        reward = reward_dist + reward_ctrl
+        if self.sparse:
+            reward_dist = np.linalg.norm(vec) < 0.05
+            reward_ctrl = 0
+            reward = reward_dist
+        else:
+            reward_dist = -np.linalg.norm(vec) * self.num_links
+            reward_ctrl = -np.square(a).sum()
+            reward = reward_dist + reward_ctrl
         self.do_simulation(a, self.frame_skip)
         ob = self._get_obs()
         done = False
