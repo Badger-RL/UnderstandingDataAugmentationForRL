@@ -127,7 +127,7 @@ InvertedPendulumSwingupBulletEnv-v0:
 InvertedPendulum-v2:
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
-  gamma: 0.98
+  gamma: 0.999
   buffer_size: 200000
   learning_starts: 10000
   noise_type: 'normal'
@@ -140,7 +140,7 @@ InvertedPendulum-v2:
 InvertedDoublePendulum-v2:
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
-  gamma: 0.98
+  gamma: 0.999
   buffer_size: 200000
   learning_starts: 10000
   noise_type: 'normal'

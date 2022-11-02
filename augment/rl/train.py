@@ -179,6 +179,8 @@ if __name__ == '__main__':
     # hyperparams['policy_kwargs'].update({'features_extractor_class': NeuralExtractor})
 
     # if args.data_factor
+    # NOTE: Data factor won't make sense if train_freq = [1, episode] since we can't guarantee we'll collect
+    # e.g. twice as much data between updates.
     hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
     hyperparams['batch_size'] = int(hyperparams['batch_size'] * args.data_factor)
     hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * args.data_factor)
