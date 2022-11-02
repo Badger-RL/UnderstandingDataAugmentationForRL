@@ -8,11 +8,12 @@ from my_gym.envs.mujoco.mujoco_env import MujocoEnv
 
 
 class ReacherEnv(MujocoEnv, utils.EzPickle):
-    def __init__(self, num_links=2, goal=None, sparse=True, rbf_n=500):
+    def __init__(self, num_links=2, goal=None, sparse=True, rand_central_angle=False, rbf_n=500):
         self.num_links = num_links
         self.goal = np.array(goal)
         self.randomize_goal = goal is None
         self.sparse = sparse
+        self.rand_central_angle = rand_central_angle
         self.rbf_n = None
 
         utils.EzPickle.__init__(self)
@@ -46,6 +47,9 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
             self.np_random.uniform(low=-0.1, high=0.1, size=self.model.nq)
             + self.init_qpos
         )
+
+        if self.rand_central_angle:
+            qpos[0] = np.random.uniform(-np.pi, np.pi)
 
         if self.randomize_goal:
             while True:

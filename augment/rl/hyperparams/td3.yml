@@ -208,6 +208,15 @@ Reacher16-v3:
 Reacher20-v3:
   <<: *reacher-defaults
 
+Reacher2Rand-v3:
+  <<: *reacher-defaults
+
+Reacher4Rand-v3:
+  <<: *reacher-defaults
+
+Reacher8Rand-v3:
+  <<: *reacher-defaults
+
 LQR-v0:
   <<: *mujoco-defaults
   learning_starts: 10000

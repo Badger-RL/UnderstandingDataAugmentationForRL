@@ -136,6 +136,16 @@ for k in [2,4,8,12,16,20]:
         max_episode_steps=100,
     )
 
+    register(
+        id=f'Reacher{k}Rand-v3',
+        entry_point='my_gym.envs.mujoco:ReacherEnv',
+        kwargs={
+            'num_links': k,
+            'rand_central_angle': True
+        },
+        max_episode_steps=100,
+    )
+
 ############################################################################
 
 register(
