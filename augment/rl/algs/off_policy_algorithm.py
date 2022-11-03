@@ -453,7 +453,13 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                 dones = self.replay_buffer.dones[aug_indices, env_indices]
                 timeouts = self.replay_buffer.timeouts[aug_indices, env_indices]
                 rewards = self.replay_buffer.rewards[aug_indices, env_indices]
-                infos = [[{'TimeLimit.Truncated': True}] if truncated else [{}] for truncated in timeouts]
+
+                new_infos = []
+                for info, truncated in zip(infos, timeouts):
+                    if truncated:
+                        info.update({'TimeLimit.Truncated': True})
+                    new_infos.append([info])
+                infos = new_infos
 
                 unscaled_actions = self.policy.unscale_action(actions)
                 aug_obs, aug_next_obs, aug_unscaled_action, aug_reward, aug_done, aug_info = self.augment_transition(

@@ -22,7 +22,7 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
 
     def step(self, a):
         vec = self.get_body_com("fingertip") - self.get_body_com("target")
-
+        theta = self.sim.data.qpos.flat[:self.num_links]
         if self.sparse:
             reward_dist = np.linalg.norm(vec) < 0.05
             reward_ctrl = 0
@@ -35,8 +35,8 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
         ob = self._get_obs()
         done = False
 
-        info = dict(reward_dist=reward_dist, reward_ctrl=reward_ctrl)
-
+        theta_next = self.sim.data.qpos.flat[:self.num_links]
+        info = dict(reward_dist=reward_dist, reward_ctrl=reward_ctrl, theta=theta, theta_next=theta_next)
         return ob, reward, done, info
 
     def viewer_setup(self):
