@@ -149,7 +149,7 @@ class InvertedDoublePendulumEnv(InvertedDoublePendulumEnv_original):
     def reset_model(self):
         if self.init_pos:
             qpos = self.init_qpos + self.np_random.uniform(low=-0.1, high=0.1, size=self.model.nq)
-            qpos[0] = self.init_qpos[0] + self.np_random.uniform(low=self.init_pos[0], high=self.init_pos[1])
+            qpos[0] = self.np_random.uniform(low=self.init_pos[0], high=self.init_pos[1])
         else:
             qpos = self.init_qpos + self.np_random.uniform(low=-0.1, high=0.1, size=self.model.nq)
 

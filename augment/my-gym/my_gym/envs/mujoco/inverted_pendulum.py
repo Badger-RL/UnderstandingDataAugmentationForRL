@@ -116,7 +116,7 @@ class InvertedPendulumEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             qpos = self.init_qpos + self.np_random.uniform(
                 size=self.model.nq, low=-0.01, high=0.01
             )
-            qpos[0] = self.init_qpos[0] + self.np_random.uniform(low=self.init_pos[0], high=self.init_pos[1])
+            qpos[0] = self.np_random.uniform(low=self.init_pos[0], high=self.init_pos[1])
         else:
             qpos = self.init_qpos + self.np_random.uniform(
                 size=self.model.nq, low=-0.01, high=0.01

@@ -60,6 +60,26 @@ register(
 )
 
 register(
+    id="InvertedPendulumWide-v2",
+    entry_point="my_gym.envs.mujoco.inverted_pendulum:InvertedPendulumEnv",
+    max_episode_steps=1000,
+    kwargs={
+        'init_pos': [-0.9, 0.9]
+    }
+)
+
+register(
+    id="InvertedDoublePendulumWide-v2",
+    entry_point="my_gym.envs.mujoco.inverted_double_pendulum:InvertedDoublePendulumEnv",
+    max_episode_steps=1000,
+    reward_threshold=9100.0,
+    kwargs={
+        'init_pos': [-0.9, 0.9]
+    }
+)
+
+
+register(
     id="HalfCheetah-v3",
     entry_point="my_gym.envs.mujoco.half_cheetah_v3:HalfCheetahEnv",
     max_episode_steps=1000,
