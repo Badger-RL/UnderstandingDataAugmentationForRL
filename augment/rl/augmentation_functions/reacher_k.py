@@ -127,29 +127,24 @@ class ReacherReflect(AugmentationFunction):
                 p=None
                 ):
 
-        delta = np.random.uniform(low=-np.pi, high=+np.pi)
+        action[:] *= -1
 
-        M = np.array([[np.cos(delta), -np.sin(delta)],
-                      [np.sin(delta), np.cos(delta)]])
-
-        # rotate central joint
+        # compute delta theta
         theta = np.arctan2(obs[:, self.k], obs[:, 0])
         theta_next = np.arctan2(next_obs[:, self.k], next_obs[:, 0])
         delta_theta = theta_next-theta
 
+        # reverse delta theta
         next_obs[:, 0] = np.cos(theta - delta_theta)
         next_obs[:, self.k] = np.sin(theta - delta_theta)
 
-
-        # rotate fingertips (use original goal to compute fingertip)
+        # compute delta fingertip dist
         fingertip_dist = obs[:, -3:-1]
-        obs[:, -3:-1] = M.dot(fingertip_dist[0])
-
         fingertip_dist_next = next_obs[:, -3:-1]
-        next_obs[:, -3:-1] = M.dot(fingertip_dist_next[0])
+        delta_fingertip_dist = fingertip_dist_next - fingertip_dist
 
-        # reward should be unchanged
-        aug_fingertip_dist = obs[:, -3:-1]
-        reward[:] = -np.linalg.norm(aug_fingertip_dist)*self.k - np.square(action).sum()
+        # reverse delta fingertip dist
+        next_obs[:, -3:-1] -= delta_fingertip_dist
+        self._set_reward(reward, next_obs[:, -3:1], action)
 
         return obs, next_obs, action, reward, done, infos
