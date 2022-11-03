@@ -54,7 +54,7 @@ class ReacherRotate(AugmentationFunction):
                 p=None
                 ):
 
-        delta = np.random.uniform(low=np.pi, high=+np.pi)
+        delta = np.random.uniform(low=-np.pi, high=+np.pi)
 
         M = np.array([[np.cos(delta), -np.sin(delta)],
                       [np.sin(delta), np.cos(delta)]])
@@ -85,9 +85,25 @@ class ReacherReflect(AugmentationFunction):
     '''
     Rotate arm and goal.
     '''
-    def __init__(self, sigma=0.1, k=2, **kwargs):
+    def __init__(self, k=2, sparse=True, **kwargs):
         super().__init__()
         self.k = k
+        self.sparse = sparse
+        print(self.k)
+        print(self.sparse)
+        if self.sparse:
+            self._reward_function = self._set_sparse_reward
+        else:
+            self._reward_function = self._set_dense_reward
+
+    def _set_reward(self, reward, fingertip_dist, action):
+        self._reward_function(reward, fingertip_dist, action)
+
+    def _set_sparse_reward(self, reward, fingertip_dist, action):
+        reward[:] = np.linalg.norm(fingertip_dist) < 0.05
+
+    def _set_dense_reward(self, reward, fingertip_dist, action):
+        reward[:] = -np.linalg.norm(fingertip_dist) * self.k - np.square(action).sum()
 
     def _rotate_goal(self, obs, theta):
         x = np.copy(obs[:, 2*self.k])
@@ -111,7 +127,7 @@ class ReacherReflect(AugmentationFunction):
                 p=None
                 ):
 
-        delta = np.random.uniform(low=np.pi, high=+np.pi)
+        delta = np.random.uniform(low=-np.pi, high=+np.pi)
 
         M = np.array([[np.cos(delta), -np.sin(delta)],
                       [np.sin(delta), np.cos(delta)]])
