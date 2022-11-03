@@ -66,6 +66,14 @@ AUGMENTATION_FUNCTIONS = {
 }
 
 for k in range(2,20+1):
-    AUGMENTATION_FUNCTIONS[f'Reacher{k}-v3'] = {'rotate': ReacherRotate}
-    AUGMENTATION_FUNCTIONS[f'Reacher{k}Rand-v3'] = {'rotate': ReacherRotate}
-    AUGMENTATION_FUNCTIONS[f'Swimmer{k}-v3'] = {'reflect': SwimmerReflect}
+    AUGMENTATION_FUNCTIONS[f'Reacher{k}-v3'] = {
+        'rotate': ReacherRotate,
+        'reflect': ReacherReflect,
+    }
+    AUGMENTATION_FUNCTIONS[f'Reacher{k}Rand-v3'] = {
+        'rotate': ReacherRotate,
+        'reflect': ReacherReflect,
+    }
+    AUGMENTATION_FUNCTIONS[f'Swimmer{k}-v3'] = {
+        'reflect': SwimmerReflect
+    }
