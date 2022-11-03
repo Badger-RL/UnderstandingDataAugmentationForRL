@@ -8,7 +8,7 @@ from my_gym.envs.mujoco.mujoco_env import MujocoEnv
 
 
 class ReacherEnv(MujocoEnv, utils.EzPickle):
-    def __init__(self, num_links=2, goal=None, sparse=True, rand_central_angle=False, rbf_n=500):
+    def __init__(self, num_links=2, goal=None, sparse=0, rand_central_angle=False, rbf_n=500):
         self.num_links = num_links
         self.goal = np.array(goal)
         self.randomize_goal = goal is None

@@ -15,7 +15,7 @@ class ReacherRotate(AugmentationFunction):
     def __init__(self, k=2, sparse=True, **kwargs):
         super().__init__()
         self.k = k
-        self.sparse = sparse
+        self.sparse = self.env.sparse
         print(self.k)
         print(self.sparse)
         if self.sparse:
@@ -85,10 +85,10 @@ class ReacherReflect(AugmentationFunction):
     '''
     Rotate arm and goal.
     '''
-    def __init__(self, k=2, sparse=True, **kwargs):
+    def __init__(self, k=2, **kwargs):
         super().__init__()
         self.k = k
-        self.sparse = sparse
+        self.sparse = self.env.sparse
         print(self.k)
         print(self.sparse)
         if self.sparse:
