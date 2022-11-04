@@ -251,28 +251,12 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             dones,
             infos,
         )
-        # self.replay_buffer.update_hists(next_obs)
-
-        # if self.use_aug:
-        #     unscaled_action = self.policy.unscale_action(buffer_action)
-        #     aug_obs, aug_next_obs, aug_unscaled_action, aug_reward, aug_done, aug_info = self.augment_transition(
-        #         self._last_original_obs,
-        #         next_obs,
-        #         unscaled_action,
-        #         reward_,
-        #         dones,
-        #         infos,
-        #     )
-        #     if aug_obs is not None: # When aug_n < 1, we only augment a fraction of transitions.
-        #         aug_action = self.policy.scale_action(aug_unscaled_action)
-        #         self.aug_replay_buffer.extend(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info)
 
         self._last_obs = new_obs
         # Save the unnormalized observation
         if self._vec_normalize_env is not None:
             self._last_original_obs = new_obs_
 
-        return self._last_original_obs, next_obs, buffer_action, reward_, dones, infos
 
     def _excluded_save_params(self) -> List[str]:
         """
@@ -411,6 +395,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         callback.on_rollout_start()
         continue_training = True
         aug_indices = []
+        past_infos = []
 
         while should_collect_more_steps(train_freq, num_collected_steps, num_collected_episodes):
             if self.use_sde and self.sde_sample_freq > 0 and num_collected_steps % self.sde_sample_freq == 0:
@@ -439,11 +424,13 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             # buf_obs, buf_next_obs, buf_action, buf_reward, buf_dones, buf_infos = self._store_transition(replay_buffer, buffer_actions, new_obs, rewards, dones, infos)
             self._store_transition(replay_buffer, buffer_actions, new_obs, rewards, dones, infos)
 
-            aug_indices.append(self.replay_buffer.size()-1)
-            if self.aug_freq == 'episode':
-                do_aug = self.use_aug and dones.all()
-            else:
-                do_aug = self.use_aug and ((num_collected_steps % self.aug_freq == 0) or dones.all())
+            if self.use_aug:
+                aug_indices.append(self.replay_buffer.size()-1)
+                past_infos.append(infos)
+                if self.aug_freq == 'episode':
+                    do_aug = dones.all()
+                else:
+                    do_aug = (num_collected_steps % self.aug_freq == 0) or dones.all()
 
             if do_aug:
                 env_indices = np.random.randint(0, high=self.n_envs, size=(len(aug_indices),))
@@ -451,15 +438,8 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                 next_obs = self.replay_buffer.next_observations[aug_indices, env_indices, :]
                 actions = self.replay_buffer.actions[aug_indices, env_indices, :]
                 dones = self.replay_buffer.dones[aug_indices, env_indices]
-                timeouts = self.replay_buffer.timeouts[aug_indices, env_indices]
+                # timeouts = self.replay_buffer.timeouts[aug_indices, env_indices]
                 rewards = self.replay_buffer.rewards[aug_indices, env_indices]
-
-                new_infos = []
-                for info, truncated in zip(infos, timeouts):
-                    if truncated:
-                        info.update({'TimeLimit.Truncated': True})
-                    new_infos.append([info])
-                infos = new_infos
 
                 unscaled_actions = self.policy.unscale_action(actions)
                 aug_obs, aug_next_obs, aug_unscaled_action, aug_reward, aug_done, aug_info = self.augment_transition(
@@ -468,12 +448,13 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                     unscaled_actions,
                     rewards,
                     dones,
-                    infos,
+                    past_infos,
                 )
                 if aug_obs is not None: # When aug_n < 1, we only augment a fraction of transitions.
                     aug_action = self.policy.scale_action(aug_unscaled_action)
                     self.aug_replay_buffer.extend(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info)
                 aug_indices.clear()
+                past_infos.clear()
 
             self._update_current_progress_remaining(self.num_timesteps, self._total_timesteps)
 
