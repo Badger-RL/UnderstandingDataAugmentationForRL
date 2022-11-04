@@ -13,7 +13,7 @@ class ReacherRotate(AugmentationFunction):
     Rotate arm and goal.
     '''
     def __init__(self, k=2, sparse=True, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
         self.k = k
         self.sparse = self.env.sparse
         print(self.k)
