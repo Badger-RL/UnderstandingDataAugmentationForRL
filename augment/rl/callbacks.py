@@ -198,6 +198,7 @@ class EvalCallback(EvalCallback_OG):
         super().__init__(eval_env, callback_on_new_best, callback_after_eval, n_eval_episodes, eval_freq, log_path,
                          best_model_save_path, deterministic, render, verbose, warn)
 
+        self.evaluations_updates = []
         self.model_save_freq = model_save_freq
 
     def _on_step(self) -> bool:
@@ -233,6 +234,7 @@ class EvalCallback(EvalCallback_OG):
 
             if self.log_path is not None:
                 self.evaluations_timesteps.append(self.num_timesteps)
+                self.evaluations_updates.append(self.model._n_updates)
                 self.evaluations_results.append(episode_rewards)
                 self.evaluations_length.append(episode_lengths)
 
@@ -244,6 +246,7 @@ class EvalCallback(EvalCallback_OG):
 
                 np.savez(
                     self.log_path,
+                    updates=self.evaluations_updates,
                     timesteps=self.evaluations_timesteps,
                     results=self.evaluations_results,
                     ep_lengths=self.evaluations_length,
