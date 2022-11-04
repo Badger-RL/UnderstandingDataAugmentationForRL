@@ -189,7 +189,13 @@ Reacher2-v3: &reacher-defaults
   noise_type: 'normal'
   noise_std: 0.1
 
+Reacher2Sparse-v3:
+  <<: *reacher-defaults
+
 Reacher4-v3:
+  <<: *reacher-defaults
+
+Reacher4Sparse-v3:
   <<: *reacher-defaults
 
 Reacher8-v3:
