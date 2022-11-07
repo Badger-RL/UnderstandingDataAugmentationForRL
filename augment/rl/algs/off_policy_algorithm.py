@@ -323,7 +323,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
     def sample_replay_buffers(self):
         alpha = 0
         if self.use_aug:
-            alpha = self.aug_ratio(self._current_progress_remaining)
+            alpha = self.aug_ratio(self._current_progress_remaining, self.num_timesteps)
 
         if alpha >= 0:
             observed_batch = self.replay_buffer.sample(self.batch_size, env=self._vec_normalize_env)

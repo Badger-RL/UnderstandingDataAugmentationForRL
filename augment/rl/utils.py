@@ -140,7 +140,7 @@ def constant_schedule(initial_value: float) -> Callable[[float], float]:
     return func
 
 def step_down_schedule(cutoff: float,) -> Callable[[float], float]:
-    def func(progress_remaining: float) -> float:
+    def func(progress_remaining: float, num_timesteps: int) -> float:
         """
         Progress will decrease from 1 (beginning) to 0.
 
@@ -148,7 +148,7 @@ def step_down_schedule(cutoff: float,) -> Callable[[float], float]:
         :return: current learning rate
         """
         progress = 1-progress_remaining
-        if progress < cutoff:
+        if num_timesteps < cutoff:
             return 1
         else:
             return 0
