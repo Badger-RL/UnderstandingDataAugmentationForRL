@@ -13,7 +13,6 @@ from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import polyak_update
 from stable_baselines3.td3.policies import CnnPolicy, MlpPolicy, MultiInputPolicy, TD3Policy
-
 # from augment.rl.algs.buffers import ReplayBuffer
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
 # from augment.rl.algs.policies import TD3Policy, MlpPolicy
@@ -162,8 +161,8 @@ class TD3(OffPolicyAlgorithmAugment):
         self.obs_active_layer_mask = []
         self.aug_active_layer_mask = []
         for i, j in zip(obs_active_layer_mask, aug_active_layer_mask):
-            self.obs_active_layer_mask.extend([i, i])
-            self.aug_active_layer_mask.extend([j, j])
+            self.obs_active_layer_mask.extend([int(i), int(i)])
+            self.aug_active_layer_mask.extend([int(j), int(j)])
         # 3 layers with 3 biases
         # self.actor_freeze_layers = []
         # self.critic_freeze_layers = []
