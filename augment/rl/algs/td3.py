@@ -179,11 +179,15 @@ class TD3(OffPolicyAlgorithmAugment):
         self.separate_aug_critic = separate_aug_critic
         self.aug_critic = None
         if self.separate_aug_critic:
-            self.aug_critic = copy.deepcopy(self.critic)
-            self.aug_critic_target = copy.deepcopy(self.critic_target)
+            self.policy.aug_critic = copy.deepcopy(self.critic)
+            self.policy.aug_critic_target = copy.deepcopy(self.critic_target)
 
-            self.actor_data_source = 'obs'
-            self.critic_data_source = 'obs'
+            # alias
+            self.aug_critic = self.policy.aug_critic
+            self.aug_critic_target = self.policy.aug_critic_target
+
+            self.policy.actor_data_source = 'obs'
+            self.policy.critic_data_source = 'obs'
 
 
     def _setup_model(self) -> None:
@@ -195,6 +199,8 @@ class TD3(OffPolicyAlgorithmAugment):
         self.actor_target = self.policy.actor_target
         self.critic = self.policy.critic
         self.critic_target = self.policy.critic_target
+
+
 
     def _critic_loss(self, replay_data, ):
         with th.no_grad():

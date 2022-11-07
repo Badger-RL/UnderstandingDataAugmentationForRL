@@ -127,7 +127,7 @@ def preprocess_action_noise(hyperparams: Dict[str, Any], env: VecEnv) -> Dict[st
 from typing import Callable
 
 def constant_schedule(initial_value: float) -> Callable[[float], float]:
-    def func(progress_remaining: float) -> float:
+    def func(progress_remaining: float, num_timesteps: int) -> float:
         """
         Progress will decrease from 1 (beginning) to 0.
 
@@ -157,7 +157,7 @@ def step_down_schedule(cutoff: float,) -> Callable[[float], float]:
     return func
 
 def step_up_schedule(initial_value: float) -> Callable[[float], float]:
-    def func(progress_remaining: float) -> float:
+    def func(progress_remaining: float, num_timesteps: int) -> float:
         """
         Progress will decrease from 1 (beginning) to 0.
 
@@ -173,7 +173,7 @@ def step_up_schedule(initial_value: float) -> Callable[[float], float]:
     return func
 
 def linear_schedule(initial_value: float, final_value: float) -> Callable[[float], float]:
-    def func(progress_remaining: float) -> float:
+    def func(progress_remaining: float, num_timesteps: int) -> float:
         """
         Progress will decrease from 1 (beginning) to 0.
 
@@ -186,7 +186,7 @@ def linear_schedule(initial_value: float, final_value: float) -> Callable[[float
 
 def exponential_schedule(initial_value: float, final_value: float=0.01) -> Callable[[float], float]:
 
-    def func(progress_remaining: float) -> float:
+    def func(progress_remaining: float, num_timesteps: int) -> float:
         """
         Progress will decrease from 1 (beginning) to 0.
 
