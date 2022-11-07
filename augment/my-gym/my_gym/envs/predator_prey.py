@@ -12,7 +12,7 @@ from my_gym.envs.my_env import MyEnv
 
 
 class PredatorPreyEnv(MyEnv):
-    def __init__(self, delta=0.025, sparse=1, rbf_n=None, d_fourier=None, neural=False, d=1, shape='disk'):
+    def __init__(self, delta=0.025, sparse=1, rbf_n=None, d_fourier=None, neural=False, d=1, shape='disk', quadrant=False):
 
         self.n = 2
         self.action_space = gym.spaces.Box(low=np.zeros(2), high=np.array([1, 2 * np.pi]), shape=(self.n,))
@@ -28,6 +28,7 @@ class PredatorPreyEnv(MyEnv):
         self.d = d
         self.shape = shape
         self.x_norm = None
+        self.quadrant = quadrant
         super().__init__(rbf_n=rbf_n, d_fourier=d_fourier, neural=neural)
 
         # vae = VAE(2, 1)
@@ -92,6 +93,8 @@ class PredatorPreyEnv(MyEnv):
 
         if self.shape == 'box':
             self.goal = np.random.uniform(low=-self.d, high=self.d, size=(self.n,))
+            if self.quadrant:
+                self.goal = np.random.uniform(low=0, high=1, size=(self.n,))
             self.x = np.random.uniform(-1, 1, size=(self.n,))
 
         self.obs = np.concatenate((self.x, self.goal))
@@ -114,3 +117,8 @@ class PredatorPreyDenseEnv(PredatorPreyEnv):
 class PredatorPreyBoxDenseEnv(PredatorPreyEnv):
     def __init__(self, d=1, shape='box', rbf_n=None, d_fourier=None, neural=False):
         super().__init__(delta=0.025, sparse=0, rbf_n=rbf_n, d_fourier=d_fourier, neural=neural, d=d, shape=shape)
+
+
+class PredatorPreyBoxQuadrantEnv(PredatorPreyEnv):
+    def __init__(self, d=1, shape='box', rbf_n=None, d_fourier=None, neural=False):
+        super().__init__(delta=0.025, sparse=1, rbf_n=rbf_n, d_fourier=d_fourier, neural=neural, d=d, shape=shape, quadrant=1)

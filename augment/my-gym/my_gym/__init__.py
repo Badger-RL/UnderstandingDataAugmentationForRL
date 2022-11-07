@@ -186,6 +186,11 @@ register(
     max_episode_steps=100,
 )
 register(
+    id="PredatorPreyBoxQuadrant-v0",
+    entry_point="my_gym.envs:PredatorPreyBoxQuadrantEnv",
+    max_episode_steps=100,
+)
+register(
     id="PredatorPreyDense-v0",
     entry_point="my_gym.envs:PredatorPreyDenseEnv",
     max_episode_steps=100,

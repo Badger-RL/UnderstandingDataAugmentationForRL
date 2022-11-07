@@ -279,6 +279,9 @@ PredatorPrey-v0: &predator_prey
 PredatorPreyBox-v0:
   <<: *predator_prey
 
+PredatorPreyBoxQuadrant-v0:
+  <<: *predator_prey
+
 PredatorPreyDense-v0:
   <<: *predator_prey
 

@@ -63,6 +63,7 @@ AUGMENTATION_FUNCTIONS = {
     },
     'PredatorPrey-v0': predator_prey_disk_augmentation_functions,
     'PredatorPreyBox-v0': predator_prey_box_augmentation_functions,
+    'PredatorPreyBoxQuadrant-v0': predator_prey_box_augmentation_functions,
     'PredatorPreyDense-v0': predator_prey_disk_augmentation_functions,
     'PredatorPreyBoxDense-v0': predator_prey_box_augmentation_functions,
     'MeetUp-v0': {
