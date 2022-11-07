@@ -33,6 +33,16 @@ AUGMENTATION_FUNCTIONS = {
         'reflect': InvertedPendulumReflect,
         'translate_reflect': InvertedPendulumTranslateReflect,
     },
+    'InvertedPendulumWide-v2': {
+        'translate': InvertedPendulumTranslate,
+        'reflect': InvertedPendulumReflect,
+        'translate_reflect': InvertedPendulumTranslateReflect,
+    },
+    'InvertedDoublePendulumWide-v2': {
+        'translate': InvertedPendulumTranslate,
+        'reflect': InvertedPendulumReflect,
+        'translate_reflect': InvertedPendulumTranslateReflect,
+    },
     'CartPole-v1': {
         'translate': InvertedPendulumTranslate,
         'reflect': InvertedPendulumReflect,
