@@ -45,6 +45,7 @@ if __name__ == '__main__':
     parser.add_argument("--aug-schedule", type=str, default="constant")
     parser.add_argument("--aug-buffer", type=bool, default=True)
     parser.add_argument("--aug-constraint", type=bool, default=None)
+    parser.add_argument("--separate-aug-critic", type=bool, default=False)
     parser.add_argument("--freeze-features-for-aug-update", type=int, default=0)
     parser.add_argument("--actor-data-source", type=str, default='both')
     parser.add_argument("--critic-data-source", type=str, default='both')
@@ -159,6 +160,7 @@ if __name__ == '__main__':
         # hyperparams['freeze_features_for_aug_update'] = args.freeze_features_for_aug_update
         hyperparams['actor_data_source'] = args.actor_data_source
         hyperparams['critic_data_source'] = args.critic_data_source
+        hyperparams['separate_aug_critic'] = args.separate_aug_critic
 
         if args.aug_freq == 'episode':
             hyperparams['aug_freq'] = args.aug_freq
