@@ -1,9 +1,13 @@
 import copy
+import io
+import pathlib
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import gym
 import numpy as np
 import torch as th
+from stable_baselines3.common.base_class import BaseAlgorithmSelf
+from stable_baselines3.common.save_util import load_from_zip_file, recursive_setattr
 from torch.nn import functional as F
 
 from stable_baselines3.common.buffers import ReplayBuffer
@@ -11,7 +15,7 @@ from stable_baselines3.common.noise import ActionNoise
 # from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
-from stable_baselines3.common.utils import polyak_update
+from stable_baselines3.common.utils import polyak_update, get_system_info, check_for_correct_spaces
 from stable_baselines3.td3.policies import CnnPolicy, MlpPolicy, MultiInputPolicy, TD3Policy
 # from augment.rl.algs.buffers import ReplayBuffer
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
@@ -186,8 +190,8 @@ class TD3(OffPolicyAlgorithmAugment):
             self.aug_critic = self.policy.aug_critic
             self.aug_critic_target = self.policy.aug_critic_target
 
-            self.policy.actor_data_source = 'obs'
-            self.policy.critic_data_source = 'obs'
+            self.actor_data_source = 'obs'
+            self.critic_data_source = 'obs'
 
 
     def _setup_model(self) -> None:
@@ -343,20 +347,20 @@ class TD3(OffPolicyAlgorithmAugment):
 
             self._n_updates += 1
             # Sample observed and augmented replay buffers
-            replay_data, observed_replay_data, aug_replay_data = self.sample_replay_buffers()
+            both_replay_data, observed_replay_data, aug_replay_data = self.sample_replay_buffers()
 
-            actor_data = replay_data
-            critic_data = replay_data
+            actor_data = both_replay_data
+            critic_data = both_replay_data
 
             if self.critic_data_source == 'both':
-                critic_data = replay_data
+                critic_data = both_replay_data
             elif self.critic_data_source == 'obs':
                 critic_data = observed_replay_data
             elif self.critic_data_source == 'aug':
                 critic_data = aug_replay_data
 
             if self.actor_data_source == 'both':
-                actor_data = replay_data
+                actor_data = both_replay_data
             elif self.actor_data_source == 'obs':
                 actor_data = observed_replay_data
             elif self.actor_data_source == 'aug':
@@ -369,7 +373,7 @@ class TD3(OffPolicyAlgorithmAugment):
                          actor_losses=actor_losses, critic_losses=critic_losses)
 
             if self.separate_aug_critic:
-                self._update_aug_critic(replay_data)
+                self._update_aug_critic(both_replay_data)
 
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
@@ -391,3 +395,118 @@ class TD3(OffPolicyAlgorithmAugment):
     def _unfreeze(self, model):
         for parameter in model.parameters():
             parameter.requires_grad = True
+
+
+    @classmethod
+    def load(
+        cls: Type[BaseAlgorithmSelf],
+        path: Union[str, pathlib.Path, io.BufferedIOBase],
+        env: Optional[GymEnv] = None,
+        device: Union[th.device, str] = "auto",
+        custom_objects: Optional[Dict[str, Any]] = None,
+        print_system_info: bool = False,
+        force_reset: bool = True,
+        exact_match: bool = False,
+        **kwargs,
+    ) -> BaseAlgorithmSelf:
+        """
+        Load the model from a zip-file.
+        Warning: ``load`` re-creates the model from scratch, it does not update it in-place!
+        For an in-place load use ``set_parameters`` instead.
+
+        :param path: path to the file (or a file-like) where to
+            load the agent from
+        :param env: the new environment to run the loaded model on
+            (can be None if you only need prediction from a trained model) has priority over any saved environment
+        :param device: Device on which the code should run.
+        :param custom_objects: Dictionary of objects to replace
+            upon loading. If a variable is present in this dictionary as a
+            key, it will not be deserialized and the corresponding item
+            will be used instead. Similar to custom_objects in
+            ``keras.models.load_model``. Useful when you have an object in
+            file that can not be deserialized.
+        :param print_system_info: Whether to print system info from the saved model
+            and the current system info (useful to debug loading issues)
+        :param force_reset: Force call to ``reset()`` before training
+            to avoid unexpected behavior.
+            See https://github.com/DLR-RM/stable-baselines3/issues/597
+        :param kwargs: extra arguments to change the model when loading
+        :return: new model instance with loaded parameters
+        """
+        if print_system_info:
+            print("== CURRENT SYSTEM INFO ==")
+            get_system_info()
+
+        data, params, pytorch_variables = load_from_zip_file(
+            path,
+            device=device,
+            custom_objects=custom_objects,
+            print_system_info=print_system_info,
+        )
+
+        # Remove stored device information and replace with ours
+        if "policy_kwargs" in data:
+            if "device" in data["policy_kwargs"]:
+                del data["policy_kwargs"]["device"]
+
+        if "policy_kwargs" in kwargs and kwargs["policy_kwargs"] != data["policy_kwargs"]:
+            raise ValueError(
+                f"The specified policy kwargs do not equal the stored policy kwargs."
+                f"Stored kwargs: {data['policy_kwargs']}, specified kwargs: {kwargs['policy_kwargs']}"
+            )
+
+        if "observation_space" not in data or "action_space" not in data:
+            raise KeyError("The observation_space and action_space were not given, can't verify new environments")
+
+        if env is not None:
+            # Wrap first if needed
+            env = cls._wrap_env(env, data["verbose"])
+            # Check if given env is valid
+            check_for_correct_spaces(env, data["observation_space"], data["action_space"])
+            # Discard `_last_obs`, this will force the env to reset before training
+            # See issue https://github.com/DLR-RM/stable-baselines3/issues/597
+            if force_reset and data is not None:
+                data["_last_obs"] = None
+            # `n_envs` must be updated. See issue https://github.com/DLR-RM/stable-baselines3/issues/1018
+            if data is not None:
+                data["n_envs"] = env.num_envs
+        else:
+            # Use stored env, if one exists. If not, continue as is (can be used for predict)
+            if "env" in data:
+                env = data["env"]
+
+        # noinspection PyArgumentList
+        model = cls(  # pytype: disable=not-instantiable,wrong-keyword-args
+            policy=data["policy_class"],
+            env=env,
+            device=device,
+            _init_setup_model=False,  # pytype: disable=not-instantiable,wrong-keyword-args
+        )
+
+        # load parameters
+        model.__dict__.update(data)
+        model.__dict__.update(kwargs)
+        model._setup_model()
+
+        # put state_dicts back in place
+        model.set_parameters(params, exact_match=exact_match, device=device)
+
+        # put other pytorch variables back in place
+        if pytorch_variables is not None:
+            for name in pytorch_variables:
+                # Skip if PyTorch variable was not defined (to ensure backward compatibility).
+                # This happens when using SAC/TQC.
+                # SAC has an entropy coefficient which can be fixed or optimized.
+                # If it is optimized, an additional PyTorch variable `log_ent_coef` is defined,
+                # otherwise it is initialized to `None`.
+                if pytorch_variables[name] is None:
+                    continue
+                # Set the data attribute directly to avoid issue when using optimizers
+                # See https://github.com/DLR-RM/stable-baselines3/issues/391
+                recursive_setattr(model, name + ".data", pytorch_variables[name].data)
+
+        # Sample gSDE exploration matrix, so it uses the right device
+        # see issue #44
+        if model.use_sde:
+            model.policy.reset_noise()  # pytype: disable=attribute-error
+        return model
