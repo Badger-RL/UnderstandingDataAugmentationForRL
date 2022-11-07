@@ -43,6 +43,7 @@ if __name__ == '__main__':
     parser.add_argument("--aug-ratio", type=float, default=1)
     parser.add_argument("--aug-freq", type=str, default=1)
     parser.add_argument("--aug-schedule", type=str, default="constant")
+    parser.add_argument("--aug-schedule-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-buffer", type=bool, default=True)
     parser.add_argument("--aug-constraint", type=bool, default=None)
     parser.add_argument("--separate-aug-critic", type=bool, default=False)
@@ -153,7 +154,7 @@ if __name__ == '__main__':
             rbf_n = args.env_kwargs['rbf_n']
         except:
             rbf_n = None
-        hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](initial_value=aug_ratio)
+        hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](**args.aug_schedule_kwargs)
         hyperparams['aug_function'] = aug_func_class(env=env, rbf_n=rbf_n, **aug_func_kwargs)
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n

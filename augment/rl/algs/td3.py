@@ -356,7 +356,7 @@ class TD3(OffPolicyAlgorithmAugment):
             elif self.actor_data_source == 'aug':
                 actor_data = aug_replay_data
 
-            if self.freeze_layers:
+            if self.freeze_layers and aug_replay_data is not None:
                 self._update_freeze(observed_replay_data, aug_replay_data, actor_losses, critic_losses)
             else:
                 self._update(actor_replay_data=actor_data, critic_replay_data=critic_data,
