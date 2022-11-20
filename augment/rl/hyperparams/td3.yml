@@ -347,9 +347,24 @@ FetchPickAndPlace-v1:
   online_sampling: True
 
 # SAC hyperparams
-FetchReach-v1:
+MyFetchReach-v1:
   n_timesteps: !!float 20000
-  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
+#  replay_buffer_class: ReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+
+MyFetchReachDense-v1:
+  n_timesteps: !!float 20000
+  policy: 'MlpPolicy'
 #  replay_buffer_class: ReplayBuffer
 #  replay_buffer_kwargs: "dict(
 #    online_sampling=True,
