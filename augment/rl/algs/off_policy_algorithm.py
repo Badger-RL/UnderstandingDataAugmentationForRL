@@ -158,6 +158,9 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             assert not self.optimize_memory_usage
             self._setup_augmented_replay_buffer()
 
+            self.aug_indices = []
+            self.past_infos = []
+
     def _setup_augmented_replay_buffer(self):
         self.aug_replay_buffer = ReplayBuffer(
             int(self.buffer_size * self.aug_n),
@@ -394,8 +397,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
 
         callback.on_rollout_start()
         continue_training = True
-        aug_indices = []
-        past_infos = []
+
 
         while should_collect_more_steps(train_freq, num_collected_steps, num_collected_episodes):
             if self.use_sde and self.sde_sample_freq > 0 and num_collected_steps % self.sde_sample_freq == 0:
@@ -425,21 +427,21 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             self._store_transition(replay_buffer, buffer_actions, new_obs, rewards, dones, infos)
 
             if self.use_aug:
-                aug_indices.append(self.replay_buffer.size()-1)
-                past_infos.append(infos)
+                self.aug_indices.append(self.replay_buffer.size()-1)
+                self.past_infos.append(infos)
                 if self.aug_freq == 'episode':
                     do_aug = dones.all()
                 else:
                     do_aug = (num_collected_steps % self.aug_freq == 0) or dones.all()
 
                 if do_aug:
-                    env_indices = np.random.randint(0, high=self.n_envs, size=(len(aug_indices),))
-                    obs = self.replay_buffer.observations[aug_indices, env_indices, :]
-                    next_obs = self.replay_buffer.next_observations[aug_indices, env_indices, :]
-                    actions = self.replay_buffer.actions[aug_indices, env_indices, :]
-                    dones = self.replay_buffer.dones[aug_indices, env_indices]
-                    # timeouts = self.replay_buffer.timeouts[aug_indices, env_indices]
-                    rewards = self.replay_buffer.rewards[aug_indices, env_indices]
+                    env_indices = np.random.randint(0, high=self.n_envs, size=(len(self.aug_indices),))
+                    obs = self.replay_buffer.observations[self.aug_indices, env_indices, :]
+                    next_obs = self.replay_buffer.next_observations[self.aug_indices, env_indices, :]
+                    actions = self.replay_buffer.actions[self.aug_indices, env_indices, :]
+                    dones = self.replay_buffer.dones[self.aug_indices, env_indices]
+                    # timeouts = self.replay_buffer.timeouts[self.aug_indices, env_indices]
+                    rewards = self.replay_buffer.rewards[self.aug_indices, env_indices]
 
                     unscaled_actions = self.policy.unscale_action(actions)
                     aug_obs, aug_next_obs, aug_unscaled_action, aug_reward, aug_done, aug_info = self.augment_transition(
@@ -448,13 +450,13 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                         unscaled_actions,
                         rewards,
                         dones,
-                        past_infos,
+                        self.past_infos,
                     )
                     if aug_obs is not None: # When aug_n < 1, we only augment a fraction of transitions.
                         aug_action = self.policy.scale_action(aug_unscaled_action)
                         self.aug_replay_buffer.extend(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info)
-                    aug_indices.clear()
-                    past_infos.clear()
+                    self.aug_indices.clear()
+                    self.past_infos.clear()
 
             self._update_current_progress_remaining(self.num_timesteps, self._total_timesteps)
 

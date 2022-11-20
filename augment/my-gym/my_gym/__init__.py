@@ -9,14 +9,14 @@ ENVS_DIR = os.path.join(os.path.dirname(__file__), 'envs')
 
 # unregister gym's env so I can use the same name
 # envs_to_unregister = ['Ant-v3', 'HalfCheetah-v3', 'Humanoid-v3', 'Walker2d-v3']
-envs_to_unregister = [
-    'CartPole-v1', 'InvertedPendulum-v2', 'InvertedDoublePendulum-v2',
-    'Ant-v3', 'HalfCheetah-v3', 'Humanoid-v3', 'Walker2d-v3', 'Hopper-v3', 'Swimmer-v3', 'HumanoidStandup-v2']
+# envs_to_unregister = [
+#     'CartPole-v1', 'InvertedPendulum-v2', 'InvertedDoublePendulum-v2',
+#     'Ant-v3', 'HalfCheetah-v3', 'Humanoid-v3', 'Walker2d-v3', 'Hopper-v3', 'Swimmer-v3', 'HumanoidStandup-v2']
 # for env_id in envs_to_unregister:
 #     if env_id in gym.envs.registry.env_specs:
 #         del gym.envs.registry.env_specs[env_id]
 env_ids = list(gym.envs.registry.env_specs.keys())
-for env_id in envs_to_unregister:
+for env_id in env_ids:
         del gym.envs.registry.env_specs[env_id]
 
 ###########################################################################
@@ -212,3 +212,46 @@ register(
     entry_point="my_gym.envs:MeetUpEnv",
     max_episode_steps=100,
 )
+
+
+###############################################################################
+
+def _merge(a, b):
+    a.update(b)
+    return a
+
+
+for reward_type in ["sparse", "dense"]:
+    suffix = "Dense" if reward_type == "dense" else ""
+    kwargs = {
+        "reward_type": reward_type,
+    }
+
+    # Fetch
+    register(
+        id="MyFetchSlide{}-v1".format(suffix),
+        entry_point="my_gym.envs.robotics:FetchSlideEnv",
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
+
+    register(
+        id="MyFetchPickAndPlace{}-v1".format(suffix),
+        entry_point="my_gym.envs.robotics:FetchPickAndPlaceEnv",
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
+
+    register(
+        id="MyFetchReach{}-v1".format(suffix),
+        entry_point="my_gym.envs.robotics:FetchReachEnv",
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
+
+    register(
+        id="MyFetchPush{}-v1".format(suffix),
+        entry_point="my_gym.envs.robotics:FetchPushEnv",
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )

@@ -1,4 +1,4 @@
-from augment.rl.augmentation_functions.fetch import FetchReachHER
+from augment.rl.augmentation_functions.fetch import FetchReachHER, FetchReachTranslate
 from augment.rl.augmentation_functions.inverted_pendulum import *
 from augment.rl.augmentation_functions.lqr import LQRTranslate, LQRRotate
 from augment.rl.augmentation_functions.meetup import MeetUpTranslate, MeetUpRotate, MeetUpRotateTranslate
@@ -71,8 +71,13 @@ AUGMENTATION_FUNCTIONS = {
         'rotate': MeetUpRotate,
         'rotate_translate': MeetUpRotateTranslate,
     },
-    'FetchReach-v1': {
+    'MyFetchReach-v1': {
         'her': FetchReachHER,
+        'translate': FetchReachTranslate,
+    },
+    'MyFetchReachDense-v1': {
+        'her': FetchReachHER,
+        'translate': FetchReachTranslate,
     }
 }
 
