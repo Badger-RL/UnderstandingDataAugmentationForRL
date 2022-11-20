@@ -3,7 +3,7 @@ import difflib
 import inspect
 import os.path
 
-import gym, my_gym, gymnasium
+import gym, my_gym
 import numpy as np
 import torch
 import yaml
