@@ -26,6 +26,7 @@ wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-
 mkdir .mujoco
 tar -xzvf mujoco210-linux-x86_64.tar.gz -C .mujoco
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$WORKING_DIR/.mujoco/mujoco210/bin"
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia
 
 # Install mujoco-py
 git clone https://github.com/openai/mujoco-py.git
