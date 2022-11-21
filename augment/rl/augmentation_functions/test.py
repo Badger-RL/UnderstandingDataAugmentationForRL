@@ -7,24 +7,25 @@ from augment.simulate import simulate
 def make_assertions(aug_next_obs, aug_reward, aug_done, aug_info,
                     next_obs_true, reward_true, done_true, info_true):
 
-    # print(aug_next_obs, next_obs_true, next_obs_true-aug_next_obs)
+    print(aug_next_obs, next_obs_true, next_obs_true-aug_next_obs)
+    print(next_obs_true)
     assert np.allclose(aug_next_obs, next_obs_true, atol=1e-7)
 
     # aug_info != info_true in general.
-    dist = np.linalg.norm(aug_next_obs[2:] - aug_next_obs[:2])
+    # dist = np.linalg.norm(aug_next_obs[2:] - aug_next_obs[:2])
     # print(aug_reward, reward_true, dist)
     assert np.allclose(aug_reward, reward_true)
 
     # print(aug_done, done_true, dist, aug_info, info_true)
 
     # ONLY TEST IF INFO IS ACTUALLY CHANGED BY AUG FUNCTION
-    if aug_done:
-        if dist < 0.05:
-            assert aug_info == {'TimeLimit.truncated': False}
-        else:
-            assert aug_info == {'TimeLimit.truncated': True}
-    else:
-        assert aug_info == {}
+    # if aug_done:
+    #     if dist < 0.05:
+    #         assert aug_info == {'TimeLimit.truncated': False}
+    #     else:
+    #         assert aug_info == {'TimeLimit.truncated': True}
+    # else:
+    #     assert aug_info == {}
 
 def test_augmentation(env, augmentation_function):
     aug_n = 1
@@ -50,7 +51,10 @@ def test_augmentation(env, augmentation_function):
             num_failure += aug_reward[0] < 1
             for k in range(aug_n):
                 env.reset()
-                env.set_state(np.copy(aug_obs[k, :2]), np.copy(aug_obs[k, 2:]))
+                # env.set_state(np.copy(aug_obs[k, :2]), np.copy(aug_obs[k, 2:]))
+                qpos, qvel = env.obs_to_q(aug_obs[k])
+                env.set_state(qpos, qvel)
+
                 next_obs_true, reward_true, done_true, info_true = env.step(aug_action[k])
 
                 make_assertions(aug_next_obs[k], aug_reward[k], aug_done[k], aug_info[k],
@@ -58,10 +62,14 @@ def test_augmentation(env, augmentation_function):
     print(num_success, num_failure, num_success_true)
 if __name__ == "__main__":
 
+    np.set_printoptions(linewidth=np.inf)
     for env_id, aug_function_classes in AUGMENTATION_FUNCTIONS.items():
         for aug_function_name, aug_function_class in aug_function_classes.items():
             print(env_id, aug_function_name)
-            if 'Predator' in env_id and aug_function_name == 'translate_proximal':
+            # Disk variant doesn't work
+            # if 'PredatorPreyBox-v0' in env_id and aug_function_name == 'translate':
+            # verfied: Swimmer, swimmer20
+            if 'Walker2d-v3' in env_id and aug_function_name == 'reflect':
                 env = gym.make(env_id)
                 aug_function = aug_function_class(env=env)
                 test_augmentation(env, aug_function)

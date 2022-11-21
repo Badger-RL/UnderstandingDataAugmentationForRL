@@ -10,7 +10,7 @@ def random_sample_on_disk(d, n):
 def random_sample_on_box(d, n):
     return np.random.uniform(-d, d, size=(n,2))
 
-class PredatorPreyAugmentationFunction(AugmentationFunction):
+class Goal2DAugmentationFunction(AugmentationFunction):
     def __init__(self, aug_d=1.0, **kwargs):
         super().__init__(**kwargs)
         self.delta = self.env.delta
@@ -90,13 +90,21 @@ class PredatorPreyAugmentationFunction(AugmentationFunction):
 
         return obs, next_obs, action, reward, done, infos
 
-class PredatorPreyTranslate(PredatorPreyAugmentationFunction):
+class Goal2DTranslate(Goal2DAugmentationFunction):
 
     def __init__(self, aug_d=1.0, **kwargs):
         super().__init__(aug_d=aug_d, **kwargs)
 
     def _set_dynamics(self, obs, next_obs, action):
         n = 1
+
+        min_obs = np.min(obs[:, :2])
+        max_obs = np.max(obs[:, :2])
+        min_next_obs = np.min(next_obs[:, :2])
+        max_next_obs = np.max(next_obs[:, :2])
+        mins = min(min_obs, min_next_obs)
+        maxs = max(max_obs, max_next_obs)
+
         v = np.random.uniform(low=-self.aug_d, high=+self.aug_d, size=(n, 2))
 
         obs[:, :2] = v
@@ -107,7 +115,7 @@ class PredatorPreyTranslate(PredatorPreyAugmentationFunction):
         next_obs[:, :2] = np.clip(next_obs[:, :2], -self.boundary, self.boundary)
 
 
-class PredatorPreyRotate(PredatorPreyAugmentationFunction):
+class Goal2DRotate(Goal2DAugmentationFunction):
 
     def __init__(self, restricted=False, **kwargs):
         super().__init__(**kwargs)
@@ -145,11 +153,11 @@ class PredatorPreyRotate(PredatorPreyAugmentationFunction):
 
         self._rotate_position(next_obs[:, 2:], theta)
 
-class PredatorPreyRotateRestricted(PredatorPreyRotate):
+class Goal2DRotateRestricted(Goal2DRotate):
     def __init__(self, **kwargs):
         super().__init__(restricted=True, **kwargs)
 
-class PredatorPreyTranslateProximal(PredatorPreyTranslate):
+class Goal2DTranslateProximal(Goal2DTranslate):
     def __init__(self, p=0.5, aug_d=1, **kwargs):
         super().__init__(aug_d=aug_d, **kwargs)
         self.p = p
@@ -184,7 +192,7 @@ class PredatorPreyTranslateProximal(PredatorPreyTranslate):
         obs[:, 1] = v[:, 1] - dy * self.delta
 
 
-class PredatorPreyHER(PredatorPreyAugmentationFunction):
+class Goal2DHER(Goal2DAugmentationFunction):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -222,7 +230,7 @@ class PredatorPreyHER(PredatorPreyAugmentationFunction):
 
         return obs, next_obs, action, reward, done, infos
 
-class PredatorPreyRotateRestrictedHER(PredatorPreyRotateRestricted):
+class Goal2DRotateRestrictedHER(Goal2DRotateRestricted):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

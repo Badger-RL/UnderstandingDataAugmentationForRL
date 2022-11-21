@@ -1,13 +1,9 @@
-
+from typing import Optional, Tuple
 
 import gym
 import numpy as np
-# import torch
+from gym.core import ObsType
 
-from matplotlib import pyplot as plt
-
-# from augment.dim_reduction.autoencoders import VAE
-from augment.rl.algs.td3 import TD3
 from my_gym.envs.my_env import MyEnv
 
 
@@ -67,18 +63,25 @@ class PredatorPreyEnv(MyEnv):
         self._clip_position()
 
         dist = np.linalg.norm(self.x - self.goal)
-        done = dist < 0.05
+        terminated = dist < 0.05
+        truncated = False
 
         if self.sparse:
-            reward = +1.0 if done else -0.1
+            reward = +1.0 if terminated else -0.1
         else:
             reward = -dist
 
         info = {}
         self.obs = np.concatenate((self.x, self.goal))
-        return self._get_obs(), reward, done, info
+        return self._get_obs(), reward, terminated, truncated, info
 
-    def reset(self):
+    def reset(
+        self,
+        *,
+        seed: Optional[int] = None,
+        options: Optional[dict] = None,
+    ) -> Tuple[ObsType, dict]:
+
         self.step_num = 0
 
         if self.shape == 'disk':
@@ -98,7 +101,7 @@ class PredatorPreyEnv(MyEnv):
             self.x = np.random.uniform(-1, 1, size=(self.n,))
 
         self.obs = np.concatenate((self.x, self.goal))
-        return self._get_obs()
+        return self._get_obs(), {}
 
     def set_state(self, pos, goal):
         self.x = pos

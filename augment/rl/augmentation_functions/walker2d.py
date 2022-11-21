@@ -30,11 +30,8 @@ from augment.rl.augmentation_functions.augmentation_function import Augmentation
 '''
 class Walker2dReflect(AugmentationFunction):
 
-    def __init__(self, sigma=0.1, k=4, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__()
-        self.sigma = sigma
-        self.k = k
-
 
     def _augment(self,
                 obs: np.ndarray,
@@ -43,38 +40,34 @@ class Walker2dReflect(AugmentationFunction):
                 reward: np.ndarray,
                 done: np.ndarray,
                 infos: List[Dict[str, Any]],
-                delta = None,
                 p=None
                 ):
 
-        rpos = obs[:, 2:5]
-        lpos = obs[:, 5:8]
-        rvel = obs[:, 11:14]
-        lvel = obs[:, 14:]
-        aug_obs[:,2:5] = lpos
-        aug_obs[:,5:8] = rpos
-        aug_obs[:,11:14] = lvel
-        aug_obs[:,14:] = rvel
+        rpos = obs[:, 3:5].copy()
+        lpos = obs[:, 6:8].copy()
+        rvel = obs[:, 12:14].copy()
+        lvel = obs[:, 15:].copy()
+        obs[:,3:5] = lpos
+        obs[:,6:8] = rpos
+        obs[:,12:14] = lvel
+        obs[:,15:] = rvel
 
-        rpos = next_obs[:, 2:5]
-        lpos = next_obs[:, 5:8]
-        rvel = next_obs[:, 11:14]
-        lvel = next_obs[:, 14:]
-        aug_next_obs[:,2:5] = lpos
-        aug_next_obs[:,5:8] = rpos
-        aug_next_obs[:,11:14] = lvel
-        aug_next_obs[:,14:] = rvel
+        rpos = obs[:, 3:5].copy()
+        lpos = obs[:, 6:8].copy()
+        rvel = obs[:, 12:14].copy()
+        lvel = obs[:, 15:].copy()
+        next_obs[:,3:5] = lpos
+        next_obs[:,6:8] = rpos
+        next_obs[:,12:14] = lvel
+        next_obs[:,15:] = rvel
 
-        ra = action[:, :3]
-        la = action[:, 3:]
+        ra = action[:, :3].copy()
+        la = action[:, 3:].copy()
 
-        aug_action[:, :3] = la
-        aug_action[:, 3:] = ra
+        action[:, :3] = la
+        action[:, 3:] = ra
 
-        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
-
-
-import gym, my_gym
+        return obs, next_obs, action, reward, done, infos
 
 
 if __name__ == "__main__":
@@ -82,49 +75,77 @@ if __name__ == "__main__":
 
     f = Walker2dReflect()
 
-    for i in range(1000):
-        env.reset()
-        # set initial qpos, qvel
-        qpos = np.copy(env.sim.data.qpos)
-        qvel = np.copy(env.sim.data.qvel)
+    env.reset()
+    # set initial qpos, qvel
+    qpos = np.copy(env.data.qpos)
+    qvel = np.copy(env.data.qvel)
 
-        # +1 index since qpos includes x position
-        qpos[3] = np.random.uniform(-1, +1)
-        qpos[6] = np.random.uniform(-1, +1)
+
+    # +1 index since qpos includes x position
+    # qpos[3] = np.random.uniform(-1, +1)
+    # qpos[6] = np.random.uniform(-1, +1)
+    # qpos[2] = -np.pi/4
+    qpos[3] = -np.pi/4
+    qpos[4] = -np.pi/4
+
+    # qpos[5] = np.pi/4
+    qpos[6] = np.pi/4
+    # qpos[2] = -np.pi/4
+    qpos[7] = np.pi/4
+
+    obs = np.concatenate([qpos[1:], qvel])
+    # qpos = np.ones(9)
+    # qvel = np.ones(9)
+
+    for i in range(100):
+        env.reset()
+        # # set initial qpos, qvel
+        # qpos = np.copy(env.sim.data.qpos)
+        # qvel = np.copy(env.sim.data.qvel)
+        #
+        # # +1 index since qpos includes x position
+        # qpos[3] = np.random.uniform(-1, +1)
+        # qpos[6] = np.random.uniform(-1, +1)
         env.set_state(qpos, qvel)
         obs = env.get_obs()
 
         # get transition
-        action = np.ones(6)
+        action = np.random.uniform(-1,1,6)
+        action = np.ones(6)*1
         next_obs, reward, done, info = env.step(action)
         obs = obs.reshape(1, -1)
         next_obs = next_obs.reshape(1, -1)
         action = action.reshape(1, -1)
         done = np.array([done]).reshape(1, -1)
 
+        env.reset()
+        # env.set_state(qpos, qvel)
 
+        env.render()
+        time.sleep(0.1)
 
-        delta = np.random.uniform(-np.pi, np.pi)
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, next_obs, action, reward, done, [{}], delta=delta)
+        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, next_obs, action, reward, done, [{}])
 
         # Make sure aug transition matches simulation
         # aug_obs to qpos, qvel
         qpos2, qvel2 = env.obs_to_q(aug_obs[0])
         env.set_state(qpos2, qvel2)
         obs2 = env.get_obs()
-        next_obs2, reward2, done2, info2 = env.step(action)
+        next_obs2, reward2, done2, info2 = env.step(aug_action[0])
 
+        env.render()
+        time.sleep(0.1)
         # print(aug_next_obs)
         # print(next_obs2)
 
 
-        # print(aug_obs - obs2)
-        # print(aug_next_obs - next_obs2)
-        # print(aug_reward - reward2, aug_reward, reward2)
+        print(aug_obs - obs2)
+        print(aug_next_obs - next_obs2)
+        print(aug_reward - reward2, aug_reward, reward2)
 
-        assert np.allclose(aug_obs, obs2)
-        assert np.allclose(aug_next_obs, next_obs2)
-        assert np.allclose(aug_reward, reward2)
+        # assert np.allclose(aug_obs, obs2)
+        # assert np.allclose(aug_next_obs, next_obs2)
+        # assert np.allclose(aug_reward, reward2)
 #
 # if __name__ == "__main__":
 #

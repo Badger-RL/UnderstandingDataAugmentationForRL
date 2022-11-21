@@ -124,7 +124,7 @@ InvertedPendulumSwingupBulletEnv-v0:
 
 # === Mujoco Envs ===
 
-InvertedPendulum-v2: &inverted-pendulum
+InvertedPendulum-v4: &inverted-pendulum
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
   gamma: 0.9999
@@ -137,33 +137,33 @@ InvertedPendulum-v2: &inverted-pendulum
   learning_rate: !!float 1e-4
   policy_kwargs: "dict(net_arch=[64, 64])"
 
-InvertedPendulumWide-v2:
+InvertedPendulumWide-v4:
   <<: *inverted-pendulum
 
-InvertedDoublePendulum-v2:
+InvertedDoublePendulum-v4:
   gamma: 0.9999
   <<: *inverted-pendulum
 
-InvertedDoublePendulumWide-v2:
+InvertedDoublePendulumWide-v4:
   <<: *inverted-pendulum
 
-HalfCheetah-v3: &mujoco-defaults
+HalfCheetah-v4: &mujoco-defaults
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
   learning_starts: 10000
   noise_type: 'normal'
   noise_std: 0.1
 
-Ant-v3:
+Ant-v4:
   <<: *mujoco-defaults
 
-Hopper-v3:
+Hopper-v4:
   <<: *mujoco-defaults
 
-Walker2d-v3:
+Walker2d-v4:
   <<: *mujoco-defaults
 
-Humanoid-v3:
+Humanoid-v4:
   <<: *mujoco-defaults
   n_timesteps: !!float 1e6
   # SAC Hyperparams
@@ -172,7 +172,7 @@ Humanoid-v3:
   learning_rate: !!float 3e-4
   batch_size: 256
 
-Swimmer-v3:
+Swimmer-v4:
   <<: *mujoco-defaults
   gamma: 0.9999
   train_freq: 1
@@ -181,7 +181,7 @@ Swimmer-v3:
 
 ### Custom Reacher
 
-Reacher2-v3: &reacher-defaults
+Reacher2-v4: &reacher-defaults
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
   learning_rate: !!float 1e-3
@@ -190,34 +190,34 @@ Reacher2-v3: &reacher-defaults
   noise_type: 'normal'
   noise_std: 0.1
 
-Reacher2Sparse-v3:
+Reacher2Sparse-v4:
   <<: *reacher-defaults
 
-Reacher4-v3:
+Reacher4-v4:
   <<: *reacher-defaults
 
-Reacher4Sparse-v3:
+Reacher4Sparse-v4:
   <<: *reacher-defaults
 
-Reacher8-v3:
+Reacher8-v4:
   <<: *reacher-defaults
 
-Reacher12-v3:
+Reacher12-v4:
   <<: *reacher-defaults
 
-Reacher16-v3:
+Reacher16-v4:
   <<: *reacher-defaults
 
-Reacher20-v3:
+Reacher20-v4:
   <<: *reacher-defaults
 
-Reacher2Rand-v3:
+Reacher2Rand-v4:
   <<: *reacher-defaults
 
-Reacher4Rand-v3:
+Reacher4Rand-v4:
   <<: *reacher-defaults
 
-Reacher8Rand-v3:
+Reacher8Rand-v4:
   <<: *reacher-defaults
 
 LQR-v0:
@@ -231,7 +231,7 @@ LQRGoal-v0:
 #  noise_type: 'ornstein-uhlenbeck'
 #  noise_std: 0.5
 
-Swimmer10-v3: &swimmer-defaults
+Swimmer10-v4: &swimmer-defaults
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
   gamma: 0.98
@@ -245,7 +245,7 @@ Swimmer10-v3: &swimmer-defaults
   gradient_steps: 16
   policy_kwargs: "dict(net_arch=[256, 256])"
 
-Swimmer20-v3:
+Swimmer20-v4:
   <<: *swimmer-defaults
 
 CartPole-v1:
@@ -262,7 +262,7 @@ CartPole-v1:
   learning_rate: !!float 1e-3
   policy_kwargs: "dict(net_arch=[400,300])"
 
-PredatorPrey-v0: &predator_prey
+Goal2D-v0: &predator_prey
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
   gamma: 0.99
@@ -276,36 +276,32 @@ PredatorPrey-v0: &predator_prey
   learning_rate: !!float 1e-3
   policy_kwargs: "dict(net_arch=[64,64])"
 
-PredatorPreyBox-v0:
+Goal2DBox-v0:
   <<: *predator_prey
 
-PredatorPreyBoxQuadrant-v0:
+Goal2DBoxQuadrant-v0:
   <<: *predator_prey
 
-PredatorPreyDense-v0:
+Goal2DDense-v0:
   <<: *predator_prey
 
-PredatorPreyBoxDense-v0:
+Goal2DBoxDense-v0:
   <<: *predator_prey
 
 MeetUp-v0:
   <<: *predator_prey
 
-FetchPush-v1:
+FetchPush-v2:
 #  env_wrapper:
 #    - sb3_contrib.common.wrappers.TimeFeatureWrapper
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
-  model_class: 'td3'
-  n_sampled_goal: 4
-  goal_selection_strategy: 'future'
   buffer_size: 1000000
   batch_size: 2048
   gamma: 0.95
   learning_rate: !!float 1e-3
   tau: 0.05
   policy_kwargs: "dict(n_critics=2, net_arch=[512, 512, 512])"
-  online_sampling: True
 
 FetchSlide-v1:
 #  env_wrapper:
@@ -347,7 +343,22 @@ FetchPickAndPlace-v1:
   online_sampling: True
 
 # SAC hyperparams
-MyFetchReach-v1:
+FetchReach-v2:
+  n_timesteps: !!float 20000
+  policy: 'MlpPolicy'
+#  replay_buffer_class: ReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+
+FetchReach-v3:
   n_timesteps: !!float 20000
   policy: 'MlpPolicy'
 #  replay_buffer_class: ReplayBuffer

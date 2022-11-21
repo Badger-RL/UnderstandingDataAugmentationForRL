@@ -1,4 +1,5 @@
-from augment.rl.augmentation_functions.fetch import FetchReachHER, FetchReachTranslate
+from augment.rl.augmentation_functions.fetch.reach import FetchReachHER, FetchReachTranslate, FetchReachTranslateProximal, FetchReachReflect
+from augment.rl.augmentation_functions.fetch.push import FetchPushHER, FetchPushTranslate, FetchPushReflect
 from augment.rl.augmentation_functions.inverted_pendulum import *
 from augment.rl.augmentation_functions.lqr import LQRTranslate, LQRRotate
 from augment.rl.augmentation_functions.meetup import MeetUpTranslate, MeetUpRotate, MeetUpRotateTranslate
@@ -8,88 +9,93 @@ from augment.rl.augmentation_functions.swimmer_k import SwimmerReflect
 from augment.rl.augmentation_functions.walker2d import Walker2dReflect
 
 predator_prey_box_augmentation_functions = {
-        'rotate': PredatorPreyRotateRestricted,
-        'translate': PredatorPreyTranslate,
-        'translate_proximal': PredatorPreyTranslateProximal,
-        'her': PredatorPreyHER,
-        'rotate_her': PredatorPreyRotateRestrictedHER,
+        'rotate': Goal2DRotateRestricted,
+        'translate': Goal2DTranslate,
+        'translate_proximal': Goal2DTranslateProximal,
+        'her': Goal2DHER,
+        'rotate_her': Goal2DRotateRestrictedHER,
 }
 
 predator_prey_disk_augmentation_functions = {
-        'rotate': PredatorPreyRotate,
-        'translate': PredatorPreyTranslate,
-        'translate_proximal': PredatorPreyTranslateProximal,
-        'her': PredatorPreyHER
+        'rotate': Goal2DRotate,
+        'translate': Goal2DTranslate,
+        'translate_proximal': Goal2DTranslateProximal,
+        'her': Goal2DHER
     }
 
 AUGMENTATION_FUNCTIONS = {
-    'InvertedPendulum-v2': {
+    'InvertedPendulum': {
         'translate': InvertedPendulumTranslate,
         'reflect': InvertedPendulumReflect,
         'translate_reflect': InvertedPendulumTranslateReflect,
     },
-    'InvertedDoublePendulum-v2': {
+    'InvertedDoublePendulum': {
         'translate': InvertedPendulumTranslate,
         'reflect': InvertedPendulumReflect,
         'translate_reflect': InvertedPendulumTranslateReflect,
     },
-    'InvertedPendulumWide-v2': {
+    'InvertedPendulumWide': {
         'translate': InvertedPendulumTranslate,
         'reflect': InvertedPendulumReflect,
         'translate_reflect': InvertedPendulumTranslateReflect,
     },
-    'InvertedDoublePendulumWide-v2': {
+    'InvertedDoublePendulumWide': {
         'translate': InvertedPendulumTranslate,
         'reflect': InvertedPendulumReflect,
         'translate_reflect': InvertedPendulumTranslateReflect,
     },
-    'CartPole-v1': {
+    'CartPole': {
         'translate': InvertedPendulumTranslate,
         'reflect': InvertedPendulumReflect,
     },
-    'LQR-v0': {
+    'LQR': {
         'translate': LQRTranslate,
         'rotate': LQRRotate,
     },
-    'LQRGoal-v0': {
+    'LQRGoal': {
         'translate': LQRTranslate,
         'rotate': LQRRotate,
     },
-    'Swimmer-v3': {
+    'Swimmer': {
         'reflect': SwimmerReflect,
     },
-    'Walker2d-v3': {
+    'Walker2d': {
         'reflect': Walker2dReflect,
     },
-    'PredatorPrey-v0': predator_prey_disk_augmentation_functions,
-    'PredatorPreyBox-v0': predator_prey_box_augmentation_functions,
-    'PredatorPreyBoxQuadrant-v0': predator_prey_box_augmentation_functions,
-    'PredatorPreyDense-v0': predator_prey_disk_augmentation_functions,
-    'PredatorPreyBoxDense-v0': predator_prey_box_augmentation_functions,
-    'MeetUp-v0': {
+    'Goal2D': predator_prey_box_augmentation_functions,
+    'Goal2DQuadrant': predator_prey_box_augmentation_functions,
+    'Goal2DDense': predator_prey_box_augmentation_functions,
+    'MeetUp': {
         'translate': MeetUpTranslate,
         'rotate': MeetUpRotate,
         'rotate_translate': MeetUpRotateTranslate,
     },
-    'MyFetchReach-v1': {
+    'FetchReach': {
+        'her': FetchReachHER,
+        'translate': FetchReachTranslate,
+        'translate_proximal': FetchReachTranslateProximal,
+        'reflect': FetchReachReflect,
+    },
+    'FetchReachDense': {
         'her': FetchReachHER,
         'translate': FetchReachTranslate,
     },
-    'MyFetchReachDense-v1': {
-        'her': FetchReachHER,
-        'translate': FetchReachTranslate,
-    }
+    'FetchPush': {
+        'her': FetchPushHER,
+        'translate': FetchPushTranslate,
+        'reflect': FetchPushReflect,
+    },
 }
 
 for k in range(2,20+1):
-    AUGMENTATION_FUNCTIONS[f'Reacher{k}-v3'] = {
+    AUGMENTATION_FUNCTIONS[f'Reacher{k}'] = {
         'rotate': ReacherRotate,
         'reflect': ReacherReflect,
     }
-    AUGMENTATION_FUNCTIONS[f'Reacher{k}Rand-v3'] = {
+    AUGMENTATION_FUNCTIONS[f'Reacher{k}Rand'] = {
         'rotate': ReacherRotate,
         'reflect': ReacherReflect,
     }
-    AUGMENTATION_FUNCTIONS[f'Swimmer{k}-v3'] = {
+    AUGMENTATION_FUNCTIONS[f'Swimmer{k}'] = {
         'reflect': SwimmerReflect
     }

@@ -1,38 +1,37 @@
 import copy
 import io
 import pathlib
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import gym
+import gymnasium
 import numpy as np
 import torch as th
 from stable_baselines3.common.base_class import BaseAlgorithmSelf
-from stable_baselines3.common.save_util import load_from_zip_file, recursive_setattr
+from stable_baselines3.common.save_util import recursive_setattr, load_from_zip_file
 from torch.nn import functional as F
 
 from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.noise import ActionNoise
-# from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
-from stable_baselines3.common.utils import polyak_update, get_system_info, check_for_correct_spaces
+from stable_baselines3.common.utils import get_parameters_by_name, polyak_update, check_for_correct_spaces, \
+    get_system_info
 from stable_baselines3.td3.policies import CnnPolicy, MlpPolicy, MultiInputPolicy, TD3Policy
-# from augment.rl.algs.buffers import ReplayBuffer
+
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
-# from augment.rl.algs.policies import TD3Policy, MlpPolicy
-# from augment.rl.algs.rbf_policy import RBFExtractor
 from augment.rl.augmentation_functions import AugmentationFunction
+
+TD3Self = TypeVar("TD3Self", bound="TD3")
 
 
 class TD3(OffPolicyAlgorithmAugment):
     """
     Twin Delayed DDPG (TD3)
     Addressing Function Approximation Error in Actor-Critic Methods.
-
     Original implementation: https://github.com/sfujim/TD3
     Paper: https://arxiv.org/abs/1802.09477
     Introduction to TD3: https://spinningup.openai.com/en/latest/algorithms/td3.html
-
     :param policy: The policy model to use (MlpPolicy, CnnPolicy, ...)
     :param env: The environment to learn from (if registered in Gym, can be str)
     :param learning_rate: learning rate for adam optimizer,
@@ -61,10 +60,9 @@ class TD3(OffPolicyAlgorithmAugment):
     :param target_policy_noise: Standard deviation of Gaussian noise added to target policy
         (smoothing noise)
     :param target_noise_clip: Limit for absolute value of target policy smoothing noise.
-    :param create_eval_env: Whether to create a second environment that will be
-        used for evaluating the agent periodically. (Only available when passing string for the environment)
     :param policy_kwargs: additional arguments to be passed to the policy on creation
-    :param verbose: the verbosity level: 0 no output, 1 info, 2 debug
+    :param verbose: Verbosity level: 0 for no output, 1 for info messages (such as device or wrappers used), 2 for
+        debug messages
     :param seed: Seed for the pseudo random generators
     :param device: Device (cpu, cuda, ...) on which the code should be run.
         Setting it to auto, the code will be run on the GPU if possible.
@@ -90,14 +88,13 @@ class TD3(OffPolicyAlgorithmAugment):
         train_freq: Union[int, Tuple[int, str]] = 1,
         gradient_steps: int = -1,
         action_noise: Optional[ActionNoise] = None,
-        replay_buffer_class: Optional[ReplayBuffer] = None,
+        replay_buffer_class: Optional[Type[ReplayBuffer]] = None,
         replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
         optimize_memory_usage: bool = False,
         policy_delay: int = 2,
         target_policy_noise: float = 0.2,
         target_noise_clip: float = 0.5,
         tensorboard_log: Optional[str] = None,
-        create_eval_env: bool = False,
         policy_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
         seed: Optional[int] = None,
@@ -117,7 +114,6 @@ class TD3(OffPolicyAlgorithmAugment):
         separate_aug_critic: Optional[bool] = False,
     ):
 
-        # policy_kwargs.update({'features_extractor_class': RBFExtractor})
         super().__init__(
             policy,
             env,
@@ -136,11 +132,10 @@ class TD3(OffPolicyAlgorithmAugment):
             tensorboard_log=tensorboard_log,
             verbose=verbose,
             device=device,
-            create_eval_env=create_eval_env,
             seed=seed,
             sde_support=False,
             optimize_memory_usage=optimize_memory_usage,
-            supported_action_spaces=(gym.spaces.Box,),
+            supported_action_spaces=(gym.spaces.Box, gymnasium.spaces.Box),
             support_multi_env=True,
             aug_function=aug_function,
             aug_ratio=aug_ratio,
@@ -197,13 +192,17 @@ class TD3(OffPolicyAlgorithmAugment):
     def _setup_model(self) -> None:
         super()._setup_model()
         self._create_aliases()
+        # Running mean and running var
+        self.actor_batch_norm_stats = get_parameters_by_name(self.actor, ["running_"])
+        self.critic_batch_norm_stats = get_parameters_by_name(self.critic, ["running_"])
+        self.actor_batch_norm_stats_target = get_parameters_by_name(self.actor_target, ["running_"])
+        self.critic_batch_norm_stats_target = get_parameters_by_name(self.critic_target, ["running_"])
 
     def _create_aliases(self) -> None:
         self.actor = self.policy.actor
         self.actor_target = self.policy.actor_target
         self.critic = self.policy.critic
         self.critic_target = self.policy.critic_target
-
 
 
     def _critic_loss(self, replay_data, ):
@@ -241,6 +240,7 @@ class TD3(OffPolicyAlgorithmAugment):
 
         # Compute critic loss
         return current_q_values, target_q_values
+
 
     def _update_freeze(self, replay_data_observed, replay_data_aug, actor_losses, critic_losses):
         # zero gradients
@@ -292,6 +292,9 @@ class TD3(OffPolicyAlgorithmAugment):
 
             polyak_update(self.critic.parameters(), self.critic_target.parameters(), self.tau)
             polyak_update(self.actor.parameters(), self.actor_target.parameters(), self.tau)
+            # Copy running stats, see GH issue #996
+            polyak_update(self.critic_batch_norm_stats, self.critic_batch_norm_stats_target, 1.0)
+            polyak_update(self.actor_batch_norm_stats, self.actor_batch_norm_stats_target, 1.0)
             # print('Actor')
             # for prev, curr in zip(actor_prev.parameters(), self.actor.parameters()):
             #     print(prev.shape, curr.shape, th.allclose(prev, curr))
@@ -322,6 +325,10 @@ class TD3(OffPolicyAlgorithmAugment):
             polyak_update(self.critic.parameters(), self.critic_target.parameters(), self.tau)
             polyak_update(self.actor.parameters(), self.actor_target.parameters(), self.tau)
 
+            # Copy running stats, see GH issue #996
+            polyak_update(self.critic_batch_norm_stats, self.critic_batch_norm_stats_target, 1.0)
+            polyak_update(self.actor_batch_norm_stats, self.actor_batch_norm_stats_target, 1.0)
+
     def _update_aug_critic(self, critic_replay_data):
         self.aug_critic.optimizer.zero_grad()
 
@@ -342,7 +349,6 @@ class TD3(OffPolicyAlgorithmAugment):
         self._update_learning_rate([self.actor.optimizer, self.critic.optimizer])
 
         actor_losses, critic_losses = [], []
-
         for _ in range(gradient_steps):
 
             self._n_updates += 1
@@ -370,16 +376,19 @@ class TD3(OffPolicyAlgorithmAugment):
                 self._update_freeze(observed_replay_data, aug_replay_data, actor_losses, critic_losses)
             else:
                 self._update(actor_replay_data=actor_data, critic_replay_data=critic_data,
-                         actor_losses=actor_losses, critic_losses=critic_losses)
+                             actor_losses=actor_losses, critic_losses=critic_losses)
 
             if self.separate_aug_critic:
                 self._update_aug_critic(both_replay_data)
-
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
         if len(actor_losses) > 0:
             self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
+
+    def _get_torch_save_params(self) -> Tuple[List[str], List[str]]:
+        state_dicts = ["policy", "actor.optimizer", "critic.optimizer"]
+        return state_dicts, []
 
     def _freeze_actor_features(self, active_layer_mask):
         for is_active, param in zip(active_layer_mask, self.actor.parameters()):
@@ -395,118 +404,3 @@ class TD3(OffPolicyAlgorithmAugment):
     def _unfreeze(self, model):
         for parameter in model.parameters():
             parameter.requires_grad = True
-
-
-    @classmethod
-    def load(
-        cls: Type[BaseAlgorithmSelf],
-        path: Union[str, pathlib.Path, io.BufferedIOBase],
-        env: Optional[GymEnv] = None,
-        device: Union[th.device, str] = "auto",
-        custom_objects: Optional[Dict[str, Any]] = None,
-        print_system_info: bool = False,
-        force_reset: bool = True,
-        exact_match: bool = False,
-        **kwargs,
-    ) -> BaseAlgorithmSelf:
-        """
-        Load the model from a zip-file.
-        Warning: ``load`` re-creates the model from scratch, it does not update it in-place!
-        For an in-place load use ``set_parameters`` instead.
-
-        :param path: path to the file (or a file-like) where to
-            load the agent from
-        :param env: the new environment to run the loaded model on
-            (can be None if you only need prediction from a trained model) has priority over any saved environment
-        :param device: Device on which the code should run.
-        :param custom_objects: Dictionary of objects to replace
-            upon loading. If a variable is present in this dictionary as a
-            key, it will not be deserialized and the corresponding item
-            will be used instead. Similar to custom_objects in
-            ``keras.models.load_model``. Useful when you have an object in
-            file that can not be deserialized.
-        :param print_system_info: Whether to print system info from the saved model
-            and the current system info (useful to debug loading issues)
-        :param force_reset: Force call to ``reset()`` before training
-            to avoid unexpected behavior.
-            See https://github.com/DLR-RM/stable-baselines3/issues/597
-        :param kwargs: extra arguments to change the model when loading
-        :return: new model instance with loaded parameters
-        """
-        if print_system_info:
-            print("== CURRENT SYSTEM INFO ==")
-            get_system_info()
-
-        data, params, pytorch_variables = load_from_zip_file(
-            path,
-            device=device,
-            custom_objects=custom_objects,
-            print_system_info=print_system_info,
-        )
-
-        # Remove stored device information and replace with ours
-        if "policy_kwargs" in data:
-            if "device" in data["policy_kwargs"]:
-                del data["policy_kwargs"]["device"]
-
-        if "policy_kwargs" in kwargs and kwargs["policy_kwargs"] != data["policy_kwargs"]:
-            raise ValueError(
-                f"The specified policy kwargs do not equal the stored policy kwargs."
-                f"Stored kwargs: {data['policy_kwargs']}, specified kwargs: {kwargs['policy_kwargs']}"
-            )
-
-        if "observation_space" not in data or "action_space" not in data:
-            raise KeyError("The observation_space and action_space were not given, can't verify new environments")
-
-        if env is not None:
-            # Wrap first if needed
-            env = cls._wrap_env(env, data["verbose"])
-            # Check if given env is valid
-            check_for_correct_spaces(env, data["observation_space"], data["action_space"])
-            # Discard `_last_obs`, this will force the env to reset before training
-            # See issue https://github.com/DLR-RM/stable-baselines3/issues/597
-            if force_reset and data is not None:
-                data["_last_obs"] = None
-            # `n_envs` must be updated. See issue https://github.com/DLR-RM/stable-baselines3/issues/1018
-            if data is not None:
-                data["n_envs"] = env.num_envs
-        else:
-            # Use stored env, if one exists. If not, continue as is (can be used for predict)
-            if "env" in data:
-                env = data["env"]
-
-        # noinspection PyArgumentList
-        model = cls(  # pytype: disable=not-instantiable,wrong-keyword-args
-            policy=data["policy_class"],
-            env=env,
-            device=device,
-            _init_setup_model=False,  # pytype: disable=not-instantiable,wrong-keyword-args
-        )
-
-        # load parameters
-        model.__dict__.update(data)
-        model.__dict__.update(kwargs)
-        model._setup_model()
-
-        # put state_dicts back in place
-        model.set_parameters(params, exact_match=exact_match, device=device)
-
-        # put other pytorch variables back in place
-        if pytorch_variables is not None:
-            for name in pytorch_variables:
-                # Skip if PyTorch variable was not defined (to ensure backward compatibility).
-                # This happens when using SAC/TQC.
-                # SAC has an entropy coefficient which can be fixed or optimized.
-                # If it is optimized, an additional PyTorch variable `log_ent_coef` is defined,
-                # otherwise it is initialized to `None`.
-                if pytorch_variables[name] is None:
-                    continue
-                # Set the data attribute directly to avoid issue when using optimizers
-                # See https://github.com/DLR-RM/stable-baselines3/issues/391
-                recursive_setattr(model, name + ".data", pytorch_variables[name].data)
-
-        # Sample gSDE exploration matrix, so it uses the right device
-        # see issue #44
-        if model.use_sde:
-            model.policy.reset_noise()  # pytype: disable=attribute-error
-        return model

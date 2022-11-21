@@ -72,8 +72,6 @@ class LQRRotate(AugmentationFunction):
 
         return obs, next_obs, action, reward, done, infos
 
-import gym, my_gym
-
 if __name__ == "__main__":
 
     env = gym.make('LQRGoal-v0')

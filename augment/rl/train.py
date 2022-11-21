@@ -1,9 +1,10 @@
 import argparse
 import difflib
+import importlib
 import inspect
 import os.path
 
-import gym, my_gym
+import gym, my_gym, gymnasium
 import numpy as np
 import torch
 import yaml
@@ -21,12 +22,13 @@ if __name__ == '__main__':
 
     # basic
     parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="PredatorPreyBox-v0", help="environment ID")
+    parser.add_argument("--env", type=str, default="FetchReach-v3", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e6), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
     parser.add_argument("--eval-episodes", help="Number of episodes to use for evaluation", default=10, type=int)
     parser.add_argument("-i", "--trained-agent", help="Path to a pretrained agent to continue training", default="", type=str)
+    parser.add_argument("--device", help="PyTorch device to be use (ex: cpu, cuda...)", default="auto", type=str)
 
     # parameters
     parser.add_argument("--env-kwargs", type=str, nargs="*", action=StoreDict, default={}, help="Optional keyword argument to pass to the env constructor")
@@ -78,11 +80,18 @@ if __name__ == '__main__':
     n_timesteps = args.n_timesteps
 
     ####################################################################################################################
-    # Assertions
+    # Going through custom gym packages to let them register in the global registory
 
+    env_id = args.env
+    registered_gymnasium_envs = gymnasium.envs.registry # pytype: disable=module-attr
+    gym.envs.registry.update(registered_gymnasium_envs)
+    registered_envs = set(gym.envs.registry.keys())
     # If the environment is not found, suggest the closest match
-    registered_envs = set(gym.envs.registry.env_specs.keys())  # pytype: disable=module-attr
-    if env_id not in registered_envs:
+    if env_id in registered_envs:
+        use_gymnasium = False
+    elif env_id in registered_gymnasium_envs:
+        use_gymnaisum = True
+    else:
         try:
             closest_match = difflib.get_close_matches(env_id, registered_envs, n=1)[0]
         except IndexError:
@@ -149,7 +158,7 @@ if __name__ == '__main__':
         aug_func = args.aug_function #
         aug_func_kwargs = args.aug_function_kwargs
 
-        aug_func_class = AUGMENTATION_FUNCTIONS[env_id][aug_func]
+        aug_func_class = AUGMENTATION_FUNCTIONS[env_id[:-3]][aug_func]
         try:
             rbf_n = args.env_kwargs['rbf_n']
         except:
@@ -188,6 +197,7 @@ if __name__ == '__main__':
     print(hyperparams['train_freq'], hyperparams['batch_size'], hyperparams['buffer_size'])
 
     algo_class = ALGOS[algo]
+    print(hyperparams)
     if args.trained_agent != "":
         assert args.trained_agent.endswith(".zip") and os.path.isfile(args.trained_agent), "The trained_agent must be a valid path to a .zip file"
         model = algo_class.load(args.trained_agent, env=env)

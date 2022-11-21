@@ -1,5 +1,4 @@
 import time
-import gym, my_gym
 from typing import Dict, List, Any
 
 import numpy as np

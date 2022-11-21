@@ -1,8 +1,5 @@
-import time
 from typing import Dict, List, Any
-
 import numpy as np
-import torch
 
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
 
@@ -42,7 +39,7 @@ class SwimmerReflect(AugmentationFunction):
         return obs, next_obs, action, reward, done, infos
 
 
-import gym, my_gym
+# import gym, my_gym
 
 if __name__ == "__main__":
     k=10
