@@ -8,13 +8,8 @@ tar -xzf ${ENVNAME}.tar.gz -C $ENVDIR
 rm ${ENVNAME}.tar.gz # remove env tarball
 source $ENVDIR/bin/activate
 
-# set up  mujoco
-#./mujoco_get_dependencies.sh
-source ./mujoco_setup.sh
+git clone git@github.com:NicholasCorrado/Gymnasium-Robotics.git -b no-dict
 
-git clone https://github.com/DLR-RM/stable-baselines3.git
-#git clone https://github.com/Farama-Foundation/Gymnasium-Robotics.git
 pip install -e .
-pip install -e stable-baselines3
 pip install -e augment/my-gym
-#pip install -e Gymnasium-Robotics
+pip install -e augment/Gymnasium-Robotics
