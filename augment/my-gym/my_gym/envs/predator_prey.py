@@ -15,7 +15,7 @@ class PredatorPreyEnv(MyEnv):
         # self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1,))
 
         self.boundary = 1.05
-        self.observation_space = gym.spaces.Box(-self.boundary, +self.boundary, shape=(2 * self.n,))
+        self.observation_space = gym.spaces.Box(-self.boundary, +self.boundary, shape=(2 * self.n,), dtype="float64")
 
         self.step_num = 0
         self.delta = delta
