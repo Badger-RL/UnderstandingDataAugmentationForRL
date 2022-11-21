@@ -12,7 +12,7 @@ source $ENVDIR/bin/activate
 pip install -e .
 
 cd augment
-git clone git@github.com:NicholasCorrado/Gymnasium-Robotics.git -b no-dict
+git clone https://github.com/NicholasCorrado/Gymnasium-Robotics.git -b no-dict
 pip install -e Gymnasium-Robotics
 pip install -e my-gym
 cd ..
