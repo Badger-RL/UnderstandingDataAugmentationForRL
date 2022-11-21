@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     # basic
     parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="FetchReach-v3", help="environment ID")
+    parser.add_argument("--env", type=str, default="FetchPush-v2", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e6), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument("--data-factor", type=float, default=1)
 
     # augmentation
-    parser.add_argument("--aug-function", type=str, default=None)
+    parser.add_argument("--aug-function", type=str, default='her')
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-n", type=float, default=1)
     parser.add_argument("--aug-ratio", type=float, default=1)
@@ -64,6 +64,7 @@ if __name__ == '__main__':
     parser.add_argument("--model-save-freq", default=None, type=int)
     parser.add_argument("-exp", "--experiment-name", help="<log folder>/<env_id>/<algo>/<experiment name>/run_<run_id>", type=str, default="")
     parser.add_argument("--run-id", help="Run id to append to env save directory", default=None, type=int)
+    parser.add_argument("--run-id-offset", default=0, type=int)
     parser.add_argument("--save-replay-buffer", type=bool, default=False)
     parser.add_argument("--save-aug-replay-buffer", type=bool, default=False)
 
@@ -101,6 +102,7 @@ if __name__ == '__main__':
     ####################################################################################################################
     # Preprocess args
 
+    args.run_id += args.run_id_offset
     save_dir = get_save_dir(args.log_folder, env_id, algo, args.run_id, args.experiment_name)
     best_model_save_dir = save_dir if args.save_best_model else None
 
