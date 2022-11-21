@@ -4,7 +4,7 @@ import importlib
 import inspect
 import os.path
 
-import gym, my_gym, gymnasium
+import gym, my_gym
 import numpy as np
 import torch
 import yaml
@@ -84,25 +84,26 @@ if __name__ == '__main__':
     # Going through custom gym packages to let them register in the global registory
 
     env_id = args.env
-    registered_gymnasium_envs = gymnasium.envs.registry # pytype: disable=module-attr
-    gym.envs.registry.update(registered_gymnasium_envs)
+    # registered_gymnasium_envs = gymnasium.envs.registry # pytype: disable=module-attr
+    # gym.envs.registry.update(registered_gymnasium_envs)
     registered_envs = set(gym.envs.registry.keys())
     # If the environment is not found, suggest the closest match
-    if env_id in registered_envs:
-        use_gymnasium = False
-    elif env_id in registered_gymnasium_envs:
-        use_gymnaisum = True
-    else:
-        try:
-            closest_match = difflib.get_close_matches(env_id, registered_envs, n=1)[0]
-        except IndexError:
-            closest_match = "'no close match found...'"
-        raise ValueError(f"{env_id} not found in gym registry, you maybe meant {closest_match}?")
+    if env_id not in registered_envs:
+        import gymnasium
+        registered_gymnasium_envs = gymnasium.envs.registry # pytype: disable=module-attr
+        gym.envs.registry.update(registered_gymnasium_envs)
+        if env_id not in registered_gymnasium_envs:
+            try:
+                closest_match = difflib.get_close_matches(env_id, registered_envs, n=1)[0]
+            except IndexError:
+                closest_match = "'no close match found...'"
+            raise ValueError(f"{env_id} not found in gym registry, you maybe meant {closest_match}?")
 
     ####################################################################################################################
     # Preprocess args
 
-    args.run_id += args.run_id_offset
+    if args.run_id:
+        args.run_id += args.run_id_offset
     save_dir = get_save_dir(args.log_folder, env_id, algo, args.run_id, args.experiment_name)
     best_model_save_dir = save_dir if args.save_best_model else None
 
