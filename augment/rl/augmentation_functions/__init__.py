@@ -1,5 +1,8 @@
-from augment.rl.augmentation_functions.fetch.reach import FetchReachHER, FetchReachTranslate, FetchReachTranslateProximal, FetchReachReflect
-from augment.rl.augmentation_functions.fetch.push import FetchPushHER, FetchPushTranslate, FetchPushReflect
+from augment.rl.augmentation_functions.fetch.reach import *
+from augment.rl.augmentation_functions.fetch.push import *
+from augment.rl.augmentation_functions.fetch.slide import *
+from augment.rl.augmentation_functions.fetch.pick_and_place import *
+
 from augment.rl.augmentation_functions.inverted_pendulum import *
 from augment.rl.augmentation_functions.lqr import LQRTranslate, LQRRotate
 from augment.rl.augmentation_functions.meetup import MeetUpTranslate, MeetUpRotate, MeetUpRotateTranslate
@@ -84,6 +87,16 @@ AUGMENTATION_FUNCTIONS = {
         'her': FetchPushHER,
         'translate': FetchPushTranslate,
         'reflect': FetchPushReflect,
+    },
+    'FetchSlide': {
+        'her': FetchSlideHER,
+        'translate': FetchSlideTranslate,
+        'reflect': FetchSlideReflect,
+    },
+    'FetchPickAndPlace': {
+        'her': FetchPickAndPlaceHER,
+        'translate': FetchPickAndPlaceTranslate,
+        'reflect': FetchPickAndPlaceReflect,
     },
 }
 
