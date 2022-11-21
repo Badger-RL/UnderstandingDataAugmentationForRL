@@ -39,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument("--data-factor", type=float, default=1)
 
     # augmentation
-    parser.add_argument("--aug-function", type=str, default='her')
+    parser.add_argument("--aug-function", type=str, default=None)
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-n", type=float, default=1)
     parser.add_argument("--aug-ratio", type=float, default=1)
