@@ -381,7 +381,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                 if self.aug_freq == 'episode':
                     do_aug = dones.all()
                 else:
-                    do_aug = (num_collected_steps % self.aug_freq == 0) or dones.all()
+                    do_aug = (self.num_timesteps % self.aug_freq == 0) or dones.all()
 
                 if do_aug:
                     env_indices = np.random.randint(0, high=self.n_envs, size=(len(self.aug_indices),))
