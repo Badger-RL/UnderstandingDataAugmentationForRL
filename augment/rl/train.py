@@ -115,7 +115,7 @@ if __name__ == '__main__':
     hyperparams.update(read_hyperparameters(env_id, algo))
     if args.hyperparams is not None:
         hyperparams.update(args.hyperparams)
-
+    hyperparams['device'] = args.device
     # set seed
     if args.run_id:
         args.seed=args.run_id
