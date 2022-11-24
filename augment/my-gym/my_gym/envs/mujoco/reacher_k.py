@@ -44,7 +44,7 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
 
     def reset_model(self):
         qpos = (
-            self.np_random.uniform(low=-0.1, high=0.1, size=self.model.nq)
+            self.np_random.uniform(low=-np.pi, high=np.pi, size=self.model.nq)
             + self.init_qpos
         )
 

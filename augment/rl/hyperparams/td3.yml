@@ -177,6 +177,7 @@ Swimmer-v4:
   gamma: 0.9999
   train_freq: 1
   gradient_steps: 1
+  batch_size: 256
   learning_rate: !!float 1e-4
 
 ### Custom Reacher
@@ -189,6 +190,9 @@ Reacher2-v4: &reacher-defaults
   buffer_size: !!float 1e6
   noise_type: 'normal'
   noise_std: 0.1
+
+Reacher-v4:
+  <<: *reacher-defaults
 
 Reacher2Sparse-v4:
   <<: *reacher-defaults
