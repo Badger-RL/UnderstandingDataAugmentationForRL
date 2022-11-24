@@ -1,12 +1,15 @@
+import time
 from typing import Dict, List, Any
 import numpy as np
+import gym
 
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
+from augment.rl.augmentation_functions.test import validate_augmentation
 
 
 class SwimmerReflect(AugmentationFunction):
 
-    def __init__(self, sigma=0.1, k=4, **kwargs):
+    def __init__(self, sigma=0.1, k=2, **kwargs):
         super().__init__()
         self.sigma = sigma
         self.k = k
@@ -23,7 +26,8 @@ class SwimmerReflect(AugmentationFunction):
                 p=None
                 ):
 
-        k = (obs.shape[-1]-2)//2
+        # k = (obs.shape[-1]-2)//2
+        k = 3
         obs[:,:k] *= -1
         obs[:,-k:] *= -1
         obs[:,k+1] *= -1
@@ -39,99 +43,55 @@ class SwimmerReflect(AugmentationFunction):
         return obs, next_obs, action, reward, done, infos
 
 
-# import gym, my_gym
+def check_valid(env, aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info):
 
+    # set env to aug_obs
+    # env = gym.make('Walker2d-v4', render_mode='human')
+
+    # env.reset()
+    qpos, qvel = env.obs_to_q(aug_obs)
+    x_pos = np.array([0])
+    qpos = np.concatenate([x_pos, qpos])
+    env.set_state(qpos, qvel)
+
+    # determine ture next_obs, reward
+    next_obs_true, reward_true, terminated_true, truncated_true, info_true = env.step(aug_action)
+    print(aug_next_obs - next_obs_true)
+    assert np.allclose(aug_next_obs, next_obs_true)
+    assert np.allclose(aug_reward, reward_true)
+
+def sanity_check():
+    env = gym.make('Swimmer-v4', render_mode='human')
+    env.reset()
+
+    f = SwimmerReflect(k=2)
+
+    qpos_orginal = env.data.qpos.copy()
+    qvel_original = env.data.qvel.copy()
+
+    qpos = qpos_orginal.copy()
+    qvel = qvel_original.copy()
+    print(qpos)
+    print(qvel)
+    env.set_state(qpos, qvel)
+
+    action = np.zeros(2)
+    action[0] = +1
+    action[1] = -1
+    for j in range(20):
+        next_obs, _, _, _, _ = env.step(action)
+    print(next_obs)
+    print()
+    env.render()
+    time.sleep(1)
+    '''
+    [ 5.82954723e-01 -1.74649185e+00  1.74651635e+00 -2.26185595e-01
+  6.68814855e-02 -3.07502596e-01  1.28781081e-05 -1.35566612e-05]
+'''
 if __name__ == "__main__":
-    k=10
-    env = gym.make('Swimmer10-v3')
+    sanity_check()
 
-    f = SwimmerReflect()
-
-    for i in range(1000):
-        env.reset()
-        # set initial qpos, qvel
-        qpos = np.copy(env.sim.data.qpos)
-        qvel = np.copy(env.sim.data.qvel)
-
-        qpos[2:] = np.random.uniform(-np.pi, np.pi, k)
-        # qpos = np.ones(5)*0.3
-        # qvel = np.zeros(5)
-        # +1 index since qpos includes x position
-        env.set_state(qpos, qvel)
-        obs = env.get_obs()
-
-        # env.render()
-
-        # get transition
-        action = np.ones(k-1)
-        next_obs, reward, done, info = env.step(action)
-        obs = obs.reshape(1, -1)
-        next_obs = next_obs.reshape(1, -1)
-        action = action.reshape(1, -1)
-        done = np.array([done]).reshape(1, -1)
-
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, next_obs, action, reward, done, [{}],)
-
-        # Make sure aug transition matches simulation
-        # aug_obs to qpos, qvel
-        qpos2, qvel2 = env.obs_to_q(aug_obs[0])
-        qpos2[:2] = qpos[:2]
-        env.set_state(qpos2, qvel2)
-        obs2 = env.get_obs()
-        next_obs2, reward2, done2, info2 = env.step(aug_action[0])
-        # env.render()
-
-        # print(info, info2)
-
-        # print(aug_obs)
-        print(aug_next_obs)
-
-        # print(obs2)
-        print(next_obs2)
-
-
-        # print(aug_obs - obs2)
-        # print(aug_next_obs - next_obs2)
-        print(aug_reward - reward2, aug_reward, reward2)
-
-        assert np.allclose(aug_obs, obs2)
-        assert np.allclose(aug_next_obs, next_obs2)
-        assert np.allclose(aug_reward, reward2)
-
-
-# if __name__ == "__main__":
-#
-#     k=3
-#     env = gym.make('Swimmer-v3')
-#     env.reset()
-#
-#     x = 0 #np.pi/4
-#     qpos = np.array([1,1] + [0.5*(-1)**i for i in range(1,k+1)])
-#     qpos = np.array([1,1] + [0.2 for i in range(1,k+1)])
-#
-#     qvel = np.zeros(k+2)
-#     env.set_state(qpos, qvel)
-#     obs = env.get_obs()
-#     obs = obs.reshape(1, -1)
-#
-#     f = Reflect()
-#
-#     for t in range(1000):
-#         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = f.augment(1, obs, obs, obs, obs, obs, [{}])
-#
-#         env.set_state(qpos, qvel)
-#
-#         env.render()
-#         time.sleep(0.001)
-#
-#         qpos_aug = np.copy(qpos)
-#         qpos_aug[2:] = aug_obs[0,:k]
-#         env.set_state(qpos_aug, qvel)
-#
-#         env.render()
-#         time.sleep(0.001)
-#
-#
-#         # time.sleep(0.1)
-#
-#     # self.set_state(qpos, qvel)
+    # env = gym.make('Swimmer-v4', render_mode='human')
+    # aug_func = SwimmerReflect(k=2)
+    #
+    # validate_augmentation(env, aug_func, check_valid)
