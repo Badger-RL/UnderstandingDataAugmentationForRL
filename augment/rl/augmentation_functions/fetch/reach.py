@@ -1,11 +1,7 @@
 from typing import Dict, List, Any
-
 import numpy as np
-import torch
-from matplotlib import pyplot as plt
 
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
-# import gym, my_gym
 
 '''
     - `observation`: its value is an `ndarray` of shape `(10,)`. It consists of kinematic information of the end effector. The elements of the array correspond to the following:
@@ -73,6 +69,71 @@ class FetchReachHER(FetchReachAugmentationFunction):
 
         return obs, next_obs, action, reward, done, infos
 
+class FetchReachTranslateGoal(FetchReachAugmentationFunction):
+
+    def __init__(self, env,  **kwargs):
+        super().__init__(env=env, **kwargs)
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 ):
+
+        new_goal = np.random.uniform(-self.lo, self.hi)
+
+        obs[:, -3:] = new_goal
+        next_obs[:, -3:] = new_goal
+
+        at_goal = self.env.is_success(next_obs[:, self.achieved_mask], next_obs[:, self.desired_mask]).astype(bool)
+        reward = self.env.compute_reward(next_obs[:, self.achieved_mask], next_obs[:, self.desired_mask], infos)
+
+        self._set_done_and_info(done, infos, at_goal)
+
+        return obs, next_obs, action, reward, done, infos
+
+
+class FetchReachTranslateGoalProximal(FetchReachAugmentationFunction):
+
+    def __init__(self, env, p=0.5, **kwargs):
+        super().__init__(env=env, **kwargs)
+        self.p = p
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 ):
+
+        if np.random.random() < self.p:
+            r = np.random.uniform(0, self.delta)
+            theta = np.random.uniform(-np.pi, np.pi)
+            phi = np.random.uniform(-np.pi/2, np.pi/2)
+            dx = r*np.sin(phi)*np.cos(theta)
+            dy = r*np.sin(phi)*np.sin(theta)
+            dz = r*np.cos(phi)
+            new_goal = obs[:, -3:] + np.array([dx, dy, dz])
+        else:
+            new_goal = np.random.uniform(-self.lo, self.hi)
+
+        obs[:, -3:] = new_goal
+        next_obs[:, -3:] = new_goal
+
+        at_goal = self.env.is_success(next_obs[:, self.achieved_mask], next_obs[:, self.desired_mask]).astype(bool)
+        reward = self.env.compute_reward(next_obs[:, self.achieved_mask], next_obs[:, self.desired_mask], infos)
+
+        self._set_done_and_info(done, infos, at_goal)
+
+        return obs, next_obs, action, reward, done, infos
+
 class FetchReachTranslate(FetchReachAugmentationFunction):
 
     def __init__(self, env, **kwargs):
@@ -94,8 +155,10 @@ class FetchReachTranslate(FetchReachAugmentationFunction):
                  ):
 
         v = np.random.uniform(-self.lo, self.hi)
+        delta_pos = next_obs[:, :3] - obs[:, :3]
+
         obs[:, :3] = v
-        next_obs[:, :3] = v + action[:, :3] * self.delta
+        next_obs[:, :3] = v + delta_pos
 
         at_goal = self.env.is_success(next_obs[:, self.achieved_mask], next_obs[:, self.desired_mask]).astype(bool)
         reward = self.env.compute_reward(next_obs[:, self.achieved_mask], next_obs[:, self.desired_mask], infos)

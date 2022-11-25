@@ -54,7 +54,7 @@ class FetchHER(FetchReachAugmentationFunction):
 
 class FetchTranslateGoal(FetchReachAugmentationFunction):
 
-    def __init__(self, env,  **kwargs):
+    def __init__(self, env, use_z=False, **kwargs):
         super().__init__(env=env, **kwargs)
 
     def _augment(self,
@@ -102,7 +102,7 @@ class FetchTranslateGoalProximal(FetchReachAugmentationFunction):
             phi = np.random.uniform(-np.pi/2, np.pi/2)
             dx = r*np.sin(phi)*np.cos(theta)
             dy = r*np.sin(phi)*np.sin(theta)
-            dz = r*np.cos(phi)
+            dz = 0 # r*np.cos(phi)
             new_goal = obs[:, self.desired_mask] + np.array([dx, dy, dz])
         else:
             new_goal = np.random.uniform(-self.lo, self.hi)

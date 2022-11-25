@@ -79,8 +79,8 @@ AUGMENTATION_FUNCTIONS = {
         'her': FetchHER,
         'translate': FetchReachTranslate,
         'translate_proximal': FetchReachTranslateProximal,
-        'translate_goal': FetchTranslateGoal,
-        'translate_goal_proximal': FetchTranslateGoalProximal,
+        'translate_goal': FetchReachTranslateGoal,
+        'translate_goal_proximal': FetchReachTranslateGoalProximal,
         'reflect': FetchReachReflect,
     },
     'FetchReachDense': {
