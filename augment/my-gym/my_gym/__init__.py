@@ -113,11 +113,11 @@ register(
 #     reward_threshold=6000.0,
 # )
 #
-# register(
-#     id="Humanoid-v3",
-#     entry_point="my_gym.envs.mujoco.humanoid_v3:HumanoidEnv",
-#     max_episode_steps=1000,
-# )
+register(
+    id="Humanoid-v4",
+    entry_point="my_gym.envs.mujoco.humanoid_v4:HumanoidEnv",
+    max_episode_steps=1000,
+)
 #
 # register(
 #     id="HumanoidStandup-v2",
@@ -141,7 +141,7 @@ register(
 #     max_episode_steps=1000,
 # )
 #
-for k in [2,4,8,12,16,20]:
+# for k in [2,4,8,12,16,20]:
     # register(
     #     id=f'ReacherTracker{k}-v3',
     #     entry_point='my_gym.envs.mujoco:ReacherTrackerEnv',
@@ -149,12 +149,12 @@ for k in [2,4,8,12,16,20]:
     #     max_episode_steps=200,
     # )
 
-    register(
-        id=f'Reacher{k}-v3',
-        entry_point='my_gym.envs.mujoco:ReacherEnv',
-        kwargs={'num_links': k},
-        max_episode_steps=100,
-    )
+    # register(
+    #     id=f'Reacher{k}-v4',
+    #     entry_point='my_gym.envs.mujoco:ReacherEnv',
+    #     kwargs={'num_links': k},
+    #     max_episode_steps=100,
+    # )
 #
 #     register(
 #         id=f'Reacher{k}Sparse-v3',
