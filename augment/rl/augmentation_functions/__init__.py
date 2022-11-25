@@ -2,6 +2,7 @@ from augment.rl.augmentation_functions.fetch.reach import *
 from augment.rl.augmentation_functions.fetch.push import *
 from augment.rl.augmentation_functions.fetch.slide import *
 from augment.rl.augmentation_functions.fetch.pick_and_place import *
+from augment.rl.augmentation_functions.fetch.common import *
 
 from augment.rl.augmentation_functions.inverted_pendulum import *
 from augment.rl.augmentation_functions.lqr import LQRTranslate, LQRRotate
@@ -75,29 +76,56 @@ AUGMENTATION_FUNCTIONS = {
         'rotate_translate': MeetUpRotateTranslate,
     },
     'FetchReach': {
-        'her': FetchReachHER,
+        'her': FetchHER,
         'translate': FetchReachTranslate,
         'translate_proximal': FetchReachTranslateProximal,
+        'translate_goal': FetchTranslateGoal,
+        'translate_goal_proximal': FetchTranslateGoalProximal,
         'reflect': FetchReachReflect,
     },
     'FetchReachDense': {
-        'her': FetchReachHER,
+        'her': FetchHER,
+        'translate_goal': FetchTranslateGoal,
+        'translate_goal_proximal': FetchTranslateGoalProximal,
         'translate': FetchReachTranslate,
     },
     'FetchPush': {
-        'her': FetchPushHER,
-        'translate': FetchPushTranslate,
+        'her': FetchHER,
+        'translate_goal': FetchTranslateGoal,
+        'translate_goal_proximal': FetchTranslateGoalProximal,
+        'translate': FetchPushTranslateGoal,
         'reflect': FetchPushReflect,
     },
     'FetchSlide': {
-        'her': FetchSlideHER,
+        'her': FetchHER,
+        'translate_goal': FetchTranslateGoal,
+        'translate_goal_proximal': FetchTranslateGoalProximal,
         'translate': FetchSlideTranslate,
         'reflect': FetchSlideReflect,
     },
     'FetchPickAndPlace': {
-        'her': FetchPickAndPlaceHER,
+        'her': FetchHER,
+        'translate_goal': FetchTranslateGoal,
+        'translate_goal_proximal': FetchTranslateGoalProximal,
         'translate': FetchPickAndPlaceTranslate,
         'reflect': FetchPickAndPlaceReflect,
+    },
+
+    'dmc_cartpole_swingup_0': {
+        'translate': InvertedPendulumTranslate,
+        'reflect': InvertedPendulumReflect,
+    },
+    'dmc_cartpole_swingup_sparse_0': {
+        'translate': InvertedPendulumTranslate,
+        'reflect': InvertedPendulumReflect,
+    },
+    'dmc_cartpole_balance_0': {
+        'translate': InvertedPendulumTranslate,
+        'reflect': InvertedPendulumReflect,
+    },
+    'dmc_cartpole_balance_sparse_0': {
+        'translate': InvertedPendulumTranslate,
+        'reflect': InvertedPendulumReflect,
     },
 }
 
