@@ -422,3 +422,85 @@ NeckGoalEnvRelativeDense-v2:
   n_sampled_goal: 4
   goal_selection_strategy: 'future'
   online_sampling: False
+
+###############################
+
+dmc_swimmer_swimmer6_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.9999
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+
+dmc_ball_in_cup_catch_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+
+dmc_manipulator_insert_ball_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+
+dmc_manipulator_bring_ball_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+
+dmc_manipulator_insert_peg_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+
+dmc_manipulator_bring_peg_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+
+dmc_cartpole_swingup_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.9999
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+
+dmc_cartpole_swingup_sparse_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.9999
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+
+dmc_cartpole_balance_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.9999
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+
+dmc_cartpole_balance sparse_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.9999
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
