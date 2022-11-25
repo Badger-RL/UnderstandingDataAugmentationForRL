@@ -4,7 +4,6 @@ import numpy as np
 import gym
 
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
-from augment.rl.augmentation_functions.test import validate_augmentation
 
 
 class SwimmerReflect(AugmentationFunction):
