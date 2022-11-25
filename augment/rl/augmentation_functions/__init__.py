@@ -93,7 +93,7 @@ AUGMENTATION_FUNCTIONS = {
         'her': FetchHER,
         'translate_goal': FetchTranslateGoal,
         'translate_goal_proximal': FetchTranslateGoalProximal,
-        'translate': FetchPushTranslateGoal,
+        'translate': FetchTranslateGoal,
         'reflect': FetchPushReflect,
     },
     'FetchSlide': {
