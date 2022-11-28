@@ -131,8 +131,6 @@ class Goal2DManyRotate(Goal2DManyAugmentationFunction):
         next_obs[:, 0] = obs[:, 0] + dx * self.delta
         next_obs[:, 1] = obs[:, 1] + dy * self.delta
 
-        self._rotate_position(next_obs[:, 2:], theta)
-
 class Goal2DManyRotateRestricted(Goal2DManyRotate):
     def __init__(self, **kwargs):
         super().__init__(restricted=True, **kwargs)
