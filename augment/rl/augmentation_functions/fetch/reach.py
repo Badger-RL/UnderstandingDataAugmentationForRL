@@ -122,7 +122,7 @@ class FetchReachTranslateGoalProximal(FetchReachAugmentationFunction):
             dz = r*np.cos(phi)
             new_goal = obs[:, -3:] + np.array([dx, dy, dz])
         else:
-            new_goal = np.random.uniform(-self.lo, self.hi)
+            new_goal = np.random.uniform(self.lo, self.hi)
 
         obs[:, -3:] = new_goal
         next_obs[:, -3:] = new_goal
@@ -154,7 +154,7 @@ class FetchReachTranslate(FetchReachAugmentationFunction):
                  p=None,
                  ):
 
-        v = np.random.uniform(-self.lo, self.hi)
+        v = np.random.uniform(self.lo, self.hi)
         delta_pos = next_obs[:, :3] - obs[:, :3]
 
         obs[:, :3] = v
@@ -206,7 +206,7 @@ class FetchReachTranslateProximal(FetchReachAugmentationFunction):
             at_goal = self.env.is_success(next_obs[:, self.achieved_mask], next_obs[:, self.desired_mask]).astype(bool)
         else:
             while True:
-                v = np.random.uniform(-self.lo, self.hi)
+                v = np.random.uniform(self.lo, self.hi)
                 obs[:, :3] = v
                 next_obs[:, :3] = v + action[:, :3] * self.delta
                 at_goal = self.env.is_success(next_obs[:, self.achieved_mask], next_obs[:, self.desired_mask]).astype(bool)
