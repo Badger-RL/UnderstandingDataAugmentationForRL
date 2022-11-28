@@ -84,14 +84,28 @@ class Goal2DManyTranslate(Goal2DManyAugmentationFunction):
 
     def _set_dynamics(self, obs, next_obs, action):
         n = 1
-        v = np.random.uniform(low=-self.aug_d, high=+self.aug_d, size=(n, 2))
+        v = np.random.uniform(low=-0.5, high=+0.5, size=(n, 2))
 
         obs[:, :2] = v
         dx = action[:, 0] * np.cos(action[:, 1])
         dy = action[:, 0] * np.sin(action[:, 1])
         next_obs[:, 0] = v[:, 0] + dx * self.delta
         next_obs[:, 1] = v[:, 1] + dy * self.delta
-        next_obs[:, :2] = np.clip(next_obs[:, :2], -self.boundary, self.boundary)
+
+class Goal2DManyTranslateGoal(Goal2DManyAugmentationFunction):
+
+    def __init__(self, aug_d=1.0, **kwargs):
+        super().__init__(aug_d=aug_d, **kwargs)
+
+    def _set_dynamics(self, obs, next_obs, action):
+        n = 1
+        v = np.random.uniform(low=-0.5, high=+0.5, size=(n, 4))
+
+        obs[:, 2:6] = v
+        dx = action[:, 0] * np.cos(action[:, 1])
+        dy = action[:, 0] * np.sin(action[:, 1])
+        next_obs[:, 0] = v[:, 0] + dx * self.delta
+        next_obs[:, 1] = v[:, 1] + dy * self.delta
 
 
 class Goal2DManyRotate(Goal2DManyAugmentationFunction):
@@ -144,13 +158,13 @@ class Goal2DManyTranslateProximal(Goal2DManyTranslate):
 
     def _translate_proximal(self, goal):
         n = 1
-        disp = random_sample_on_box(self.delta, n)
+        disp = random_sample_on_disk(self.delta, n)
         v = goal + disp
         return v
 
     def _translate_uniform(self, goal):
         n = 1
-        v = random_sample_on_box(self.aug_d, n)
+        v = random_sample_on_disk(self.aug_d, n)
         norm = np.linalg.norm(goal-v)
         while norm < 0.05:
             v = random_sample_on_box(self.aug_d, n)
