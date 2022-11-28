@@ -301,11 +301,11 @@ FetchPush-v2:
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
   buffer_size: 1000000
-  batch_size: 2048
+  batch_size: 256
   gamma: 0.99
   learning_rate: !!float 1e-3
   tau: 0.05
-  policy_kwargs: "dict(net_arch=[512, 512, 512])"
+  policy_kwargs: "dict(net_arch=[256,256,256])"
 
 FetchSlide-v2:
 #  env_wrapper:
@@ -313,38 +313,23 @@ FetchSlide-v2:
   n_timesteps: !!float 2.5e6
   policy: 'MlpPolicy'
   buffer_size: 1000000
-  batch_size: 2048
+  batch_size: 256
   gamma: 0.99
   learning_rate: !!float 1e-3
   tau: 0.05
-  policy_kwargs: "dict(net_arch=[512, 512, 512])"
+  policy_kwargs: "dict(net_arch=[256,256,256])"
 
 
 FetchPickAndPlace-v2:
   n_timesteps: !!float 1e6
   policy: 'MlpPolicy'
   buffer_size: 1000000
-  batch_size: 2048
+  batch_size: 256
   gamma: 0.99
   learning_rate: !!float 1e-3
   tau: 0.05
-  policy_kwargs: "dict(net_arch=[512, 512, 512])"
+  policy_kwargs: "dict(net_arch=[256,256,256])"
 
-# SAC hyperparams
-FetchReach-v2:
-  n_timesteps: !!float 20000
-  policy: 'MlpPolicy'
-#  replay_buffer_class: ReplayBuffer
-#  replay_buffer_kwargs: "dict(
-#    online_sampling=True,
-#    goal_selection_strategy='future',
-#    n_sampled_goal=4
-#  )"
-  buffer_size: 1000000
-  batch_size: 256
-  gamma: 0.95
-  learning_rate: 0.001
-  learning_starts: 1000
 
 FetchReach-v3:
   n_timesteps: !!float 20000
