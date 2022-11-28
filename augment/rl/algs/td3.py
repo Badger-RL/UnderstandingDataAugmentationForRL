@@ -4,7 +4,7 @@ import pathlib
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import gym
-import gymnasium
+import gymnasium.spaces.box
 import numpy as np
 import torch as th
 from stable_baselines3.common.base_class import BaseAlgorithmSelf
