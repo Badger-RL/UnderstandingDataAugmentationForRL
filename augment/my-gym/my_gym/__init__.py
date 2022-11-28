@@ -180,6 +180,12 @@ register(
     entry_point="my_gym.envs:PredatorPreyBoxEnv",
     max_episode_steps=100,
 )
+register(
+    id="Goal2DMany-v0",
+    entry_point="my_gym.envs:Goal2DManyEnv",
+    max_episode_steps=100,
+)
+
 # register(
 #     id="Goal2DBox-v0",
 #     entry_point="my_gym.envs:PredatorPreyBoxEnv",

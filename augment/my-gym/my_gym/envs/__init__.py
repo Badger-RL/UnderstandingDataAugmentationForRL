@@ -1,5 +1,6 @@
 import gym
 from my_gym.envs.predator_prey import PredatorPreyEnv, PredatorPreyDenseEnv, PredatorPreyBoxEnv, PredatorPreyBoxDenseEnv, PredatorPreyBoxQuadrantEnv
+from my_gym.envs.goal2d_many import Goal2DManyEnv
 from my_gym.envs.meetup import MeetUpEnv
 # from my_gym.envs.predator_prey_simple import PredatorPreySimpleEnv
 from my_gym.envs.lqr import LQREnv
