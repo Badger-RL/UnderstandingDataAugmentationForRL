@@ -389,7 +389,7 @@ PandaReach-v3:
   noise_type: 'normal'
   noise_std: 0.2
 
-PandaPush-v2:
+PandaPush-v3:
   n_timesteps: !!float 1e6
   policy: 'MultiInputPolicy'
   buffer_size: 1000000
@@ -408,7 +408,7 @@ PandaPush-v2:
   noise_type: 'normal'
   noise_std: 0.2
 
-PandaSlide-v2:
+PandaSlide-v3:
   n_timesteps: !!float 1e6
   policy: 'MultiInputPolicy'
   buffer_size: 1000000
@@ -427,7 +427,7 @@ PandaSlide-v2:
   noise_type: 'normal'
   noise_std: 0.2
 
-PandaPickAndPlace-v2:
+PandaPickAndPlace-v3:
   n_timesteps: !!float 1e6
   policy: 'MultiInputPolicy'
   buffer_size: 1000000
