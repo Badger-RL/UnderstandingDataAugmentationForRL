@@ -3,7 +3,7 @@ from augment.rl.augmentation_functions.fetch.push import *
 from augment.rl.augmentation_functions.fetch.slide import *
 from augment.rl.augmentation_functions.fetch.pick_and_place import *
 from augment.rl.augmentation_functions.fetch.common import *
-from augment.rl.augmentation_functions.goal2d_many import Goal2DManyTranslateProximal, Goal2DManyHER
+from augment.rl.augmentation_functions.goal2d_many import Goal2DManyTranslateProximal, Goal2DManyHER, Goal2DManyTranslate, Goal2DManyTranslateGoal
 
 from augment.rl.augmentation_functions.inverted_pendulum import *
 from augment.rl.augmentation_functions.lqr import LQRTranslate, LQRRotate
@@ -72,8 +72,9 @@ AUGMENTATION_FUNCTIONS = {
     'Goal2DQuadrant': predator_prey_box_augmentation_functions,
     'Goal2DDense': predator_prey_box_augmentation_functions,
     'Goal2DMany': {
-        # 'rotate': Goal2DRotateRestricted,
-        # 'translate': Goal2DTranslate,
+        'rotate': Goal2DRotateRestricted,
+        'translate': Goal2DManyTranslate,
+        'translate_goal': Goal2DManyTranslateGoal,
         'translate_proximal': Goal2DManyTranslateProximal,
         'her': Goal2DManyHER,
         # 'rotate_her': Goal2DRotateRestrictedHER,
