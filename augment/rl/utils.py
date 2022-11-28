@@ -19,6 +19,7 @@ from augment.rl.algs.dqn import DQN
 
 from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise
 from stable_baselines3.common.vec_env import VecEnv
+from stable_baselines3.her.her_replay_buffer import HerReplayBuffer
 
 ALGOS = {
     "a2c": A2C,
