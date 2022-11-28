@@ -90,6 +90,7 @@ if __name__ == '__main__':
     # If the environment is not found, suggest the closest match
     if env_id not in registered_envs:
         import gymnasium
+        import panda_gym
         registered_gymnasium_envs = gymnasium.envs.registry # pytype: disable=module-attr
         gym.envs.registry.update(registered_gymnasium_envs)
         if env_id not in registered_gymnasium_envs:
