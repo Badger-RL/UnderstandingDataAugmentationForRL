@@ -280,7 +280,7 @@ Goal2D-v0: &predator_prey
   learning_rate: !!float 1e-3
   policy_kwargs: "dict(net_arch=[64,64])"
 
-Goal2DMany-v0:
+Goal2DKey-v0:
   <<: *predator_prey
 
 Goal2DBox-v0:
