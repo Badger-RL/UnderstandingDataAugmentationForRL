@@ -16,12 +16,10 @@ class Goal2DAugmentationFunction(AugmentationFunction):
         self.delta = self.env.delta
         self.boundary = self.env.boundary
         self.sparse = self.env.sparse
-        self.shape = self.env.shape
         self.aug_d = aug_d
         print('delta:', self.delta)
         print('boundary:', self.boundary)
         print('sparse:', self.sparse)
-        print('shape:', self.shape)
         print('aug_d:', self.aug_d)
 
         if self.sparse:
@@ -29,13 +27,8 @@ class Goal2DAugmentationFunction(AugmentationFunction):
         else:
             self._set_reward_function = self._set_dense_reward
 
-        assert self.shape in ['disk', 'box']
-        if self.shape == 'disk':
-            self._sampling_function = random_sample_on_disk
-            self._clipping_function = self._clip_to_disk
-        elif self.shape == 'box':
-            self._sampling_function = random_sample_on_box
-            self._clipping_function = self._clip_to_box
+        self._sampling_function = random_sample_on_box
+        self._clipping_function = self._clip_to_box
 
     def _set_dynamics(self, obs, next_obs, action):
         raise NotImplementedError

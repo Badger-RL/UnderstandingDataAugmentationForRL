@@ -4,10 +4,10 @@ import gym
 import numpy as np
 from gym.core import ObsType
 
-from my_gym.envs import Goal2DKeyEnv
+from my_gym.envs import Goal2DEnv
 
 
-class Goal2DKeyEnv(Goal2DKeyEnv):
+class Goal2DKeyEnv(Goal2DEnv):
     def __init__(self, delta=0.025, sparse=1, rbf_n=None, d_fourier=None, neural=False, d=1,
                  quadrant=False, center=False):
 

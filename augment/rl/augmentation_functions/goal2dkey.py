@@ -17,12 +17,10 @@ class Goal2DManyAugmentationFunction(AugmentationFunction):
         self.delta = self.env.delta
         self.boundary = self.env.boundary
         self.sparse = self.env.sparse
-        self.shape = self.env.shape
         self.aug_d = aug_d
         print('delta:', self.delta)
         print('boundary:', self.boundary)
         print('sparse:', self.sparse)
-        print('shape:', self.shape)
         print('aug_d:', self.aug_d)
 
     def _set_dynamics(self, obs, next_obs, action):
