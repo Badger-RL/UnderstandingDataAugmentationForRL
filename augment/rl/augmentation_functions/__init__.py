@@ -3,87 +3,40 @@ from augment.rl.augmentation_functions.fetch.push import *
 from augment.rl.augmentation_functions.fetch.slide import *
 from augment.rl.augmentation_functions.fetch.pick_and_place import *
 from augment.rl.augmentation_functions.fetch.common import *
-from augment.rl.augmentation_functions.goal2d_many import Goal2DManyTranslateProximal, Goal2DManyHER, Goal2DManyTranslate, Goal2DManyTranslateGoal
 
-from augment.rl.augmentation_functions.inverted_pendulum import *
-from augment.rl.augmentation_functions.lqr import LQRTranslate, LQRRotate
-from augment.rl.augmentation_functions.meetup import MeetUpTranslate, MeetUpRotate, MeetUpRotateTranslate
-from augment.rl.augmentation_functions.predator_prey import *
+from augment.rl.augmentation_functions.goal2d import GOAL2D_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.goal2dkey import GOAL2DKEY_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.cartpole import CARTPOLE_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.swimmer import SWIMMER_AUG_FUNCTIONS
+
+
 from augment.rl.augmentation_functions.reacher_k import *
-from augment.rl.augmentation_functions.swimmer_k import SwimmerReflect
-from augment.rl.augmentation_functions.walker2d import Walker2dReflect
+from augment.rl.augmentation_functions.walker2d import WALKER2D_AUG_FUNCTIONS
 from augment.simulate import simulate
 
-predator_prey_box_augmentation_functions = {
-        'rotate': Goal2DRotateRestricted,
-        'translate': Goal2DTranslate,
-        'translate_proximal': Goal2DTranslateProximal,
-        'her': Goal2DHER,
-        'rotate_her': Goal2DRotateRestrictedHER,
-}
 
-predator_prey_disk_augmentation_functions = {
-        'rotate': Goal2DRotate,
-        'translate': Goal2DTranslate,
-        'translate_proximal': Goal2DTranslateProximal,
-        'her': Goal2DHER
-    }
 
 AUGMENTATION_FUNCTIONS = {
-    'InvertedPendulum': {
-        'translate': InvertedPendulumTranslate,
-        'reflect': InvertedPendulumReflect,
-        'translate_reflect': InvertedPendulumTranslateReflect,
-    },
-    'InvertedDoublePendulum': {
-        'translate': InvertedPendulumTranslate,
-        'reflect': InvertedPendulumReflect,
-        'translate_reflect': InvertedPendulumTranslateReflect,
-    },
-    'InvertedPendulumWide': {
-        'translate': InvertedPendulumTranslate,
-        'reflect': InvertedPendulumReflect,
-        'translate_reflect': InvertedPendulumTranslateReflect,
-    },
-    'InvertedDoublePendulumWide': {
-        'translate': InvertedPendulumTranslate,
-        'reflect': InvertedPendulumReflect,
-        'translate_reflect': InvertedPendulumTranslateReflect,
-    },
-    'CartPole': {
-        'translate': InvertedPendulumTranslate,
-        'reflect': InvertedPendulumReflect,
-    },
-    'LQR': {
-        'translate': LQRTranslate,
-        'rotate': LQRRotate,
-    },
-    'LQRGoal': {
-        'translate': LQRTranslate,
-        'rotate': LQRRotate,
-    },
-    'Swimmer': {
-        'reflect': SwimmerReflect,
-    },
-    'Walker2d': {
-        'reflect': Walker2dReflect,
-    },
-    'Goal2D': predator_prey_box_augmentation_functions,
-    'Goal2DQuadrant': predator_prey_box_augmentation_functions,
-    'Goal2DDense': predator_prey_box_augmentation_functions,
-    'Goal2DMany': {
-        'rotate': Goal2DRotateRestricted,
-        'translate': Goal2DManyTranslate,
-        'translate_goal': Goal2DManyTranslateGoal,
-        'translate_proximal': Goal2DManyTranslateProximal,
-        'her': Goal2DManyHER,
-        # 'rotate_her': Goal2DRotateRestrictedHER,
-    },
-    'MeetUp': {
-        'translate': MeetUpTranslate,
-        'rotate': MeetUpRotate,
-        'rotate_translate': MeetUpRotateTranslate,
-    },
+    # Toy
+    'Goal2D': GOAL2D_AUG_FUNCTIONS,
+    'Goal2DQuadrant': GOAL2D_AUG_FUNCTIONS,
+    'Goal2DDense': GOAL2D_AUG_FUNCTIONS,
+    'Goal2DKey': GOAL2DKEY_AUG_FUNCTIONS,
+
+    # Pendulum-like environments
+    'InvertedPendulum': CARTPOLE_AUG_FUNCTIONS,
+    'InvertedDoublePendulum': CARTPOLE_AUG_FUNCTIONS,
+    'CartPole': CARTPOLE_AUG_FUNCTIONS,
+    'dmc_cartpole_swingup_0': CARTPOLE_AUG_FUNCTIONS,
+    'dmc_cartpole_swingup_sparse_0': CARTPOLE_AUG_FUNCTIONS,
+    'dmc_cartpole_balance_0': CARTPOLE_AUG_FUNCTIONS,
+    'dmc_cartpole_balance_sparse_0': CARTPOLE_AUG_FUNCTIONS,
+
+    # locomotion
+    'Swimmer': SWIMMER_AUG_FUNCTIONS,
+    'Walker2d': WALKER2D_AUG_FUNCTIONS,
+
+    # robotics
     'FetchReach': {
         'her': FetchHER,
         'translate': FetchReachTranslate,
@@ -119,37 +72,20 @@ AUGMENTATION_FUNCTIONS = {
         'translate': FetchPickAndPlaceTranslate,
         'reflect': FetchPickAndPlaceReflect,
     },
-
-    'dmc_cartpole_swingup_0': {
-        'translate': InvertedPendulumTranslate,
-        'reflect': InvertedPendulumReflect,
-    },
-    'dmc_cartpole_swingup_sparse_0': {
-        'translate': InvertedPendulumTranslate,
-        'reflect': InvertedPendulumReflect,
-    },
-    'dmc_cartpole_balance_0': {
-        'translate': InvertedPendulumTranslate,
-        'reflect': InvertedPendulumReflect,
-    },
-    'dmc_cartpole_balance_sparse_0': {
-        'translate': InvertedPendulumTranslate,
-        'reflect': InvertedPendulumReflect,
-    },
 }
 
-for k in range(2,20+1):
-    AUGMENTATION_FUNCTIONS[f'Reacher{k}'] = {
-        'rotate': ReacherRotate,
-        'reflect': ReacherReflect,
-    }
-    AUGMENTATION_FUNCTIONS[f'Reacher{k}Rand'] = {
-        'rotate': ReacherRotate,
-        'reflect': ReacherReflect,
-    }
-    AUGMENTATION_FUNCTIONS[f'Swimmer{k}'] = {
-        'reflect': SwimmerReflect
-    }
+# for k in range(2,20+1):
+#     AUGMENTATION_FUNCTIONS[f'Reacher{k}'] = {
+#         'rotate': ReacherRotate,
+#         'reflect': ReacherReflect,
+#     }
+#     AUGMENTATION_FUNCTIONS[f'Reacher{k}Rand'] = {
+#         'rotate': ReacherRotate,
+#         'reflect': ReacherReflect,
+#     }
+#     AUGMENTATION_FUNCTIONS[f'Swimmer{k}'] = {
+#         'reflect': SwimmerReflect
+#     }
 
 def validate_augmentation(env, aug_func, check_valid):
     observations, next_observations, actions, rewards, dones, infos = simulate(

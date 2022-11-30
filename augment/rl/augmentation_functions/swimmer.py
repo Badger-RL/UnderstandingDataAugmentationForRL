@@ -31,7 +31,6 @@ class SwimmerReflect(AugmentationFunction):
         obs[:,-k:] *= -1
         obs[:,k+1] *= -1
 
-
         next_obs[:,:k] *= -1
         next_obs[:,-k:] *= -1
         next_obs[:,k+1] *= -1
@@ -83,10 +82,13 @@ def sanity_check():
     print()
     env.render()
     time.sleep(1)
-    '''
-    [ 5.82954723e-01 -1.74649185e+00  1.74651635e+00 -2.26185595e-01
-  6.68814855e-02 -3.07502596e-01  1.28781081e-05 -1.35566612e-05]
-'''
+
+SWIMMER_AUG_FUNCTIONS = {
+    'reflect': SwimmerReflect,
+}
+
+
+
 if __name__ == "__main__":
     sanity_check()
 

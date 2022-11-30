@@ -268,3 +268,11 @@ class Goal2DRotateRestrictedHER(Goal2DRotateRestricted):
         self._set_done_and_info(done, infos, at_goal)
 
         return obs, next_obs, action, reward, done, infos
+
+GOAL2D_AUG_FUNCTIONS = {
+    'rotate': Goal2DRotateRestricted,
+    'translate': Goal2DTranslate,
+    'translate_proximal': Goal2DTranslateProximal,
+    'her': Goal2DHER,
+    'rotate_her': Goal2DRotateRestrictedHER,
+}

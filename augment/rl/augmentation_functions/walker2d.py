@@ -259,6 +259,10 @@ def check_valid(env, aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, au
     assert np.allclose(aug_next_obs, next_obs_true)
     assert np.allclose(aug_reward, reward_true)
 
+WALKER2D_AUG_FUNCTIONS = {
+    'reflect': Walker2dReflect,
+}
+
 
 if __name__ == "__main__":
     import gym

@@ -61,8 +61,9 @@ class CartPoleEnv(CartPoleEnv_original):
 
     metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 50}
 
-    def __init__(self, continuous=False):
+    def __init__(self, continuous=True):
         super().__init__()
+        self.steps_beyond_done = None
         self.continuous = continuous
         if self.continuous:
             self.action_space = spaces.Box(low=-1, high=+1, shape=(1,))
@@ -131,11 +132,11 @@ class CartPoleEnv(CartPoleEnv_original):
             reward = 0.0
 
         state = self._get_obs()
-        return state, reward, done, {}
+        return state, reward, done, False, {}
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
-        return self.state
+        return self.state, {}
 
 
     def _get_obs(self):
