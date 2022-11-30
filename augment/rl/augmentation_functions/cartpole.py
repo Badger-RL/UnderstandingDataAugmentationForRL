@@ -5,9 +5,10 @@ from augment.rl.augmentation_functions.augmentation_function import Augmentation
 
 class InvertedPendulumTranslate(AugmentationFunction):
 
-    def __init__(self,  noise_range=0.9, **kwargs):
+    def __init__(self,  noise_level=0.9, **kwargs):
         super().__init__()
-        self.noise_range = noise_range
+        self.noise_level = noise_level
+        print(locals())
 
     def _augment(self,
                 obs: np.ndarray,
@@ -20,7 +21,7 @@ class InvertedPendulumTranslate(AugmentationFunction):
                 ):
 
         n = obs.shape[0]
-        delta = np.random.uniform(low=-self.noise_range, high=+self.noise_range, size=(n,))
+        delta = np.random.uniform(low=-self.noise_level, high=+self.noise_level, size=(n,))
         delta_x = next_obs[:,0] - obs[:,0]
         obs[:,0] = delta
         next_obs[:,0] = np.clip(delta_x + delta, -1, 1)
@@ -29,7 +30,7 @@ class InvertedPendulumTranslate(AugmentationFunction):
 
 class InvertedPendulumReflect(AugmentationFunction):
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
 
     def _augment(
             self,
@@ -51,8 +52,10 @@ class InvertedPendulumReflect(AugmentationFunction):
 
 class InvertedPendulumTranslateReflect(AugmentationFunction):
 
-    def __init__(self,  noise='uniform', **kwargs):
-        super().__init__()
+    def __init__(self,  noise_level=0.9, **kwargs):
+        super().__init__(**kwargs)
+        self.noise_level = noise_level
+        print(locals())
 
     def _augment(self,
                 obs: np.ndarray,
@@ -65,7 +68,7 @@ class InvertedPendulumTranslateReflect(AugmentationFunction):
                 ):
 
         n = obs.shape[0]
-        delta = np.random.uniform(low=-0.9, high=+0.9, size=(n,))
+        delta = np.random.uniform(low=-self.noise_level, high=+self.noise_level, size=(n,))
         delta_x = next_obs[:,0] - obs[:,0]
         obs[:,0] = delta
         next_obs[:,0] = np.clip(delta_x + delta, -1, 1)
