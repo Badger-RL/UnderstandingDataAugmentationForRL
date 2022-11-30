@@ -6,9 +6,9 @@ from matplotlib import pyplot as plt
 
 if __name__ == "__main__":
 
-
-    for rbf_n in [16,32,64,128,256,512,1024]:
-        obs_dim = 42
+    np.random.seed(0)
+    for rbf_n in [16, 32, 64, 128, 256, 512, 1024]:
+        obs_dim = 1
 
         P = np.random.normal(loc=0, scale=1, size=(rbf_n, obs_dim))
         phi = np.random.uniform(low=-np.pi, high=np.pi, size=(rbf_n,))
@@ -19,13 +19,13 @@ if __name__ == "__main__":
         rbfs = []
         for i in range(m):
             out.append((observations[i]))
-            rbfs.append(np.sin(P.dot(observations[i])))
+            rbfs.append(P.dot(observations[i])/4+phi)
 
         d = scipy.spatial.distance.pdist(out)
         nu = np.average(d)
 
         rbfs = np.array(rbfs)
-        for i in range(4):
+        for i in range(rbf_n):
             plt.hist(rbfs[:,i], alpha=0.2)
         plt.show()
 

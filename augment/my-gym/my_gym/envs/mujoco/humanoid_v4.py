@@ -1,3 +1,5 @@
+from os import path
+
 import numpy as np
 
 from gym import utils
@@ -246,8 +248,9 @@ class HumanoidEnv(HumanoidEnv_original):
                 low=-np.inf, high=np.inf, shape=(47,), dtype=np.float64
             )
 
+        fullpath = path.join(path.dirname(__file__), "assets", 'humanoid.xml')
         MujocoEnv.__init__(
-            self, "humanoid.xml", 5, observation_space=observation_space, **kwargs
+            self, fullpath, 5, observation_space=observation_space, **kwargs
         )
 
     def _get_obs(self):

@@ -20,6 +20,7 @@ ENVS_DIR = os.path.join(os.path.dirname(__file__), 'envs')
 #         del gym.envs.registry.env_specs[env_id]
 
 ###########################################################################
+### Classic control
 
 register(
     id="CartPole-v1",
@@ -27,7 +28,20 @@ register(
     max_episode_steps=500,
 )
 
-# Mujoco
+###########################################################################
+### Mujoco
+
+register(
+    id="Walker2d-v4",
+    max_episode_steps=1000,
+    entry_point="my_gym.envs.mujoco:Walker2dEnv",
+)
+register(
+    id="Humanoid-v4",
+    entry_point="my_gym.envs.mujoco.humanoid_v4:HumanoidEnv",
+    max_episode_steps=1000,
+)
+
 # ----------------------------------------
 
 # 2D
@@ -100,24 +114,6 @@ register(
 #     reward_threshold=360.0,
 # )
 #
-register(
-    id="Walker2d-v4",
-    max_episode_steps=1000,
-    entry_point="my_gym.envs.mujoco:Walker2dEnv",
-)
-#
-# register(
-#     id="Ant-v3",
-#     entry_point="my_gym.envs.mujoco.ant_v3:AntEnv",
-#     max_episode_steps=1000,
-#     reward_threshold=6000.0,
-# )
-#
-register(
-    id="Humanoid-v4",
-    entry_point="my_gym.envs.mujoco.humanoid_v4:HumanoidEnv",
-    max_episode_steps=1000,
-)
 #
 # register(
 #     id="HumanoidStandup-v2",
@@ -174,44 +170,24 @@ register(
 #     )
 
 ############################################################################
+### Toy
 
 register(
     id="Goal2D-v0",
-    entry_point="my_gym.envs:PredatorPreyBoxEnv",
+    entry_point="my_gym.envs:Goal2DEnv",
     max_episode_steps=100,
 )
 register(
     id="Goal2DKey-v0",
-    entry_point="my_gym.envs:Goal2DManyEnv",
+    entry_point="my_gym.envs:Goal2DKeyEnv",
+    max_episode_steps=100,
+)
+register(
+    id="Goal2DQuadrant-v0",
+    entry_point="my_gym.envs:Goal2DQuadrantEnv",
     max_episode_steps=100,
 )
 
-# register(
-#     id="Goal2DBox-v0",
-#     entry_point="my_gym.envs:PredatorPreyBoxEnv",
-#     max_episode_steps=100,
-# )
-register(
-    id="Goal2DQuadrant-v0",
-    entry_point="my_gym.envs:PredatorPreyBoxQuadrantEnv",
-    max_episode_steps=100,
-)
-# register(
-#     id="Goal2DDense-v0",
-#     entry_point="my_gym.envs:PredatorPreyDenseEnv",
-#     max_episode_steps=100,
-# )
-register(
-    id="Goal2DDense-v0",
-    entry_point="my_gym.envs:PredatorPreyBoxDenseEnv",
-    max_episode_steps=100,
-)
-#
-# register(
-#     id="PredatorPreySimple-v0",
-#     entry_point="my_gym.envs:PredatorPreySimpleEnv",
-#     max_episode_steps=100,
-# )
 ###############################################################################
 register(
     id="MeetUp-v0",

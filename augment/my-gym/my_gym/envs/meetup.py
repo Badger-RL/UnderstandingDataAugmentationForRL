@@ -19,7 +19,7 @@ class MeetUpEnv(MyEnv):
         # self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1,))
         self.dist_features = dist_features
         if self.dist_features:
-            self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=(self.n,))
+            self.observation_space = gym.spaces.Box(0, np.inf, shape=(self.n,))
         else:
             self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=(2*self.n,))
 
@@ -55,7 +55,10 @@ class MeetUpEnv(MyEnv):
 
         info = {}
         if self.dist_features:
-            self.obs = self.x1 - self.x2
+            dist = self.x1 - self.x2
+            theta = np.arctan2(dist[1], dist[0])
+            self.obs = np.array([np.linalg.norm(dist), theta])
+            # self.obs = np.abs(self.x1 - self.x2)
         else:
             self.obs = np.concatenate((self.x1, self.x2))
         return self._get_obs(), reward, done, info
@@ -68,7 +71,9 @@ class MeetUpEnv(MyEnv):
 
         if self.dist_features:
             # Don't use norm. Norm cannot distinguish between rotations.
-            self.obs = self.x1 - self.x2
+            dist = self.x1 - self.x2
+            theta = np.arctan2(dist[1], dist[0])
+            self.obs = np.array([np.linalg.norm(dist), theta])
         else:
             self.obs = np.concatenate((self.x1, self.x2))
         return self._get_obs()

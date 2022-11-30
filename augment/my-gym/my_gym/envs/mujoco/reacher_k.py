@@ -3,8 +3,8 @@ import os
 import gym
 import numpy as np
 from gym import utils
-from my_gym.envs.mujoco.mujoco_env import MujocoEnv
-
+# from my_gym.envs.mujoco.mujoco_env import MujocoEnv
+from gym.envs.mujoco import MujocoEnv
 
 
 class ReacherEnv(MujocoEnv, utils.EzPickle):
