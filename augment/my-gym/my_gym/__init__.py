@@ -100,11 +100,11 @@ register(
 #     reward_threshold=360.0,
 # )
 #
-# register(
-#     id="Walker2d-v3",
-#     max_episode_steps=1000,
-#     entry_point="my_gym.envs.mujoco.walker2d_v3:Walker2dEnv",
-# )
+register(
+    id="Walker2d-v4",
+    max_episode_steps=1000,
+    entry_point="my_gym.envs.mujoco:Walker2dEnv",
+)
 #
 # register(
 #     id="Ant-v3",
