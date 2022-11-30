@@ -57,13 +57,24 @@ class Goal2DKeyEnv(Goal2DEnv):
         self.goal = np.random.uniform(low=-0.5, high=0.5, size=(self.n,))
         self.key = np.random.uniform(low=-0.5, high=0.5, size=(self.n,))
         self.x = np.random.uniform(-0.5, 0.5, size=(self.n,))
-        self.has_key = False
+
+        dist_key = np.linalg.norm(self.x - self.key)
+        self.has_key = dist_key < 0.05
 
         self.obs = np.zeros(self.observation_space.shape)
         self.obs[:2] = self.x
         self.obs[2:4] = self.goal
         self.obs[4:6] = self.key
         self.obs[-1] = self.has_key
+
+        self.x = np.random.uniform(-1, 1, size=(self.n,))
+        self.goal = self._sample_goal()
+
+        dist_goal = np.linalg.norm(self.x - self.goal)
+
+        while (dist_goal < 0.05):
+            self.goal = np.random.uniform(-0.5, 0.5, size=(self.n,))
+            dist_goal = np.linalg.norm(self.x - self.goal)
 
         return self._get_obs(), {}
 

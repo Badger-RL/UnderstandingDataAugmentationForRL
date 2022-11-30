@@ -53,6 +53,12 @@ class Goal2DEnv(MyEnv):
         self.obs = np.concatenate((self.x, self.goal))
         return self._get_obs(), reward, terminated, truncated, info
 
+    def _sample_goal(self):
+        goal = np.random.uniform(low=-self.d, high=self.d, size=(self.n,))
+        if self.quadrant:
+            goal = np.random.uniform(low=0, high=1, size=(self.n,))
+        return goal
+
     def reset(
         self,
         *,
@@ -62,12 +68,13 @@ class Goal2DEnv(MyEnv):
 
         self.step_num = 0
 
-        self.goal = np.random.uniform(low=-self.d, high=self.d, size=(self.n,))
-        if self.quadrant:
-            self.goal = np.random.uniform(low=0, high=1, size=(self.n,))
         self.x = np.random.uniform(-1, 1, size=(self.n,))
-        if self.center:
-            self.x = np.zeros(self.n)
+        self.goal = self._sample_goal()
+
+        dist = np.linalg.norm(self.x - self.goal)
+        while dist < 0.05:
+            self.goal =self._sample_goal()
+            dist = np.linalg.norm(self.x - self.goal)
 
         self.obs = np.concatenate((self.x, self.goal))
         return self._get_obs(), {}
