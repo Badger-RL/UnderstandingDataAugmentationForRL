@@ -191,14 +191,33 @@ class Goal2DManyTranslateProximal(Goal2DManyTranslate):
 
 class Goal2DManyHER(Goal2DManyAugmentationFunction):
 
-    def __init__(self, **kwargs):
+    def __init__(self,strategy='future', **kwargs):
         super().__init__(**kwargs)
+        self.strategy = strategy
+        if self.strategy == 'future':
+            self.sampler = self._sample_future
+        else:
+            self.sampler = self._sample_last
+
+    def _sample_future(self, next_obs):
+        n = next_obs.shape[0]
+        low = np.arange(n)
+        indices = np.random.randint(low=low, high=n)
+        final_pos = next_obs[indices, :2].copy()
+        return final_pos, indices
+
+    def _sample_last(self, next_obs):
+        n = next_obs.shape[0]
+        final_pos = next_obs[-1, :2].copy()
+        return final_pos, np.ones(n)*n
+
+    def _sample_goals(self, next_obs):
+        return self.sampler(next_obs)
 
     def _set_dynamics(self, obs, next_obs, action):
-        new_goal = next_obs[-1, :2].copy()
+        new_goal, goal_indices = self._sample_goals(next_obs)
 
-        n = obs.shape[0]
-        idx = np.random.randint(n)
+        idx = np.random.randint(low=0, high=goal_indices+1)
         new_key = next_obs[idx, :2].copy()
 
         obs[:, 4:6] = new_key

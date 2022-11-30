@@ -187,11 +187,31 @@ class Goal2DTranslateProximal(Goal2DTranslate):
 
 class Goal2DHER(Goal2DAugmentationFunction):
 
-    def __init__(self, **kwargs):
+    def __init__(self, strategy='future', **kwargs):
         super().__init__(**kwargs)
+        self.strategy = strategy
+        if self.strategy == 'future':
+            self.sampler = self._sample_future
+        else:
+            self.sampler = self._sample_last
+
+    def _sample_future(self, next_obs):
+        n = next_obs.shape[0]
+        low = np.arange(n)
+        indices = np.random.randint(low=low, high=n)
+        final_pos = next_obs[indices, :2].copy()
+        return final_pos
+
+    def _sample_last(self, next_obs):
+        final_pos = next_obs[-1, :2].copy()
+        return final_pos
+
+    def _sample_goals(self, next_obs):
+        return self.sampler(next_obs)
 
     def _set_dynamics(self, obs, next_obs, action):
-        final_pos = next_obs[-1, :2].copy()
+
+        final_pos = self._sample_goals(next_obs)
         obs[:, 2:] = final_pos
         next_obs[:, 2:] = final_pos
 
