@@ -249,5 +249,4 @@ def register_env(
 
 tasks = dm_control.suite.ALL_TASKS
 for domain, task in tasks:
-    print(domain,task)
     register_env(domain, task)
