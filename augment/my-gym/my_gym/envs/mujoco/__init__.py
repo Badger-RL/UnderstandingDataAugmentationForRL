@@ -1,4 +1,5 @@
 import gym
+from my_gym.envs.mujoco.walker2d_v4 import Walker2dEnv
 from my_gym.envs.mujoco.humanoid_v4 import HumanoidEnv
 
 # from my_gym.envs.mujoco.reacher_k import ReacherEnv
