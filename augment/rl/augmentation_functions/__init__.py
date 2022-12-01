@@ -12,6 +12,8 @@ from augment.rl.augmentation_functions.swimmer import SWIMMER_AUG_FUNCTIONS
 
 from augment.rl.augmentation_functions.reacher_k import *
 from augment.rl.augmentation_functions.walker2d import WALKER2D_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.ant import ANT_AUG_FUNCTIONS
+
 from augment.simulate import simulate
 
 
@@ -35,6 +37,7 @@ AUGMENTATION_FUNCTIONS = {
     # locomotion
     'Swimmer': SWIMMER_AUG_FUNCTIONS,
     'Walker2d': WALKER2D_AUG_FUNCTIONS,
+    'Ant': ANT_AUG_FUNCTIONS,
 
     # robotics
     'FetchReach': {
