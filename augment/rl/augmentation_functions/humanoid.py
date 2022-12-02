@@ -377,6 +377,7 @@ class HumanoidRotate(AugmentationFunction):
 
 HUMANOID_AUG_FUNCTIONS = {
     'rotate': HumanoidRotate,
+    'reflect': HumanoidReflect,
 }
 def tmp():
 
