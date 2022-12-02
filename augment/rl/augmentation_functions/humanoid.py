@@ -318,7 +318,6 @@ class HumanoidRotate(AugmentationFunction):
 
         assert obs.shape[0] == 1 # for now.
         alpha = np.random.uniform(low=-self.noise_scale, high=+self.noise_scale)
-        alpha = np.pi/2
         sin = np.sin(alpha/2)
         cos = np.cos(alpha/2)
 
@@ -379,6 +378,7 @@ def tmp():
     print(res)
     print(res_reflect)
 
+    print(f'{i}\ttrue\ttrue_reflect\taug')
     for i in range(45):
         print(f'{i}\t{res[i]:.8f}\t{res_reflect[i]:.8f}\t{res_aug[0][i]:.8f}')
     # print(res_aug-res_reflect)
