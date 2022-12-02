@@ -336,9 +336,9 @@ class HumanoidRotate(AugmentationFunction):
         # self._rotate_vel(obs, sin, cos)
         # self._rotate_vel(next_obs, sin, cos)
 
-        vx = infos[0]['x_velocity']
-        vy = infos[0]['y_velocity']
-        reward_forward = infos[0]['reward_linvel']
+        vx = infos[0][0]['x_velocity']
+        vy = infos[0][0]['y_velocity']
+        reward_forward = infos[0][0]['reward_linvel']
 
         reward[:] -= reward_forward
         reward[:] += self.forward_reward_weight*(vx*cos - vy*sin)
@@ -378,6 +378,9 @@ def tmp():
 
     print(res)
     print(res_reflect)
+
+    for i in range(45):
+        print(f'{i}\t{res[i]:.8f}\t{res_reflect[i]:.8f}\t{res_aug[0][i]:.8f}')
     # print(res_aug-res_reflect)
     # print()
     time.sleep(2)
@@ -406,10 +409,10 @@ def check_valid(env, aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, au
     assert np.allclose(aug_reward, reward_true)
 
 if __name__ == "__main__":
-    # sanity_check()
+    tmp()
     '''
 
     '''
-    env = gym.make('Humanoid-v4', reset_noise_scale=0)
-    aug_func = HumanoidRotate(env=env)
-    validate_augmentation(env, aug_func, check_valid)
+    # env = gym.make('Humanoid-v4', reset_noise_scale=0)
+    # aug_func = HumanoidRotate(env=env)
+    # validate_augmentation(env, aug_func, check_valid)
