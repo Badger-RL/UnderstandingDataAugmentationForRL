@@ -205,42 +205,76 @@ class HumanoidReflect(AugmentationFunction):
 
     def __init__(self,  noise='uniform', **kwargs):
         super().__init__()
-        self.mask_right = np.zeros(45, dtype=bool)
-        # pos
-        self.mask_right[8:11+1] = 1
-        self.mask_right[16:18+1] = 1
-        # vel
-        self.mask_right[31:34+1] = 1
-        self.mask_right[39:41+1] = 1
+        self.obs_permute = np.arange(45)
+        # leg angles
+        self.obs_permute[8] = 12
+        self.obs_permute[9] = 13
+        self.obs_permute[10] = 14
+        self.obs_permute[11] = 15
+        self.obs_permute[12] = 8
+        self.obs_permute[13] = 9
+        self.obs_permute[14] = 10
+        self.obs_permute[15] = 11
+        self.obs_permute[16] = 19
+        self.obs_permute[17] = 20
+        self.obs_permute[18] = 21
+        self.obs_permute[19] = 16
+        self.obs_permute[20] = 17
+        self.obs_permute[21] = 18
 
-        self.mask_left = np.zeros(45, dtype=bool)
-        # pos
-        self.mask_left[12:15+1] = 1
-        self.mask_left[19:21+1] = 1
-        # vel
-        self.mask_left[35:38+1] = 1
-        self.mask_left[42:44+1] = 1
+        # joint vels
+        self.obs_permute[31] = 35
+        self.obs_permute[32] = 36
+        self.obs_permute[33] = 37
+        self.obs_permute[34] = 38
+        self.obs_permute[35] = 31
+        self.obs_permute[36] = 32
+        self.obs_permute[37] = 33
+        self.obs_permute[38] = 34
+        self.obs_permute[39] = 42
+        self.obs_permute[40] = 43
+        self.obs_permute[41] = 44
+        self.obs_permute[42] = 39
+        self.obs_permute[43] = 40
+        self.obs_permute[44] = 41
+
+        self.obs_reflect = np.zeros(45, dtype=bool)
+        # self.obs_reflect[1] = True # x orientation of torso
+        self.obs_reflect[2] = True
+        self.obs_reflect[4:5+1] = True
+        self.obs_reflect[7] = True # x angle of abdomen
+        self.obs_reflect[16:17+1] = True
+        self.obs_reflect[19:20+1] = True
+
+        self.obs_reflect[23] = True
+        self.obs_reflect[25] = True
+        self.obs_reflect[27] = True
+        self.obs_reflect[28] = True
+        self.obs_reflect[30] = True
+        self.obs_reflect[39] = True
+        self.obs_reflect[40] = True
+        self.obs_reflect[42] = True
+        self.obs_reflect[43] = True
+
+        self.action_permute = np.arange(17)
+        self.action_permute[3:6+1] = np.array([7,8,9,10])
+        self.action_permute[7:10+1] = np.array([3,4,5,6])
+
+        self.action_permute[11:13+1] = np.array([14,15,16])
+        self.action_permute[14:16+1] = np.array([11,12,13])
+
+        self.action_reflect = np.zeros(17, dtype=bool)
+        self.action_reflect[1:2+1] = True
+        self.action_reflect[11:12+1] = True
+        self.action_reflect[14:15+1] = True
 
     def reflect_action(self, action):
-        action[:, 1:2+1] *= -1
-        l = action[:, 3:6+1].copy()
-        r = action[:, 7:10+1].copy()
-        action[:, 3:6+1] = r
-        action[:, 7:10+1] = l
-
-        l = action[:, 11:13+1].copy()
-        r = action[:, 14:16+1].copy()
-        action[:, 14:16+1] = r
-        action[:, 11:13+1] = l
+        action[:, :] = action[:, self.action_permute]
+        action[:, self.action_reflect] *= -1
 
     def reflect_obs(self, obs):
-        obs[:, 1] *= -1
-        obs[:, 3:5+1] *= -1
-
-        r = obs[:, self.mask_right].copy()
-        l = obs[:, self.mask_left].copy()
-        obs[:, self.mask_left] = r
-        obs[:, self.mask_right] = l
+        obs[:, :] = obs[:, self.obs_permute]
+        obs[:, self.obs_reflect] *= -1
 
     def _augment(self,
                  obs: np.ndarray,
@@ -253,11 +287,7 @@ class HumanoidReflect(AugmentationFunction):
                  ):
         self.reflect_obs(obs)
         self.reflect_obs(next_obs)
-
-        ra = action[:, :3].copy()
-        la = action[:, 3:].copy()
-        action[:, :3] = la
-        action[:, 3:] = ra
+        self.reflect_action(action)
 
         return obs, next_obs, action, reward, done, infos
 
@@ -353,38 +383,38 @@ def tmp():
     env = gym.make('Humanoid-v4', reset_noise_scale=0)
     f = HumanoidReflect()
 
-    action = np.zeros(17, dtype=np.float32).reshape(1,-1)
-    action[:, 2] = 1
-    # action[:, 3:6] = 1
-    # action[:, 11:13] = 1
+    for k in range(1,2):
+        action = np.zeros(17, dtype=np.float32).reshape(1,-1)
+        action[:, k] = 1
+        # action[:, 3:6] = 1
+        # action[:, 11:13] = 1
 
-    env.reset()
-    # f.reflect_action(action)
-    print(action)
-    for i in range(20):
-        next_obs, reward, terminated, truncated, info = env.step(action[0])
-    res = next_obs.copy()
-    res_aug = next_obs.copy().reshape(1,-1)
-    # f.reflect_obs(res_aug)
-    # res_aug.reshape(-1)
+        env.reset()
+        # f.reflect_action(action)
+        print(action)
+        for i in range(200):
+            next_obs, reward, terminated, truncated, info = env.step(action[0])
+        true = next_obs.copy()
+        aug = next_obs.copy().reshape(1,-1)
+        f.reflect_obs(aug)
+        aug.reshape(-1)
 
-    env.reset()
-    # f.reflect_action(action)
-    action *= - 1
-    print(action)
-    for i in range(20):
-        next_obs, reward, terminated, truncated, info = env.step(action[0])
-    res_reflect = next_obs.copy()
+        env.reset()
+        f.reflect_action(action)
+        # action = np.zeros(17, dtype=np.float32).reshape(1,-1)
+        # action[:, 16] = 1
+        print(action)
+        for i in range(200):
+            next_obs, reward, terminated, truncated, info = env.step(action[0])
+        true_reflect = next_obs.copy()
 
-    print(res)
-    print(res_reflect)
-
-    print(f'{i}\ttrue\t\ttrue_reflect\taug')
-    for i in range(45):
-        print(f'{i}\t{res[i]:.8f}\t{res_reflect[i]:.8f}\t{res_aug[0][i]:.8f}')
-    # print(res_aug-res_reflect)
+        print(f'{i}\ttrue\t\ttrue_reflect\taug\tis_close')
+        is_close = np.isclose(true_reflect,aug[0])
+        for i in range(45):
+            print(f'{i}\t{true[i]:.8f}\t{true_reflect[i]:.8f}\t{aug[0][i]:.8f}\t{is_close[i]}')
+        print(np.all(is_close))
     # print()
-    time.sleep(2)
+    # time.sleep(2)
 
 def check_valid(env, aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info):
 
@@ -410,10 +440,10 @@ def check_valid(env, aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, au
     assert np.allclose(aug_reward, reward_true)
 
 if __name__ == "__main__":
-    tmp()
+    # tmp()
     '''
 
     '''
-    # env = gym.make('Humanoid-v4', reset_noise_scale=0)
-    # aug_func = HumanoidRotate(env=env)
-    # validate_augmentation(env, aug_func, check_valid)
+    env = gym.make('Humanoid-v4', reset_noise_scale=0)
+    aug_func = HumanoidReflect(env=env)
+    validate_augmentation(env, aug_func, check_valid)
