@@ -192,9 +192,10 @@ env = gym.make('Humanoid-v4', ctrl_cost_weight=0.1, ....)
 """
 import time
 from typing import Dict, List, Any
+
+import gym
 import numpy as np
 
-from augment.gym import gym
 import my_gym
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
 from augment.rl.augmentation_functions.validate import validate_augmentation
@@ -349,10 +350,10 @@ HUMANOID_AUG_FUNCTIONS = {
 }
 def tmp():
 
-    env = gym.make('dmc_humanoid_walk_0-v1')
+    env = gym.make('Humanoid-v4', reset_noise_scale=0)
     f = HumanoidReflect()
 
-    action = np.zeros(21, dtype=np.float32).reshape(1,-1)
+    action = np.zeros(17, dtype=np.float32).reshape(1,-1)
     action[:, 2] = 1
     # action[:, 3:6] = 1
     # action[:, 11:13] = 1
@@ -378,7 +379,7 @@ def tmp():
     print(res)
     print(res_reflect)
 
-    print(f'{i}\ttrue\ttrue_reflect\taug')
+    print(f'{i}\ttrue\t\ttrue_reflect\taug')
     for i in range(45):
         print(f'{i}\t{res[i]:.8f}\t{res_reflect[i]:.8f}\t{res_aug[0][i]:.8f}')
     # print(res_aug-res_reflect)
