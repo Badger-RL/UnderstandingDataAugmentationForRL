@@ -591,12 +591,23 @@ dmc_cartpole_balance_sparse_0-v1:
   learning_rate: !!float 1e-3
   policy_kwargs: "dict(net_arch=[256,256])"
 
+dmc_finger_turn_easy_0-v1:
+  <<: *mujoco-defaults
+dmc_finger_turn_hard_0-v1:
+  <<: *mujoco-defaults
+dmc_finger_turn_spin_0-v1:
+  <<: *mujoco-defaults
+
+dmc_fish_upright_0-v1:
+  <<: *mujoco-defaults
+dmc_fish_swim_0-v1:
+  <<: *mujoco-defaults
+
+
 dmc_walker_walk_0-v1:
   <<: *mujoco-defaults
-
 dmc_walker_run_0-v1:
   <<: *mujoco-defaults
-
 dmc_walker_stand_0-v1:
   <<: *mujoco-defaults
 
