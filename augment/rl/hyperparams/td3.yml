@@ -590,3 +590,39 @@ dmc_cartpole_balance_sparse_0-v1:
   batch_size: 256
   learning_rate: !!float 1e-3
   policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_walker_walk_0-v1:
+  <<: *mujoco-defaults
+
+dmc_walker_run_0-v1:
+  <<: *mujoco-defaults
+
+dmc_walker_stand_0-v1:
+  <<: *mujoco-defaults
+
+dmc_humanoid_walk_0-v1:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 1e6
+  # SAC Hyperparams
+  train_freq: 1
+  gradient_steps: 1
+  learning_rate: !!float 3e-4
+  batch_size: 256
+
+dmc_humanoid_run_0-v1:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 1e6
+  # SAC Hyperparams
+  train_freq: 1
+  gradient_steps: 1
+  learning_rate: !!float 3e-4
+  batch_size: 256
+
+dmc_humanoid_stand_0-v1:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 1e6
+  # SAC Hyperparams
+  train_freq: 1
+  gradient_steps: 1
+  learning_rate: !!float 3e-4
+  batch_size: 256
