@@ -373,76 +373,80 @@ FetchReach-v3:
 #####################################################
 PandaReach-v3:
   n_timesteps: !!float 100e3
-  policy: 'MultiInputPolicy'
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
   buffer_size: 1000000
   batch_size: 256
   gamma: 0.95
   learning_rate: 0.001
   learning_starts: 1000
-  replay_buffer_class: HerReplayBuffer
-  replay_buffer_kwargs: "dict(
-    online_sampling=True,
-    goal_selection_strategy='future',
-    n_sampled_goal=4
-  )"
-  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
 PandaPush-v3:
   n_timesteps: !!float 1e6
-  policy: 'MultiInputPolicy'
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
   buffer_size: 1000000
   batch_size: 256
   gamma: 0.95
   learning_rate: 0.001
   learning_starts: 1000
   tau: 0.05
-  replay_buffer_class: HerReplayBuffer
-  replay_buffer_kwargs: "dict(
-    online_sampling=True,
-    goal_selection_strategy='future',
-    n_sampled_goal=4
-  )"
-  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
 PandaSlide-v3:
   n_timesteps: !!float 1e6
-  policy: 'MultiInputPolicy'
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
   buffer_size: 1000000
   batch_size: 256
   gamma: 0.95
   learning_rate: 0.001
   learning_starts: 1000
   tau: 0.05
-  replay_buffer_class: HerReplayBuffer
-  replay_buffer_kwargs: "dict(
-    online_sampling=True,
-    goal_selection_strategy='future',
-    n_sampled_goal=4
-  )"
-  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
 PandaPickAndPlace-v3:
   n_timesteps: !!float 1e6
-  policy: 'MultiInputPolicy'
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
   buffer_size: 1000000
   batch_size: 256
   gamma: 0.95
   learning_rate: 0.001
   learning_starts: 1000
   tau: 0.05
-  replay_buffer_class: HerReplayBuffer
-  replay_buffer_kwargs: "dict(
-    online_sampling=True,
-    goal_selection_strategy='future',
-    n_sampled_goal=4
-  )"
-  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 

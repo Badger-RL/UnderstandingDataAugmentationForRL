@@ -44,6 +44,10 @@ AUGMENTATION_FUNCTIONS = {
 
     # robotics
     'PandaReach': PANDA_AUG_FUNCTIONS,
+    'PandaPush': PANDA_AUG_FUNCTIONS,
+    'PandaReach': PANDA_AUG_FUNCTIONS,
+    'PandaReach': PANDA_AUG_FUNCTIONS,
+
     'FetchReach': {
         'her': FetchHER,
         'translate': FetchReachTranslate,
