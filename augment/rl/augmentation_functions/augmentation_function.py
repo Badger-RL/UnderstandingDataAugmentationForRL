@@ -7,6 +7,7 @@ class AugmentationFunction:
 
     def __init__(self, env=None, **kwargs):
         self.env = env
+        self.is_her = False
 
     def _deepcopy_transition(
             self,
@@ -37,6 +38,7 @@ class AugmentationFunction:
                  infos: List[Dict[str, Any]],
                  **kwargs,):
 
+        self.num_obs = obs.shape[0]
         return self._augment(*self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos), **kwargs)
 
     def _augment(self,
@@ -49,3 +51,52 @@ class AugmentationFunction:
                  **kwargs,):
         raise NotImplementedError("Augmentation function not implemented.")
 
+
+class HERAugmentationFunction(AugmentationFunction):
+
+    def __init__(self, env=None, **kwargs):
+        super().__init__(env, **kwargs)
+        self.is_her = True
+        self.aug_n = None
+
+    def _deepcopy_transition(
+            self,
+            augmentation_n: int,
+            obs: np.ndarray,
+            next_obs: np.ndarray,
+            action: np.ndarray,
+            reward: np.ndarray,
+            done: np.ndarray,
+            infos: List[Dict[str, Any]],
+    ):
+        aug_obs = deepcopy(obs)
+        aug_next_obs = deepcopy(next_obs)
+        aug_action = deepcopy(action)
+        aug_reward = deepcopy(reward)
+        aug_done = deepcopy(done).astype(np.bool)
+        aug_infos = np.repeat(deepcopy(infos), 1, axis=0)
+
+        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+
+    def augment(self,
+                 aug_n: int,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 **kwargs,):
+
+        self.aug_n = aug_n
+        return self._augment(*self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos), **kwargs)
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 **kwargs,):
+        raise NotImplementedError("Augmentation function not implemented.")

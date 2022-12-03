@@ -1,7 +1,8 @@
 from typing import Dict, List, Any
 import numpy as np
 
-from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
+from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction, HERAugmentationFunction
+
 
 class TranslateGoal(AugmentationFunction):
 
@@ -51,7 +52,7 @@ class TranslateGoal(AugmentationFunction):
         return obs, next_obs, action, reward, done, infos
 
 
-class HER(AugmentationFunction):
+class HER(HERAugmentationFunction):
     def __init__(self, env, strategy='future', **kwargs):
         super().__init__(env=env, **kwargs)
         self.lo = env.task.goal_range_low
@@ -67,7 +68,7 @@ class HER(AugmentationFunction):
         n = next_obs.shape[0]
         low = np.arange(n)
         indices = np.random.randint(low=low, high=n)
-        final_pos = next_obs[indices, :2].copy()
+        final_pos = next_obs[indices, -3].copy()
         return final_pos
 
     def _sample_last(self, next_obs):
@@ -103,13 +104,14 @@ class HER(AugmentationFunction):
 
         self._set_done_and_info(done, infos, at_goal)
 
-        end = np.argmax(done)+1
-        obs = obs[:end]
-        next_obs = next_obs[:end]
-        action = action[:end]
-        reward = reward[:end]
-        done = done[:end]
-        infos = infos[:end]
+        if self.strategy != 'future':
+            end = np.argmax(done)+1
+            obs = obs[:end]
+            next_obs = next_obs[:end]
+            action = action[:end]
+            reward = reward[:end]
+            done = done[:end]
+            infos = infos[:end]
 
         return obs, next_obs, action, reward, done, infos
 

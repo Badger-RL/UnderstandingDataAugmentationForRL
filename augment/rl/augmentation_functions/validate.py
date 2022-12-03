@@ -12,7 +12,7 @@ def validate_augmentation(env, aug_func, check_valid):
     actions = np.expand_dims(actions, axis=1)
     rewards = np.expand_dims(rewards, axis=1)
     dones = np.expand_dims(dones, axis=1)
-    infos = np.expand_dims(infos, axis=1)
+    infos = np.expand_dims([infos], axis=1)
 
     aug_n = 1
 
