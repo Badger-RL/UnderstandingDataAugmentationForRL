@@ -5,7 +5,7 @@
         <geom conaffinity="1" condim="1" contype="1" margin="0.001" material="geom" rgba="0.8 0.6 .4 1"/>
         <motor ctrllimited="true" ctrlrange="-.4 .4"/>
     </default>
-    <option integrator="RK4" iterations="50" solver="PGS" timestep="0.003">
+    <option integrator="RK4" solver="Newton" timestep="0.003">
         <!-- <flags solverstat="enable" energy="enable"/>-->
     </option>
     <size nkey="5" nuser_geom="1"/>
@@ -40,10 +40,10 @@
                     <body name="right_thigh" pos="0 -0.1 0">
                         <joint armature="0.01" axis="1 0 0" damping="5" name="right_hip_x" pos="0 0 0" range="-25 5" stiffness="10" type="hinge"/>
                         <joint armature="0.01" axis="0 0 1" damping="5" name="right_hip_z" pos="0 0 0" range="-60 35" stiffness="10" type="hinge"/>
-                        <joint armature="0.0080" axis="0 1 0" damping="5" name="right_hip_y" pos="0 0 0" range="-110 20" stiffness="20" type="hinge"/>
+                        <joint armature="0.01" axis="0 1 0" damping="5" name="right_hip_y" pos="0 0 0" range="-110 20" stiffness="20" type="hinge"/>
                         <geom fromto="0 0 0 0.34 0.01 0" name="right_thigh1" size="0.06" type="capsule"/>
                         <body name="right_shin" pos="0.403 0.01 0">
-                            <joint armature="0.0060" axis="0 -1 0" name="right_knee" pos="0 0 .02" range="-160 -2" type="hinge"/>
+                            <joint armature="0.0060" axis="0 -1 0" name="right_knee" pos="0 0 .02" range="-160 -2" stiffness="1" type="hinge"/>
                             <geom fromto="0 0 0 0.3 0 0" name="right_shin1" size="0.049" type="capsule"/>
                             <body name="right_foot" pos="0.35 0 -.10">
                                 <geom name="right_foot" pos="0 0 0.1" size="0.075" type="sphere" user="0"/>

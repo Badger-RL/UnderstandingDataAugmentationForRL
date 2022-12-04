@@ -41,6 +41,11 @@ register(
     entry_point="my_gym.envs.mujoco.humanoid_v4:HumanoidEnv",
     max_episode_steps=1000,
 )
+register(
+    id="HumanoidStandup-v4",
+    entry_point="my_gym.envs.mujoco.humanoidstandup_v4:HumanoidStandupEnv",
+    max_episode_steps=1000,
+)
 
 # ----------------------------------------
 
