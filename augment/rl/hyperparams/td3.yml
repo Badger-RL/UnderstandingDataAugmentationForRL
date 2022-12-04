@@ -172,6 +172,15 @@ Humanoid-v4:
   learning_rate: !!float 3e-4
   batch_size: 256
 
+HumanoidStandup-v4:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 1e6
+  # SAC Hyperparams
+  train_freq: 1
+  gradient_steps: 1
+  learning_rate: !!float 3e-4
+  batch_size: 256
+
 Swimmer-v4:
   <<: *mujoco-defaults
   gamma: 0.9999

@@ -1,7 +1,8 @@
 from augment.rl.augmentation_functions.goal2d import GOAL2D_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.goal2dkey import GOAL2DKEY_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.humanoidstandup import HUMANOIDSTANDUP_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.inverted_double_pendulum import INVERTED_DOUBLE_PENDULUM_AUG_FUNCTIONS
-from augment.rl.augmentation_functions.inverted_pendulum import CARTPOLE_AUG_FUNCTIONS, INVERTED_PENDULUM_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.inverted_pendulum import INVERTED_PENDULUM_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.humanoid import HUMANOID_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.panda import PANDA_AUG_FUNCTIONS, PANDA_PUSH_AUG_FUNCTIONS, \
     PANDA_SLIDE_AUG_FUNCTIONS
@@ -27,17 +28,18 @@ AUGMENTATION_FUNCTIONS = {
     'InvertedPendulum': INVERTED_PENDULUM_AUG_FUNCTIONS,
     'InvertedDoublePendulum': INVERTED_DOUBLE_PENDULUM_AUG_FUNCTIONS,
 
-    'CartPole': CARTPOLE_AUG_FUNCTIONS,
-    'dmc_cartpole_swingup_0': CARTPOLE_AUG_FUNCTIONS,
-    'dmc_cartpole_swingup_sparse_0': CARTPOLE_AUG_FUNCTIONS,
-    'dmc_cartpole_balance_0': CARTPOLE_AUG_FUNCTIONS,
-    'dmc_cartpole_balance_sparse_0': CARTPOLE_AUG_FUNCTIONS,
+    'CartPole': INVERTED_PENDULUM_AUG_FUNCTIONS,
+    'dmc_cartpole_swingup_0': INVERTED_PENDULUM_AUG_FUNCTIONS,
+    'dmc_cartpole_swingup_sparse_0': INVERTED_PENDULUM_AUG_FUNCTIONS,
+    'dmc_cartpole_balance_0': INVERTED_PENDULUM_AUG_FUNCTIONS,
+    'dmc_cartpole_balance_sparse_0': INVERTED_PENDULUM_AUG_FUNCTIONS,
 
     # locomotion
     'Swimmer': SWIMMER_AUG_FUNCTIONS,
     'Walker2d': WALKER2D_AUG_FUNCTIONS,
     'Ant': ANT_AUG_FUNCTIONS,
     'Humanoid': HUMANOID_AUG_FUNCTIONS,
+    'HumanoidStandup': HUMANOIDSTANDUP_AUG_FUNCTIONS,
 
     # robotics
     'PandaReach': PANDA_AUG_FUNCTIONS,

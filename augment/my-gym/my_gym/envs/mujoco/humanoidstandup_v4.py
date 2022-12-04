@@ -191,7 +191,7 @@ class HumanoidStandupEnv(MujocoEnv, utils.EzPickle):
 
     def __init__(self, **kwargs):
         observation_space = Box(
-            low=-np.inf, high=np.inf, shape=(376,), dtype=np.float64
+            low=-np.inf, high=np.inf, shape=(45,), dtype=np.float64
         )
         fullpath = path.join(path.dirname(__file__), "assets", 'humanoidstandup.xml')
         MujocoEnv.__init__(
@@ -209,8 +209,6 @@ class HumanoidStandupEnv(MujocoEnv, utils.EzPickle):
             [
                 data.qpos.flat[2:],
                 data.qvel.flat,
-                data.cinert.flat,
-                data.cvel.flat,
             ]
         )
 
