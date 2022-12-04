@@ -8,8 +8,7 @@ class TranslateGoal(AugmentationFunction):
     def __init__(self, env,  **kwargs):
         super().__init__(env=env, **kwargs)
         self.env = env
-        self.lo = env.task.goal_range_low
-        self.hi = env.task.goal_range_high
+        self.goal_length = self.env.goal_idx.shape[-1]
         self.delta = 0.05
 
 
@@ -30,7 +29,7 @@ class TranslateGoal(AugmentationFunction):
 
         n = obs.shape[0]
         achieved_goal = next_obs[:, self.env.achieved_idx]
-        new_goal = np.random.uniform(low=self.lo, high=self.hi, size=(n,3))
+        new_goal = self.env.task._sample_n_goals(n)
         obs[:, self.env.goal_idx] = new_goal
         next_obs[:, self.env.goal_idx] = new_goal
 
