@@ -31,8 +31,8 @@ class TranslateGoal(AugmentationFunction):
         n = obs.shape[0]
         achieved_goal = next_obs[:, self.env.achieved_idx]
         new_goal = np.random.uniform(low=self.lo, high=self.hi, size=(n,3))
-        obs[:, -3:] = new_goal
-        next_obs[:, -3:] = new_goal
+        obs[:, self.env.goal_idx] = new_goal
+        next_obs[:, self.env.goal_idx] = new_goal
 
         at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         reward = self.env.task.compute_reward(achieved_goal, new_goal, infos)
@@ -78,11 +78,11 @@ class TranslateGoalProximal(AugmentationFunction):
             dz = r*np.cos(phi)
             if self.hi[-1] == 0:
                 dz = 0
-            new_goal = obs[:, -3:] + np.array([dx, dy, dz])
+            new_goal = obs[:, self.env.goal_idx] + np.array([dx, dy, dz])
         else:
             new_goal = np.random.uniform(low=self.lo, high=self.hi, size=(n,3))
-        obs[:, -3:] = new_goal
-        next_obs[:, -3:] = new_goal
+        obs[:, self.env.goal_idx] = new_goal
+        next_obs[:, self.env.goal_idx] = new_goal
 
         at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         reward = self.env.task.compute_reward(achieved_goal, new_goal, infos)
@@ -135,8 +135,8 @@ class HER(HERAugmentationFunction):
 
         achieved_goal = next_obs[:, self.env.achieved_idx]
         new_goal = self._sample_goals(next_obs)
-        obs[:, -3:] = new_goal
-        next_obs[:, -3:] = new_goal
+        obs[:, self.env.goal_idx] = new_goal
+        next_obs[:, self.env.goal_idx] = new_goal
 
         at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         reward = self.env.task.compute_reward(achieved_goal, new_goal, infos)
@@ -176,8 +176,8 @@ class Reflect(AugmentationFunction):
         n = obs.shape[0]
         achieved_goal = next_obs[:, self.env.achieved_idx]
         new_goal = np.random.uniform(low=self.lo, high=self.hi, size=(n,3))
-        obs[:, -3:] = new_goal
-        next_obs[:, -3:] = new_goal
+        obs[:, self.env.goal_idx] = new_goal
+        next_obs[:, self.env.goal_idx] = new_goal
 
         at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         reward = self.env.task.compute_reward(achieved_goal, new_goal, infos)
