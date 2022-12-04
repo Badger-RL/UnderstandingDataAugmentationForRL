@@ -450,6 +450,46 @@ PandaPickAndPlace-v3:
   noise_type: 'normal'
   noise_std: 0.2
 
+PandaFlip-v3:
+  n_timesteps: !!float 1e6
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
+  buffer_size: 1000000
+  batch_size: 64
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  tau: 0.05
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+PandaStack-v3:
+  n_timesteps: !!float 1e6
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
+  buffer_size: 1000000
+  batch_size: 64
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  tau: 0.05
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
 # === Real Robot envs
 NeckGoalEnvRelativeSparse-v2:
   model_class: 'sac'

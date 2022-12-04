@@ -47,6 +47,8 @@ AUGMENTATION_FUNCTIONS = {
     'PandaPush': PANDA_AUG_FUNCTIONS,
     'PandaSlide': PANDA_AUG_FUNCTIONS,
     'PandaPickAndPlace': PANDA_AUG_FUNCTIONS,
+    'PandaStack': PANDA_AUG_FUNCTIONS,
+    'PandaFlip': PANDA_AUG_FUNCTIONS,
 
     'FetchReach': {
         'her': FetchHER,
