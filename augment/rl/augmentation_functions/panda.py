@@ -45,8 +45,6 @@ class TranslateGoalProximal(AugmentationFunction):
     def __init__(self, env, p=0.5,  **kwargs):
         super().__init__(env=env, **kwargs)
         self.env = env
-        self.lo = env.task.goal_range_low
-        self.hi = env.task.goal_range_high
         self.delta = 0.05
         self.p = p
 
@@ -75,11 +73,11 @@ class TranslateGoalProximal(AugmentationFunction):
             dx = r*np.sin(phi)*np.cos(theta)
             dy = r*np.sin(phi)*np.sin(theta)
             dz = r*np.cos(phi)
-            if self.hi[-1] == 0:
+            if self.env.task.goal_range_high[-1] == 0:
                 dz = 0
             new_goal = obs[:, self.env.goal_idx] + np.array([dx, dy, dz])
         else:
-            new_goal = np.random.uniform(low=self.lo, high=self.hi, size=(n,3))
+            new_goal = self.env.task._sample_n_goals(n)
         obs[:, self.env.goal_idx] = new_goal
         next_obs[:, self.env.goal_idx] = new_goal
 
@@ -111,7 +109,7 @@ class HER(HERAugmentationFunction):
         return final_pos
 
     def _sample_last(self, next_obs):
-        final_pos = next_obs[:, :3].copy()
+        final_pos = next_obs[:, self.env.achieved_idx].copy()
         return final_pos
 
     def _sample_goals(self, next_obs):
