@@ -124,9 +124,9 @@ class HERTranslateGoalProximal(HERMixed):
     def __init__(self, env, strategy='future', p=0.5, **kwargs):
         super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, p=p, **kwargs)
 
-# class HERReflect(HERMixed):
-#     def __init__(self, env, strategy='future', p=0.5, **kwargs):
-#         super().__init__(env=env, aug_function=Reflect, strategy=strategy, p=p, **kwargs)
+class HERReflect(HERMixed):
+    def __init__(self, env, strategy='future', p=0.5, **kwargs):
+        super().__init__(env=env, aug_function=Reflect, strategy=strategy, p=p, **kwargs)
 
 class RobotAugmentationFunction(HERAugmentationFunction):
     def __init__(self, env, **kwargs):
@@ -164,7 +164,7 @@ class RobotAugmentationFunction(HERAugmentationFunction):
 
         return obs, next_obs, action, reward, done, infos
 
-class ReachReflect(RobotAugmentationFunction):
+class Reflect(RobotAugmentationFunction):
 
     def __init__(self, env,  **kwargs):
         super().__init__(env=env, **kwargs)
@@ -184,8 +184,8 @@ class ReachReflect(RobotAugmentationFunction):
     def _reflect_object_obs(self, obs):
         # y reflection
         obs[:, 7] *= -1
+        obs[:, 9] *= -1
         obs[:, 13] *= -1
-        obs[:, 16] *= -1
 
     def _reflect_goal_obs(self, obs):
         # y reflection
@@ -222,10 +222,18 @@ PANDA_AUG_FUNCTIONS = {
     'her_translate_goal_proximal': HERTranslateGoalProximal,
     'translate_goal': TranslateGoal,
     'translate_goal_proximal': TranslateGoalProximal,
-    'reflect': ReachReflect, # Does not apply to flip no stack
 }
 
-PANDA_REACH_AUG_FUNCTIONS = {
-    'reflect': ReachReflect,
+PANDA_PUSH_AUG_FUNCTIONS = {
+    'reflect': Reflect,
+    'her_reflect': HERReflect,
+
 }
-PANDA_REACH_AUG_FUNCTIONS.update(PANDA_AUG_FUNCTIONS)
+PANDA_PUSH_AUG_FUNCTIONS.update(PANDA_AUG_FUNCTIONS)
+
+PANDA_SLIDE_AUG_FUNCTIONS = {
+    'reflect': Reflect,
+    'her_reflect': HERReflect,
+}
+PANDA_PUSH_AUG_FUNCTIONS.update(PANDA_AUG_FUNCTIONS)
+PANDA_SLIDE_AUG_FUNCTIONS.update(PANDA_AUG_FUNCTIONS)
