@@ -91,8 +91,6 @@ class TranslateGoalProximal(AugmentationFunction):
 class HER(HERAugmentationFunction):
     def __init__(self, env, strategy='future', **kwargs):
         super().__init__(env=env, **kwargs)
-        self.lo = env.task.goal_range_low
-        self.hi = env.task.goal_range_high
         self.delta = 0.05
         self.strategy = strategy
         if self.strategy == 'future':
@@ -191,15 +189,12 @@ class Reflect(AugmentationFunction):
                  ):
 
         n = obs.shape[0]
-        achieved_goal = next_obs[:, self.env.achieved_idx]
-        new_goal = np.random.uniform(low=self.lo, high=self.hi, size=(n,3))
-        obs[:, self.env.goal_idx] = new_goal
-        next_obs[:, self.env.goal_idx] = new_goal
 
-        at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
-        reward = self.env.task.compute_reward(achieved_goal, new_goal, infos)
+        obs[:, self.env.achieved_idx[0]] *= -1
+        next_obs[:, self.env.achieved_idx[0]] *= -1
+        next_obs[:, self.env.goal_idx[0]] *= -1
 
-        self._set_done_and_info(done, infos, at_goal)
+        action[:, 0] *= -1
 
         return obs, next_obs, action, reward, done, infos
 
@@ -209,6 +204,7 @@ PANDA_AUG_FUNCTIONS = {
     'her_translate_goal': HERTranslateGoal,
     'translate_goal': TranslateGoal,
     'translate_goal_proximal': TranslateGoalProximal,
+    'reflect': Reflect, # Does not apply to flip no stack
 }
 #
 #
