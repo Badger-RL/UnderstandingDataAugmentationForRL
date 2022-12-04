@@ -76,6 +76,8 @@ class TranslateGoalProximal(AugmentationFunction):
             dx = r*np.sin(phi)*np.cos(theta)
             dy = r*np.sin(phi)*np.sin(theta)
             dz = r*np.cos(phi)
+            if self.hi[-1] == 0:
+                dz = 0
             new_goal = obs[:, -3:] + np.array([dx, dy, dz])
         else:
             new_goal = np.random.uniform(low=self.lo, high=self.hi, size=(n,3))
