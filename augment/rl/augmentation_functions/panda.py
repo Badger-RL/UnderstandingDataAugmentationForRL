@@ -43,7 +43,7 @@ class TranslateGoal(AugmentationFunction):
 
 class TranslateGoalProximal(AugmentationFunction):
 
-    def __init__(self, env, p,  **kwargs):
+    def __init__(self, env, p=0.5,  **kwargs):
         super().__init__(env=env, **kwargs)
         self.env = env
         self.lo = env.task.goal_range_low
@@ -145,7 +145,27 @@ class HER(HERAugmentationFunction):
 
         return obs, next_obs, action, reward, done, infos
 
+class HERTranslateGoal(AugmentationFunction):
+    def __init__(self, env, strategy='future', p=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.HER = HER(env, strategy, **kwargs)
+        self.TranslateGoal = TranslateGoal(env, **kwargs)
+        self.p = p
 
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 ):
+
+        if np.random.random() < self.p:
+            return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
+        else:
+            return self.TranslateGoal._augment(obs, next_obs, action, reward, done, infos, p)
 
 
 class Reflect(AugmentationFunction):
@@ -189,6 +209,7 @@ class Reflect(AugmentationFunction):
 
 PANDA_AUG_FUNCTIONS = {
     'her': HER,
+    'her_translate_goal': HERTranslateGoal,
     'translate_goal': TranslateGoal,
     'translate_goal_proximal': TranslateGoalProximal,
 }
