@@ -1,10 +1,12 @@
 import time
 from typing import Dict, List, Any
 
+import gym, my_gym
 import numpy as np
 import torch
 
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
+from augment.rl.augmentation_functions.validate import validate_augmentation
 
 
 class ReacherRotate(AugmentationFunction):
@@ -14,13 +16,15 @@ class ReacherRotate(AugmentationFunction):
     def __init__(self, k=2, sparse=True, **kwargs):
         super().__init__(**kwargs)
         self.k = k
-        self.sparse = self.env.sparse
+        # self.sparse = self.env.sparse
         print(self.k)
-        print(self.sparse)
-        if self.sparse:
-            self._reward_function = self._set_sparse_reward
-        else:
-            self._reward_function = self._set_dense_reward
+        # print(self.sparse)
+        self._reward_function = self._set_dense_reward
+
+        # if self.sparse:
+        #     self._reward_function = self._set_sparse_reward
+        # else:
+        #     self._reward_function = self._set_dense_reward
 
     def _set_reward(self, reward, fingertip_dist, action):
         self._reward_function(reward, fingertip_dist, action)
@@ -87,13 +91,14 @@ class ReacherReflect(AugmentationFunction):
     def __init__(self, k=2, **kwargs):
         super().__init__(**kwargs)
         self.k = k
-        self.sparse = self.env.sparse
+        # self.sparse = self.env.sparse
         print(self.k)
-        print(self.sparse)
-        if self.sparse:
-            self._reward_function = self._set_sparse_reward
-        else:
-            self._reward_function = self._set_dense_reward
+        # print(self.sparse)
+        # if self.sparse:
+        #     self._reward_function = self._set_sparse_reward
+        # else:
+        #     self._reward_function = self._set_dense_reward
+        self._reward_function = self._set_dense_reward
 
         self.mask = np.zeros(self.k*2+2+3).astype(bool)
         self.mask[:2*self.k] = True
@@ -108,6 +113,9 @@ class ReacherReflect(AugmentationFunction):
 
     def _set_dense_reward(self, reward, fingertip_dist, action):
         reward[:] = -np.linalg.norm(fingertip_dist) * self.k - np.square(action).sum()
+
+    def reflect_action(self, action):
+        action[:] *= -1
 
     def _augment(self,
                 obs: np.ndarray,
@@ -131,10 +139,10 @@ class ReacherReflect(AugmentationFunction):
 
         next_obs[:, :self.k] = np.cos(theta-delta_theta)
         next_obs[:, self.k:self.k*2] = np.sin(theta-delta_theta)
-        next_obs[:, 2*self.k+2:-3] *= -1
-        next_obs[:, -3:] -= 2*(next_obs[:, -3:] - obs[:, -3:])
+        next_obs[:, 6:7+1] *= -1
+        # next_obs[:, -3:] -= 2*(next_obs[:, -3:] - obs[:, -3:])
+        self.reflect_action(action)
 
-        action[:] *= -1
 
         # delta = next_obs - obs
         # next_obs[:, :2*self.k] -= 2*delta[:, :2*self.k]
@@ -145,43 +153,74 @@ class ReacherReflect(AugmentationFunction):
 
         return obs, next_obs, action, reward, done, infos
 
+def check_valid(env, aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info):
+
+    # set env to aug_obs
+    # env = gym.make('Walker2d-v4', render_mode='human')
+
+    # env.reset()
+    qpos, qvel = np.concatenate([aug_info[0]['theta'], aug_info[0]['target']]), np.concatenate([aug_obs[6:7+1], np.zeros(2)])
+    env.set_state(qpos, qvel)
+
+    # determine ture next_obs, reward
+    next_obs_true, reward_true, terminated_true, truncated_true, info_true = env.step(aug_action)
+    print(f'\ttrue\t\taug\tis_close')
+    is_close = np.isclose(next_obs_true, aug_next_obs)
+    for i in range(11):
+        print(f'{i}\t{next_obs_true[i]:.8f}\t{aug_next_obs[i]:.8f}\t{is_close[i]}')
+    print(np.all(is_close))
+    print('reward', aug_reward-reward_true)
+    assert np.allclose(aug_next_obs, next_obs_true)
+    assert np.allclose(aug_reward, reward_true)
+
+def sanity_check():
+    env = gym.make('Reacher-v4', render_mode=None)
+    env.reset()
+
+    f = ReacherReflect(env=env, k=2)
+
+    action = np.zeros(2, dtype=np.float32).reshape(1, -1)
+    action[:, 0] = 0.01
+    # action[:, 3:6] = 1
+    # action[:, 11:13] = 1
+
+    env.reset()
+    # f.reflect_action(action)
+    print(action)
+    for i in range(1):
+        next_obs, reward, terminated, truncated, info = env.step(action[0])
+    true = next_obs.copy()
+    aug = next_obs.copy().reshape(1, -1)
+    aug.reshape(-1)
+
+
+    env.reset()
+    # action[:, 0] = -0.01
+    f.reflect_action(action)
+
+    print(action)
+    for i in range(1):
+        next_obs, reward, terminated, truncated, info = env.step(action[0])
+    true_reflect = next_obs.copy()
+
+    print(f'\ttrue\t\ttrue_reflect\taug\t\tis_close')
+    is_close = np.isclose(true_reflect, aug[0])
+    for i in range(11):
+        print(f'{i}\t{true[i]:.8f}\t{true_reflect[i]:.8f}\t{aug[0][i]:.8f}\t{is_close[i]}')
+    print(np.all(is_close))
+
+REACHER_AUG_FUNCTIONS = {
+    'reflect': ReacherReflect,
+    'rotate': ReacherRotate,
+}
+
+
+
 if __name__ == "__main__":
-    k = 2
-    env = gym.make(f'Reacher{k}-v3')
-    f = ReacherReflect(env=env, k=k)
+    sanity_check()
+    '''
 
-    obs = env.reset()
-    for i in range(1000):
-        obs = env.reset()
-        action = np.ones(2)
-        # action[0] = 1
-        action = np.random.uniform(size=(2,))
-
-        # qpos = np.zeros(4)
-        # qpos[0] = (i*0.1) %( 2*np.pi)
-        # qvel = np.zeros(4)
-        # env.set_state(qpos, qvel)
-
-        next_obs, reward, done, info = env.step(action)
-        print('normal', next_obs-obs)
-
-        env.reset()
-
-
-        obs = obs.reshape(1,-1)
-        next_obs = next_obs.reshape(1,-1)
-        action = action.reshape(1,-1)
-        reward = np.array([reward])
-        done = np.array([done])
-        info = [[info]]
-
-        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info = f.augment(1, obs, next_obs, action, reward, done, info)
-        qpos, qvel = env.obs_to_q(aug_obs[0])
-        env.set_state(qpos, qvel)
-        env.render()
-
-
-        next_obs, reward, done, info = env.step(aug_action[0])
-        print('aug', next_obs-obs)
-
-        env.render()
+    '''
+    # env = gym.make('Reacher-v4')
+    # aug_func = ReacherReflect()
+    # validate_augmentation(env, aug_func, check_valid)

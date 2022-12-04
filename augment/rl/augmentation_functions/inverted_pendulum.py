@@ -24,7 +24,7 @@ class InvertedPendulumTranslate(AugmentationFunction):
         delta = np.random.uniform(low=-self.noise_scale, high=+self.noise_scale, size=(n,))
         delta_x = next_obs[:,0] - obs[:,0]
         obs[:,0] = delta
-        next_obs[:,0] = np.clip(delta_x + delta, -1, 1)
+        next_obs[:,0] = delta_x + delta
 
         return obs, next_obs, action, reward, done, infos
 
@@ -42,10 +42,11 @@ class InvertedPendulumReflect(AugmentationFunction):
             infos: List[Dict[str, Any]],
             **kwargs,
     ):
+        delta_x = next_obs[:,0] - obs[:,0]
 
-        obs[:,0:] *= -1
-        next_obs[:,0:] *= -1
-        # next_obs[:,0] -= 2*delta_x
+        obs[:,1:] *= -1
+        next_obs[:,1:] *= -1
+        next_obs[:, 0] -= 2*delta_x
         action *= -1
 
         return obs, next_obs, action, reward, done, infos
@@ -71,17 +72,15 @@ class InvertedPendulumTranslateReflect(AugmentationFunction):
         delta = np.random.uniform(low=-self.noise_scale, high=+self.noise_scale, size=(n,))
         delta_x = next_obs[:,0] - obs[:,0]
         obs[:,0] = delta
-        next_obs[:,0] = np.clip(delta_x + delta, -1, 1)
+        next_obs[:,0] = delta_x + delta
 
-        # reflect with probability
-        if np.random.random() < 0.5:
-            obs[:,0:] *= -1
-            next_obs[:,0:] *= -1
-            action *= -1
+        obs[:,0:] *= -1
+        next_obs[:,0:] *= -1
+        action *= -1
 
         return obs, next_obs, action, reward, done, infos
 
-CARTPOLE_AUG_FUNCTIONS = {
+INVERTED_PENDULUM_AUG_FUNCTIONS = {
     'translate': InvertedPendulumTranslate,
     'reflect': InvertedPendulumReflect,
     'translate_reflect': InvertedPendulumTranslateReflect,

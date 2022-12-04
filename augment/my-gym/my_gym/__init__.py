@@ -46,12 +46,12 @@ register(
 
 # 2D
 #
-# register(
-#     id="Reacher-v2",
-#     entry_point="my_gym.envs.mujoco:ReacherEnv",
-#     max_episode_steps=50,
-#     reward_threshold=-3.75,
-# )
+register(
+    id="Reacher-v4",
+    entry_point="my_gym.envs.mujoco:ReacherEnv",
+    max_episode_steps=50,
+    reward_threshold=-3.75,
+)
 #
 # register(
 #     id="Pusher-v2",
@@ -60,18 +60,18 @@ register(
 #     reward_threshold=0.0,
 # )
 #
-# register(
-#     id="InvertedPendulum-v2",
-#     entry_point="my_gym.envs.mujoco.inverted_pendulum:InvertedPendulumEnv",
-#     max_episode_steps=1000,
-# )
-# #
-# register(
-#     id="InvertedDoublePendulum-v2",
-#     entry_point="my_gym.envs.mujoco.inverted_double_pendulum:InvertedDoublePendulumEnv",
-#     max_episode_steps=1000,
-#     reward_threshold=9100.0,
-# )
+register(
+    id="InvertedPendulum-v4",
+    entry_point="my_gym.envs.mujoco.inverted_pendulum_v4:InvertedPendulumEnv",
+    max_episode_steps=1000,
+)
+#
+register(
+    id="InvertedDoublePendulum-v4",
+    entry_point="my_gym.envs.mujoco.inverted_double_pendulum_v4:InvertedDoublePendulumEnv",
+    max_episode_steps=1000,
+    reward_threshold=9100.0,
+)
 #
 # register(
 #     id="InvertedPendulumWide-v2",

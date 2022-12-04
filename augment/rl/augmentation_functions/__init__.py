@@ -1,6 +1,7 @@
 from augment.rl.augmentation_functions.goal2d import GOAL2D_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.goal2dkey import GOAL2DKEY_AUG_FUNCTIONS
-from augment.rl.augmentation_functions.cartpole import CARTPOLE_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.inverted_double_pendulum import INVERTED_DOUBLE_PENDULUM_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.inverted_pendulum import CARTPOLE_AUG_FUNCTIONS, INVERTED_PENDULUM_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.humanoid import HUMANOID_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.panda import PANDA_AUG_FUNCTIONS, PANDA_PUSH_AUG_FUNCTIONS, \
     PANDA_SLIDE_AUG_FUNCTIONS
@@ -23,8 +24,9 @@ AUGMENTATION_FUNCTIONS = {
     'Goal2DKey': GOAL2DKEY_AUG_FUNCTIONS,
 
     # Pendulum-like environments
-    'InvertedPendulum': CARTPOLE_AUG_FUNCTIONS,
-    'InvertedDoublePendulum': CARTPOLE_AUG_FUNCTIONS,
+    'InvertedPendulum': INVERTED_PENDULUM_AUG_FUNCTIONS,
+    'InvertedDoublePendulum': INVERTED_DOUBLE_PENDULUM_AUG_FUNCTIONS,
+
     'CartPole': CARTPOLE_AUG_FUNCTIONS,
     'dmc_cartpole_swingup_0': CARTPOLE_AUG_FUNCTIONS,
     'dmc_cartpole_swingup_sparse_0': CARTPOLE_AUG_FUNCTIONS,
