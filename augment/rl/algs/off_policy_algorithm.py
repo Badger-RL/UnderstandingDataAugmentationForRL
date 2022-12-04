@@ -22,8 +22,6 @@ from stable_baselines3.common.utils import safe_mean, should_collect_more_steps
 from stable_baselines3.common.vec_env import VecEnv
 from stable_baselines3.her.her_replay_buffer import HerReplayBuffer
 
-from augment.rl.augmentation_functions import AugmentationFunction
-
 OffPolicyAlgorithmAugmentSelf = TypeVar("OffPolicyAlgorithmAugmentSelf", bound="OffPolicyAlgorithmAugment")
 
 
@@ -105,7 +103,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         use_sde_at_warmup: bool = False,
         sde_support: bool = True,
         supported_action_spaces: Optional[Tuple[gym.spaces.Space, ...]] = None,
-        aug_function: Optional[AugmentationFunction] = None,
+        aug_function: Optional = None,
         aug_ratio: Optional[Union[float, Schedule]] = None,
         aug_n: Optional[int] = 1,
         aug_buffer: Optional[bool] = True,

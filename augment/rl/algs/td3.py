@@ -20,7 +20,6 @@ from stable_baselines3.common.utils import get_parameters_by_name, polyak_update
 from stable_baselines3.td3.policies import CnnPolicy, MlpPolicy, MultiInputPolicy, TD3Policy
 
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
-from augment.rl.augmentation_functions import AugmentationFunction
 
 TD3Self = TypeVar("TD3Self", bound="TD3")
 
@@ -100,7 +99,7 @@ class TD3(OffPolicyAlgorithmAugment):
         seed: Optional[int] = None,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
-        aug_function: Optional[AugmentationFunction] = None,
+        aug_function: Optional = None,
         aug_ratio: Optional[Union[float, Schedule]] = None,
         aug_n: Optional[int] = 1,
         aug_freq: Optional[Union[int, str]] = 1,
