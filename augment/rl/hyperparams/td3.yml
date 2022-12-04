@@ -376,7 +376,7 @@ PandaReach-v3:
 #  policy: 'MultiInputPolicy'
   policy: 'MlpPolicy'
   buffer_size: 1000000
-  batch_size: 256
+  batch_size: 64
   gamma: 0.95
   learning_rate: 0.001
   learning_starts: 1000
@@ -395,7 +395,7 @@ PandaPush-v3:
 #  policy: 'MultiInputPolicy'
   policy: 'MlpPolicy'
   buffer_size: 1000000
-  batch_size: 256
+  batch_size: 64
   gamma: 0.95
   learning_rate: 0.001
   learning_starts: 1000
@@ -415,7 +415,7 @@ PandaSlide-v3:
 #  policy: 'MultiInputPolicy'
   policy: 'MlpPolicy'
   buffer_size: 1000000
-  batch_size: 256
+  batch_size: 64
   gamma: 0.95
   learning_rate: 0.001
   learning_starts: 1000
@@ -435,7 +435,7 @@ PandaPickAndPlace-v3:
 #  policy: 'MultiInputPolicy'
   policy: 'MlpPolicy'
   buffer_size: 1000000
-  batch_size: 256
+  batch_size: 64
   gamma: 0.95
   learning_rate: 0.001
   learning_starts: 1000
