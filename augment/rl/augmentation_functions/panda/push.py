@@ -174,7 +174,7 @@ class FetchPushHER(FetchPushAugmentationFunction):
         return obs, next_obs, action, reward, done, infos
 
 
-class FetchPushTranslate(FetchPushAugmentationFunction):
+class FetchPushTranslateGoal(FetchPushAugmentationFunction):
 
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
@@ -193,9 +193,9 @@ class FetchPushTranslate(FetchPushAugmentationFunction):
                  infos: List[Dict[str, Any]],
                  p=None,
                  ):
-        v = np.random.uniform(-self.lo, self.hi)
-        obs[:, :3] += v
-        next_obs[:, :3] += v
+        new_goal = np.random.uniform(-self.lo, self.hi)
+        obs[:, -3:] = new_goal
+        next_obs[:, -3:] = new_goal
 
         at_goal = self.env.is_success(next_obs[:, self.achieved_mask], next_obs[:, self.desired_mask]).astype(bool)
         reward = self.env.compute_reward(next_obs[:, self.achieved_mask], next_obs[:, self.desired_mask], infos)

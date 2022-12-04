@@ -124,11 +124,13 @@ class HERTranslateGoalProximal(HERMixed):
     def __init__(self, env, strategy='future', p=0.5, **kwargs):
         super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, p=p, **kwargs)
 
-# Reach, Push, Slide, PickAndPlace only
-PANDA_AUG_FUNCTIONS = {
-    'her': HER,
-    'her_translate_goal': HERTranslateGoal,
-    'her_translate_goal_proximal': HERTranslateGoalProximal,
-    'translate_goal': TranslateGoal,
-    'translate_goal_proximal': TranslateGoalProximal,
-}
+class RobotAugmentationFunction(HERAugmentationFunction):
+    def __init__(self, env, **kwargs):
+        super().__init__(env=env, **kwargs)
+        self.delta = 0.05
+        self.goal_length = self.env.goal_idx.shape[-1]
+
+    def _set_done_and_info(self, done, infos, at_goal):
+        done |= at_goal
+        infos[done & ~at_goal] = [{'TimeLimit.truncated': True}]
+        infos[done & at_goal] = [{'TimeLimit.truncated': False}]
