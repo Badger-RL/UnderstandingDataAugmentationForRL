@@ -122,7 +122,7 @@ class InvertedDoublePendulumEnv(MujocoEnv, utils.EzPickle):
     }
 
     def __init__(self, reset_noise_scale=0, **kwargs):
-        observation_space = Box(low=-np.inf, high=np.inf, shape=(11,), dtype=np.float64)
+        observation_space = Box(low=-np.inf, high=np.inf, shape=(8,), dtype=np.float64)
         self.reset_noise_scale = reset_noise_scale
         MujocoEnv.__init__(
             self,
