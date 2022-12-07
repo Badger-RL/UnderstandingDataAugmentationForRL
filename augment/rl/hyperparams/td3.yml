@@ -321,7 +321,7 @@ FetchPush-v2:
     goal_selection_strategy='future',
     n_sampled_goal=4
   )"
-  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
@@ -339,7 +339,7 @@ FetchSlide-v2:
     goal_selection_strategy='future',
     n_sampled_goal=4
   )"
-  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
@@ -357,7 +357,7 @@ FetchPickAndPlace-v2:
     goal_selection_strategy='future',
     n_sampled_goal=4
   )"
-  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
@@ -395,7 +395,7 @@ PandaReach-v3:
 #    goal_selection_strategy='future',
 #    n_sampled_goal=4
 #  )"
-  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
@@ -415,7 +415,7 @@ PandaPush-v3:
 #    goal_selection_strategy='future',
 #    n_sampled_goal=4
 #  )"
-  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
@@ -435,7 +435,7 @@ PandaSlide-v3:
 #    goal_selection_strategy='future',
 #    n_sampled_goal=4
 #  )"
-  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
@@ -455,7 +455,7 @@ PandaPickAndPlace-v3:
 #    goal_selection_strategy='future',
 #    n_sampled_goal=4
 #  )"
-  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
@@ -475,7 +475,7 @@ PandaFlip-v3:
 #    goal_selection_strategy='future',
 #    n_sampled_goal=4
 #  )"
-  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
@@ -495,7 +495,7 @@ PandaStack-v3:
 #    goal_selection_strategy='future',
 #    n_sampled_goal=4
 #  )"
-  policy_kwargs: "dict(n_critics=2, net_arch=[256,256,256])"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
 
