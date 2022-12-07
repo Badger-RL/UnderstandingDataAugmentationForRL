@@ -172,6 +172,7 @@ if __name__ == '__main__':
         aug_buffer = args.aug_buffer
         aug_ratio = args.aug_ratio
         aug_n = args.aug_n
+        aug_schedule = args.aug_schedule #
         aug_func = args.aug_function #
         aug_func_kwargs = args.aug_function_kwargs
 
@@ -180,6 +181,7 @@ if __name__ == '__main__':
             rbf_n = args.env_kwargs['rbf_n']
         except:
             rbf_n = None
+
         hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](initial_value=args.aug_ratio, **args.aug_schedule_kwargs)
         hyperparams['aug_function'] = aug_func_class(env=env, rbf_n=rbf_n, **aug_func_kwargs)
         hyperparams['aug_constraint'] = args.aug_constraint
