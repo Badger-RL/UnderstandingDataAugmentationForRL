@@ -3,14 +3,10 @@ from typing import Any, Dict, Optional, Tuple, Type, Union, List, TypeVar
 import torch as th
 
 from stable_baselines3.common.noise import ActionNoise
-# from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.td3.policies import TD3Policy
-# from stable_baselines3.td3.td3 import TD3
 from augment.rl.algs.buffers import ReplayBuffer
-from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
 from augment.rl.algs.td3 import TD3
-from augment.rl.augmentation_functions import AugmentationFunction
 
 SelfDDPG = TypeVar("SelfDDPG", bound="DDPG")
 
