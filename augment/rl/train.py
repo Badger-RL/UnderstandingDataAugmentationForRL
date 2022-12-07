@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     # basic
     parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="FetchPush-v2", help="environment ID")
+    parser.add_argument("--env", type=str, default="PandaPush-v3", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e6), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
@@ -37,8 +37,12 @@ if __name__ == '__main__':
     parser.add_argument("--linear", type=bool, default=False)
     parser.add_argument("--linear-neural", type=bool, default=False)
     parser.add_argument("--data-factor", type=float, default=1)
+    parser.add_argument("--layers", type=list, default=None)
 
     # augmentation
+    parser.add_argument("--use-coda", type=str, default=False)
+    parser.add_argument("--coda-n", type=float, default=1)
+
     parser.add_argument("--aug-function", type=str, default=None)
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-n", type=float, default=1)
@@ -151,13 +155,22 @@ if __name__ == '__main__':
     hyperparams['obs_active_layer_mask'] = args.obs_active_layer_mask
     hyperparams['aug_active_layer_mask'] = args.aug_active_layer_mask
 
+    # coda
+    if args.use_coda:
+        aug_schedule = args.aug_schedule #
+
+        coda_func_class = AUGMENTATION_FUNCTIONS[env_id[:-3]]['coda']
+        hyperparams['coda_function'] = coda_func_class(env=env)
+        hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](initial_value=args.aug_ratio, **args.aug_schedule_kwargs)
+        hyperparams['coda_n'] = args.coda_n
+
+
     # augmentation
     if args.aug_function:
         if 'her' in args.aug_function:
             args.aug_freq = 'episode'
         aug_buffer = args.aug_buffer
         aug_ratio = args.aug_ratio
-        aug_schedule = args.aug_schedule #
         aug_n = args.aug_n
         aug_func = args.aug_function #
         aug_func_kwargs = args.aug_function_kwargs

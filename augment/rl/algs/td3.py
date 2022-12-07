@@ -11,7 +11,8 @@ from stable_baselines3.common.base_class import BaseAlgorithmSelf
 from stable_baselines3.common.save_util import recursive_setattr, load_from_zip_file
 from torch.nn import functional as F
 
-from stable_baselines3.common.buffers import ReplayBuffer
+# from stable_baselines3.common.buffers import ReplayBuffer
+from augment.rl.algs.buffers import ReplayBuffer
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
@@ -87,7 +88,7 @@ class TD3(OffPolicyAlgorithmAugment):
         train_freq: Union[int, Tuple[int, str]] = 1,
         gradient_steps: int = -1,
         action_noise: Optional[ActionNoise] = None,
-        replay_buffer_class: Optional[Type[ReplayBuffer]] = None,
+        replay_buffer_class: Optional[Type[ReplayBuffer]] = ReplayBuffer,
         replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
         optimize_memory_usage: bool = False,
         policy_delay: int = 2,
@@ -111,6 +112,8 @@ class TD3(OffPolicyAlgorithmAugment):
         obs_active_layer_mask: Optional[List[int]] = (),
         aug_active_layer_mask: Optional[List[int]] = (),
         separate_aug_critic: Optional[bool] = False,
+        coda_function: Optional = None,
+        coda_n: Optional = 1,
     ):
 
         super().__init__(
@@ -141,7 +144,9 @@ class TD3(OffPolicyAlgorithmAugment):
             aug_n=aug_n,
             aug_buffer=aug_buffer,
             aug_constraint=aug_constraint,
-            aug_freq=aug_freq
+            aug_freq=aug_freq,
+            coda_function=coda_function,
+            coda_n=coda_n
         )
 
         self.policy_delay = policy_delay

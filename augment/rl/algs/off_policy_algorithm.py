@@ -11,7 +11,8 @@ import numpy as np
 import torch as th
 
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
-from stable_baselines3.common.buffers import DictReplayBuffer, ReplayBuffer
+# from stable_baselines3.common.buffers import DictReplayBuffer, ReplayBuffer
+from augment.rl.algs.buffers import ReplayBuffer
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.noise import ActionNoise, VectorizedActionNoise
 from stable_baselines3.common.policies import BasePolicy
@@ -21,6 +22,8 @@ from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Rollout
 from stable_baselines3.common.utils import safe_mean, should_collect_more_steps
 from stable_baselines3.common.vec_env import VecEnv
 from stable_baselines3.her.her_replay_buffer import HerReplayBuffer
+
+from augment.rl.augmentation_functions.coda import CoDAPanda
 
 OffPolicyAlgorithmAugmentSelf = TypeVar("OffPolicyAlgorithmAugmentSelf", bound="OffPolicyAlgorithmAugment")
 
@@ -88,7 +91,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         Tuple[int, str]] = (1, "step"),
         gradient_steps: int = 1,
         action_noise: Optional[ActionNoise] = None,
-        replay_buffer_class: Optional[Type[ReplayBuffer]] = None,
+        replay_buffer_class: Optional[Type[ReplayBuffer]] = ReplayBuffer,
         replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
         optimize_memory_usage: bool = False,
         policy_kwargs: Optional[Dict[str, Any]] = None,
@@ -108,7 +111,10 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         aug_n: Optional[int] = 1,
         aug_buffer: Optional[bool] = True,
         aug_constraint: Optional[float] = None,
-        aug_freq: Optional[Union[int, str]] = 1):
+        aug_freq: Optional[Union[int, str]] = 1,
+        coda_function: Optional = None,
+        coda_n: Optional[int] = 1,
+    ):
 
         super().__init__(
             policy,
@@ -146,9 +152,12 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         self.aug_freq = aug_freq
         self.separate_aug_buffer = aug_buffer
         self.aug_constraint = aug_constraint
+        self.coda_function = coda_function
+        self.coda_n = coda_n
+        self.use_coda = self.coda_function is not None
 
         self.use_aug = self.aug_function is not None
-        if self.use_aug:
+        if self.use_aug or self.use_coda:
             assert self._vec_normalize_env is None
             assert not self.optimize_memory_usage
             self._setup_augmented_replay_buffer()
@@ -157,8 +166,15 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             self.past_infos = []
 
     def _setup_augmented_replay_buffer(self):
+        if self.use_coda and self.use_aug:
+            aug_buffer_size = int(self.buffer_size * (self.aug_n+self.coda_n))
+        elif self.use_aug:
+            aug_buffer_size = int(self.buffer_size * self.aug_n)
+        elif self.use_coda:
+            aug_buffer_size = int(self.buffer_size * self.coda_n)
+
         self.aug_replay_buffer = ReplayBuffer(
-            int(self.buffer_size * self.aug_n),
+            aug_buffer_size,
             self.observation_space,
             self.action_space,
             device=self.device,
@@ -373,6 +389,9 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             # Store data in replay buffer (normalized action and unnormalized observation)
             self._store_transition(replay_buffer, buffer_actions, new_obs, rewards, dones, infos)
 
+            if self.use_coda:
+                self._coda()
+
             if self.use_aug:
                 self.aug_indices.append(self.replay_buffer.size()-1)
                 self.past_infos.append(infos)
@@ -454,3 +473,25 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         dones = th.concat((observed_batch.dones, aug_batch.dones))
 
         return ReplayBufferSamples(observations, actions, next_observations, dones, rewards), observed_batch, aug_batch
+
+    def _coda(self):
+        num_coda_samples_made = 0
+        while num_coda_samples_made < self.coda_n:
+            observations, actions, next_observations, rewards, dones, timeouts = self.replay_buffer.sample_array(
+                batch_size=2)
+
+
+            aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info = self.coda_function.augment(
+                observations[0],
+                next_observations[0],
+                actions[0],
+                observations[1],
+                next_observations[1],
+                rewards[1],
+                dones[1],
+                timeouts[1]
+            )
+
+            if aug_obs is not None:  # When aug_n < 1, we only augment a fraction of transitions.
+                self.aug_replay_buffer.add(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info)
+                num_coda_samples_made += 1

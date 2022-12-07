@@ -2,6 +2,8 @@ from typing import Dict, List, Any
 import numpy as np
 
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction, HERAugmentationFunction
+from augment.rl.augmentation_functions.coda import CoDAPanda
+
 
 class GoalAugmentationFunction(HERAugmentationFunction):
     def __init__(self, env, **kwargs):
@@ -222,6 +224,7 @@ PANDA_AUG_FUNCTIONS = {
     'her_translate_goal_proximal': HERTranslateGoalProximal,
     'translate_goal': TranslateGoal,
     'translate_goal_proximal': TranslateGoalProximal,
+    'coda': CoDAPanda,
 }
 
 PANDA_PUSH_AUG_FUNCTIONS = {
