@@ -175,3 +175,32 @@ Swimmer-v3:
   gamma: 0.9999
   train_freq: 1
   gradient_steps: 1
+  
+#####################################################
+PandaPush-v3: &panda
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  tau: 0.05
+  policy_kwargs: "dict(net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+PandaSlide-v3:
+  <<: *panda
+
+PandaPickAndPlace-v3:
+  <<: *panda
+
+PandaFlip-v3:
+  <<: *panda
+
+PandaStack-v3:
+  <<: *panda
+
+PandaReach-v3:
+  <<: *panda

@@ -11,7 +11,7 @@ import numpy as np
 import yaml
 
 from stable_baselines3 import A2C, DDPG, DQN, PPO, SAC, TD3
-# from augment.rl.algs.ddpg import DDPG
+from augment.rl.algs.ddpg import DDPG
 # from augment.rl.algs.ppo import PPO
 from augment.rl.algs.td3 import TD3
 # from augment.rl.algs.sac import SAC
