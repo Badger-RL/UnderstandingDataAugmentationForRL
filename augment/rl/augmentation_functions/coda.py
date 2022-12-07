@@ -58,8 +58,14 @@ class CoDAPanda:
                     terminated=terminated2
                 )
 
+            goal2 = obs2[self.env.goal_idx].copy()
+            next_goal2 = next_obs2[self.env.goal_idx].copy()
+
             aug_obs[:,self.env.obj_idx] = obj_obs2.copy()
+            aug_obs[:,self.env.goal_idx] = goal2.copy()
+
             aug_next_obs[:,self.env.obj_idx] = next_obj_obs2.copy()
+            aug_next_obs[:,self.env.goal_idx] = next_goal2.copy()
 
             return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info
         else:
