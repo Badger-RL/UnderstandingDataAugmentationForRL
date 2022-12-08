@@ -38,6 +38,8 @@ if __name__ == '__main__':
     parser.add_argument("--linear-neural", type=bool, default=False)
     parser.add_argument("--data-factor", type=float, default=1)
     parser.add_argument("--layers", type=list, default=None)
+    parser.add_argument("--n-critics", type=int, default=None)
+
 
     # augmentation
     parser.add_argument("--use-coda", type=str, default=False)
@@ -203,6 +205,11 @@ if __name__ == '__main__':
     assert not(args.linear and args.linear_neural)
     if args.linear:
         hyperparams['policy_kwargs'] = {'net_arch':{'pi':[], 'qf':[]}}
+    if args.n_critics:
+        try:
+            hyperparams['policy_kwargs'].update({'n_critics': args.n_critics})
+        except:
+            hyperparams['policy_kwargs'] = {'n_critics': args.n_critics}
 
     preprocess_action_noise(hyperparams=hyperparams, env=env)
     # hyperparams['policy_kwargs'].update({'features_extractor_class': NeuralExtractor})
