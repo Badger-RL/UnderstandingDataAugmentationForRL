@@ -464,7 +464,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             aug_batch_size = 1 if np.random.uniform(0, 1) < np.abs(alpha) else 0
         aug_batch = self.aug_replay_buffer.sample(aug_batch_size, env=self._vec_normalize_env)
         if alpha < 0:
-            return aug_batch
+            return aug_batch, None, None
 
         observations = th.concat((observed_batch.observations, aug_batch.observations))
         actions = th.concat((observed_batch.actions, aug_batch.actions))
