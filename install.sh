@@ -6,7 +6,8 @@ ENVDIR=${ENVNAME}_env
 cp /staging/ncorrado/${ENVNAME}.tar.gz .
 
 mkdir $ENVDIR
-if [${1}] then
+if [${1}] 
+then
   ENVNAME=rl-augment_gpu
 fi
 
