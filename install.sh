@@ -2,15 +2,14 @@
 
 # set up conda env
 ENVNAME=rl-augment
-ENVDIR=${ENVNAME}_env
-cp /staging/ncorrado/${ENVNAME}.tar.gz .
-
-mkdir $ENVDIR
 if [${1}] 
 then
   ENVNAME=rl-augment_gpu
 fi
+ENVDIR=${ENVNAME}_env
+cp /staging/ncorrado/${ENVNAME}.tar.gz .
 
+mkdir $ENVDIR
 tar -xzf ${ENVNAME}.tar.gz -C $ENVDIR
 rm ${ENVNAME}.tar.gz # remove env tarball
 source $ENVDIR/bin/activate
