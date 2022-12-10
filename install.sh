@@ -2,7 +2,7 @@
 
 # set up conda env
 ENVNAME=rl-augment
-if [${1}==1]
+if [[${1}==1]]
 then
   ENVNAME=rl-augment_gpu
 fi
