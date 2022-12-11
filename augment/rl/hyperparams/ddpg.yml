@@ -192,9 +192,12 @@ PandaSlide-v3:
 
 PandaPickAndPlace-v3:
   <<: *panda
+  batch_size: 512
+
 
 PandaFlip-v3:
   <<: *panda
+  batch_size: 512
 
 PandaStack-v3:
   <<: *panda
