@@ -97,11 +97,11 @@ class HER(GoalAugmentationFunction):
         return self.goal_sampler(next_obs, n)
 
 class HERMixed(GoalAugmentationFunction):
-    def __init__(self, env, aug_function, strategy='future', p=0.5, **kwargs):
+    def __init__(self, env, aug_function, strategy='future', q=0.5, **kwargs):
         super().__init__(env, **kwargs)
         self.HER = HER(env, strategy, **kwargs)
         self.aug_function = aug_function(env, **kwargs)
-        self.p = p
+        self.q = q
 
     def _augment(self,
                  obs: np.ndarray,
@@ -113,14 +113,14 @@ class HERMixed(GoalAugmentationFunction):
                  p=None,
                  ):
 
-        if np.random.random() < self.p:
+        if np.random.random() < self.q:
             return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
         else:
             return self.aug_function._augment(obs, next_obs, action, reward, done, infos, p)
 
 class HERTranslateGoal(HERMixed):
-    def __init__(self, env, strategy='future', p=0.5, **kwargs):
-        super().__init__(env=env, aug_function=TranslateGoal, strategy=strategy, p=p, **kwargs)
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env=env, aug_function=TranslateGoal, strategy=strategy, q=q, **kwargs)
 
 class HERTranslateGoalProximal(HERMixed):
     def __init__(self, env, strategy='future', p=0.5, **kwargs):
