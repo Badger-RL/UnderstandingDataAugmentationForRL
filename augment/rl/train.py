@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     # basic
     parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="PandaPush-v3", help="environment ID")
+    parser.add_argument("--env", type=str, default="Goal2D-v0", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e6), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     ####################################################################################################################
     # Preprocess args
 
-    if args.run_id:
+    if args.run_id is not None:
         args.run_id += args.run_id_offset
     save_dir = get_save_dir(args.log_folder, env_id, algo, args.run_id, args.experiment_name)
     best_model_save_dir = save_dir if args.save_best_model else None
