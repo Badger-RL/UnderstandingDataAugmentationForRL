@@ -123,8 +123,30 @@ class HERTranslateGoal(HERMixed):
         super().__init__(env=env, aug_function=TranslateGoal, strategy=strategy, q=q, **kwargs)
 
 class HERTranslateGoalProximal(HERMixed):
-    def __init__(self, env, strategy='future', p=0.5, **kwargs):
-        super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, p=p, **kwargs)
+    def __init__(self, env, strategy='future', q=0.5, p=0.5, **kwargs):
+        super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, q=q, p=p, **kwargs)
+
+class HERTranslateGoalProximal0(GoalAugmentationFunction):
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.HER = HER(env, strategy, **kwargs)
+        self.aug_function = TranslateGoalProximal(env, p=0, **kwargs)
+        self.q = q
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 ):
+
+        if np.random.random() < self.q:
+            return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
+        else:
+            return self.aug_function._augment(obs, next_obs, action, reward, done, infos, p)
 
 class HERReflect(HERMixed):
     def __init__(self, env, strategy='future', p=0.5, **kwargs):
@@ -222,6 +244,7 @@ PANDA_AUG_FUNCTIONS = {
     'her': HER,
     'her_translate_goal': HERTranslateGoal,
     'her_translate_goal_proximal': HERTranslateGoalProximal,
+    'her_translate_goal_proximal_0': HERTranslateGoalProximal0,
     'translate_goal': TranslateGoal,
     'translate_goal_proximal': TranslateGoalProximal,
     'coda': CoDAPanda,
