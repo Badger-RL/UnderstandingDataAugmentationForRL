@@ -72,6 +72,10 @@ class TranslateGoalProximal(GoalAugmentationFunction):
 
         return new_goal
 
+class TranslateGoalProximal0(TranslateGoalProximal):
+    def __init__(self, env, **kwargs):
+        super().__init__(env=env, p=0, **kwargs)
+
 class HER(GoalAugmentationFunction):
     def __init__(self, env, strategy='future', **kwargs):
         super().__init__(env=env, **kwargs)
@@ -247,6 +251,7 @@ PANDA_AUG_FUNCTIONS = {
     'her_translate_goal_proximal_0': HERTranslateGoalProximal0,
     'translate_goal': TranslateGoal,
     'translate_goal_proximal': TranslateGoalProximal,
+    'translate_goal_proximal_0': TranslateGoalProximal0,
     'coda': CoDAPanda,
 }
 
