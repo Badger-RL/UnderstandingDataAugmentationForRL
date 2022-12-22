@@ -1,11 +1,15 @@
+# from augment.rl.augmentation_functions.fetch import FETCH_PUSH_AUG_FUNCTIONS, FETCH_SLIDE_AUG_FUNCTIONS, FETCH_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.goal2d import GOAL2D_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.goal2dkey import GOAL2DKEY_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.humanoidstandup import HUMANOIDSTANDUP_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.inverted_double_pendulum import INVERTED_DOUBLE_PENDULUM_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.inverted_pendulum import INVERTED_PENDULUM_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.humanoid import HUMANOID_AUG_FUNCTIONS
-from augment.rl.augmentation_functions.panda import PANDA_AUG_FUNCTIONS, PANDA_PUSH_AUG_FUNCTIONS, \
-    PANDA_SLIDE_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.panda.common import PANDA_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.panda.flip import PANDA_FLIP_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.panda.pickandplace import PANDA_PICKANDPLACE_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.panda.push import PANDA_PUSH_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.panda.slide import PANDA_SLIDE_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.swimmer import SWIMMER_AUG_FUNCTIONS
 
 
@@ -42,12 +46,17 @@ AUGMENTATION_FUNCTIONS = {
     'HumanoidStandup': HUMANOIDSTANDUP_AUG_FUNCTIONS,
 
     # robotics
-    'PandaReach': PANDA_AUG_FUNCTIONS,
+    # 'PandaReach': PANDA_AUG_FUNCTIONS,
     'PandaPush': PANDA_PUSH_AUG_FUNCTIONS,
     'PandaSlide': PANDA_SLIDE_AUG_FUNCTIONS,
-    'PandaPickAndPlace': PANDA_AUG_FUNCTIONS,
-    'PandaStack': PANDA_AUG_FUNCTIONS,
-    'PandaFlip': PANDA_AUG_FUNCTIONS,
+    'PandaPickAndPlace': PANDA_PICKANDPLACE_AUG_FUNCTIONS,
+    'PandaFlip': PANDA_FLIP_AUG_FUNCTIONS,
+    # 'PandaStack': PANDA_AUG_FUNCTIONS,
+
+    # 'FetchReach': FETCH_AUG_FUNCTIONS,
+    # 'FetchPush': FETCH_PUSH_AUG_FUNCTIONS,
+    # 'FetchSlide': FETCH_SLIDE_AUG_FUNCTIONS,
+    # 'FetchPickAndPlace': FETCH_AUG_FUNCTIONS,
 }
 
 # for k in range(2,20+1):
