@@ -68,8 +68,15 @@ class TranslateGoalProximal(GoalAugmentationFunction):
                 dz = 0
             new_goal = next_obs[:, self.env.goal_idx] + np.array([dx, dy, dz])
         else:
+            # new goal results in no reward signal
             new_goal = self.env.task._sample_n_goals(n)
+            achieved_goal = next_obs[:, self.env.achieved_idx]
+            at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
 
+            # resample if success (rejection sampling)
+            while at_goal:
+                new_goal = self.env.task._sample_n_goals(n)
+                at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         return new_goal
 
 class TranslateGoalProximal0(TranslateGoalProximal):
