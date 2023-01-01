@@ -1,18 +1,18 @@
 from typing import Dict, List, Any
 import numpy as np
 
-from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction, HERAugmentationFunction
+from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
 from augment.rl.augmentation_functions.coda import CoDAPanda
 
 
-class GoalAugmentationFunction(HERAugmentationFunction):
+class GoalAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
         self.delta = 0.05
 
         self.goal_length = self.env.goal_idx.shape[-1]
 
-    def _sample_goals(self, next_obs, n):
+    def _sample_goals(self, next_obs):
         raise NotImplementedError()
 
     def _set_done_and_info(self, done, infos, at_goal):
@@ -30,8 +30,7 @@ class GoalAugmentationFunction(HERAugmentationFunction):
                  p=None,
                  ):
 
-        n = obs.shape[0]
-        new_goal = self._sample_goals(next_obs, n)
+        new_goal = self._sample_goals(next_obs)
         obs[:, self.env.goal_idx] = new_goal
         next_obs[:, self.env.goal_idx] = new_goal
 
@@ -90,22 +89,29 @@ class HER(GoalAugmentationFunction):
         self.strategy = strategy
         if self.strategy == 'future':
             self.goal_sampler = self._sample_future
+        elif self.strategy == 'random':
+            self.goal_sampler = self._sample_random
         else:
             self.goal_sampler = self._sample_last
 
-    def _sample_future(self, next_obs, n):
-        low = np.arange(n)
-        indices = np.random.randint(low=low, high=n)
+    def _sample_future(self, next_obs):
+        ep_length = next_obs.shape[0]
+        low = np.arange(ep_length)
+        indices = np.random.randint(low=low, high=ep_length)
         final_pos = next_obs[indices].copy()
         final_pos = final_pos[:, self.env.achieved_idx]
         return final_pos
 
-    def _sample_last(self, next_obs, n):
+    def _sample_last(self, next_obs):
         final_pos = next_obs[:, self.env.achieved_idx].copy()
         return final_pos
 
-    def _sample_goals(self, next_obs, n):
-        return self.goal_sampler(next_obs, n)
+    def _sample_random(self, next_obs):
+        ep_length = next_obs.shape[0]
+        return self.env.task._sample_n_goals(ep_length)
+
+    def _sample_goals(self, next_obs):
+        return self.goal_sampler(next_obs)
 
 class HERMixed(GoalAugmentationFunction):
     def __init__(self, env, aug_function, strategy='future', q=0.5, **kwargs):
@@ -157,13 +163,35 @@ class HERTranslateGoalProximal0(GoalAugmentationFunction):
         if np.random.random() < self.q:
             return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
         else:
-            return self.aug_function._augment(obs, next_obs, action, reward, done, infos, p)
+            return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
+
+class HERTranslateGoalProximal09(GoalAugmentationFunction):
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.HER = HER(env, strategy, **kwargs)
+        self.aug_function = TranslateGoalProximal(env, p=0.09, **kwargs)
+        self.q = q
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 ):
+
+        if np.random.random() < self.q:
+            return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
+        else:
+            return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
 
 class HERReflect(HERMixed):
     def __init__(self, env, strategy='future', p=0.5, **kwargs):
         super().__init__(env=env, aug_function=Reflect, strategy=strategy, p=p, **kwargs)
 
-class RobotAugmentationFunction(HERAugmentationFunction):
+class RobotAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
         self.delta = 0.05
@@ -256,6 +284,7 @@ PANDA_AUG_FUNCTIONS = {
     'her_translate_goal': HERTranslateGoal,
     'her_translate_goal_proximal': HERTranslateGoalProximal,
     'her_translate_goal_proximal_0': HERTranslateGoalProximal0,
+    'her_translate_goal_proximal_09': HERTranslateGoalProximal09,
     'translate_goal': TranslateGoal,
     'translate_goal_proximal': TranslateGoalProximal,
     'translate_goal_proximal_0': TranslateGoalProximal0,
