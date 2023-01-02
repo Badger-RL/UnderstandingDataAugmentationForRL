@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     # basic
     parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="Goal2D-v0", help="environment ID")
+    parser.add_argument("--env", type=str, default="PandaPush-v3", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e6), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
@@ -45,14 +45,15 @@ if __name__ == '__main__':
     parser.add_argument("--use-coda", type=str, default=False)
     parser.add_argument("--coda-n", type=float, default=1)
 
-    parser.add_argument("--aug-function", type=str, default=None)
+    parser.add_argument("--aug-function", type=str, default="her_translate_goal")
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
-    parser.add_argument("--aug-n", type=float, default=1)
+    parser.add_argument("--aug-n", type=float, default=32)
     parser.add_argument("--aug-ratio", type=float, default=1)
     parser.add_argument("--aug-freq", type=str, default=1)
     parser.add_argument("--aug-schedule", type=str, default="constant")
     parser.add_argument("--aug-schedule-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-buffer", type=bool, default=True)
+    parser.add_argument("--aug-buffer-size", type=int, default=None)
     parser.add_argument("--aug-constraint", type=bool, default=None)
     parser.add_argument("--separate-aug-critic", type=bool, default=False)
     parser.add_argument("--freeze-features-for-aug-update", type=int, default=0)
@@ -186,6 +187,7 @@ if __name__ == '__main__':
 
         hyperparams['aug_ratio'] = SCHEDULES[aug_schedule](initial_value=args.aug_ratio, **args.aug_schedule_kwargs)
         hyperparams['aug_function'] = aug_func_class(env=env, rbf_n=rbf_n, **aug_func_kwargs)
+        hyperparams['aug_buffer_size'] = args.aug_buffer_size
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
         # hyperparams['freeze_features_for_aug_update'] = args.freeze_features_for_aug_update
