@@ -46,8 +46,9 @@ class TranslateGoal(GoalAugmentationFunction):
     def __init__(self, env,  **kwargs):
         super().__init__(env=env, **kwargs)
 
-    def _sample_goals(self, next_obs, n):
-        return self.env.task._sample_n_goals(n)
+    def _sample_goals(self, next_obs):
+        ep_length = next_obs.shape[0]
+        return self.env.task._sample_n_goals(ep_length)
 
 class TranslateGoalProximal(GoalAugmentationFunction):
 
@@ -55,11 +56,12 @@ class TranslateGoalProximal(GoalAugmentationFunction):
         super().__init__(env=env, **kwargs)
         self.p = p
 
-    def _sample_goals(self, next_obs, n):
+    def _sample_goals(self, next_obs):
+        ep_length = next_obs.shape[0]
         if np.random.random() < self.p:
-            r = np.random.uniform(0, self.delta)
-            theta = np.random.uniform(-np.pi, np.pi)
-            phi = np.random.uniform(-np.pi/2, np.pi/2)
+            r = np.random.uniform(0, self.delta, size=ep_length)
+            theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
+            phi = np.random.uniform(-np.pi/2, np.pi/2, size=ep_length)
             dx = r*np.sin(phi)*np.cos(theta)
             dy = r*np.sin(phi)*np.sin(theta)
             dz = r*np.cos(phi)
@@ -68,13 +70,13 @@ class TranslateGoalProximal(GoalAugmentationFunction):
             new_goal = next_obs[:, self.env.goal_idx] + np.array([dx, dy, dz])
         else:
             # new goal results in no reward signal
-            new_goal = self.env.task._sample_n_goals(n)
+            new_goal = self.env.task._sample_n_goals(ep_length)
             achieved_goal = next_obs[:, self.env.achieved_idx]
             at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
 
             # resample if success (rejection sampling)
             while at_goal:
-                new_goal = self.env.task._sample_n_goals(n)
+                new_goal = self.env.task._sample_n_goals(ep_length)
                 at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         return new_goal
 
