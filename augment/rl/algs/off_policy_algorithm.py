@@ -110,6 +110,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         aug_ratio: Optional[Union[float, Schedule]] = None,
         aug_n: Optional[int] = 1,
         aug_buffer: Optional[bool] = True,
+        aug_buffer_size: Optional[int] = None,
         aug_constraint: Optional[float] = None,
         aug_freq: Optional[Union[int, str]] = 1,
         coda_function: Optional = None,
@@ -155,6 +156,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         self.coda_function = coda_function
         self.coda_n = coda_n
         self.use_coda = self.coda_function is not None
+        self.aug_buffer_size = aug_buffer_size
 
         self.use_aug = self.aug_function is not None
         if self.use_aug or self.use_coda:
@@ -166,7 +168,9 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             self.past_infos = []
 
     def _setup_augmented_replay_buffer(self):
-        if self.use_coda and self.use_aug:
+        if self.aug_buffer_size:
+            aug_buffer_size = self.aug_buffer_size
+        elif self.use_coda and self.use_aug:
             aug_buffer_size = int(self.buffer_size * (self.aug_n+self.coda_n))
         elif self.use_aug:
             aug_buffer_size = int(self.buffer_size * self.aug_n)
