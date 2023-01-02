@@ -15,7 +15,7 @@ from torch.nn import functional as F
 from augment.rl.algs.buffers import ReplayBuffer
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.policies import BasePolicy
-from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
+from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule, TrainFreq, TrainFrequencyUnit
 from stable_baselines3.common.utils import get_parameters_by_name, polyak_update, check_for_correct_spaces, \
     get_system_info
 from stable_baselines3.td3.policies import CnnPolicy, MlpPolicy, MultiInputPolicy, TD3Policy
@@ -105,6 +105,7 @@ class TD3(OffPolicyAlgorithmAugment):
         aug_n: Optional[int] = 1,
         aug_freq: Optional[Union[int, str]] = 1,
         aug_buffer: Optional[bool] = True,
+        aug_buffer_size: Optional[int] = None,
         aug_constraint: Optional[float] = 0,
         actor_data_source: Optional[str] = 'both',
         critic_data_source: Optional[str] = 'both',
@@ -143,6 +144,7 @@ class TD3(OffPolicyAlgorithmAugment):
             aug_ratio=aug_ratio,
             aug_n=aug_n,
             aug_buffer=aug_buffer,
+            aug_buffer_size=aug_buffer_size,
             aug_constraint=aug_constraint,
             aug_freq=aug_freq,
             coda_function=coda_function,
@@ -320,7 +322,7 @@ class TD3(OffPolicyAlgorithmAugment):
         self.critic.optimizer.step()
 
         # Delayed policy updates
-        if self._n_updates % self.policy_delay == 0:
+        if not self.skip_update and self._n_updates % self.policy_delay == 0:
             actor_loss = -self.critic.q1_forward(actor_replay_data.observations, self.actor(actor_replay_data.observations)).mean()
             actor_losses.append(actor_loss.item())
             actor_loss.backward()
@@ -361,6 +363,24 @@ class TD3(OffPolicyAlgorithmAugment):
 
             actor_data = both_replay_data
             critic_data = both_replay_data
+
+            n_reward_signal = th.sum(both_replay_data.rewards > 0)
+            # print(n_reward_signal)
+            if n_reward_signal == 0:
+                self.skip_update = True
+                self.batch_size += self.batch_size
+                # self.train_freq = TrainFreq(frequency=int(self.train_freq.frequency*2), unit=TrainFrequencyUnit.STEP)
+
+                if self.batch_size > 1024:
+                    self.batch_size = 1024
+                    # self.train_freq = TrainFreq(frequency=32*8, unit=TrainFrequencyUnit.STEP)
+            else:
+                self.batch_size //= 2
+                # self.train_freq = TrainFreq(frequency=int(self.train_freq.frequency/2), unit=TrainFrequencyUnit.STEP)
+                if self.batch_size < 32:
+                    self.batch_size = 32
+                    # self.train_freq = TrainFreq(16, unit=TrainFrequencyUnit.STEP)
+                self.skip_update = False
 
             if self.critic_data_source == 'both':
                 critic_data = both_replay_data
