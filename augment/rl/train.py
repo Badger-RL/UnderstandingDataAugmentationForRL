@@ -200,6 +200,11 @@ if __name__ == '__main__':
         else:
             hyperparams['aug_freq'] = int(args.aug_freq)
 
+        saved_aug_function_hyperparams = {
+            'aug_function': args.aug_function,
+            'aug_function_kwargs': args.aug_function_kwargs
+        }
+
 
     ####################################################################################################################
     # More preprocessing that depends on the env object
@@ -213,6 +218,14 @@ if __name__ == '__main__':
         except:
             hyperparams['policy_kwargs'] = {'n_critics': args.n_critics}
 
+    saved_aug_function_hyperparams = {
+        'aug_function': args.aug_function,
+        'aug_function_kwargs': args.aug_function_kwargs
+    }
+    saved_action_noise_hyperparams = {
+        'noise_type': hyperparams['noise_type'],
+        'noise_std': hyperparams['noise_std']
+    }
     preprocess_action_noise(hyperparams=hyperparams, env=env)
     # hyperparams['policy_kwargs'].update({'features_extractor_class': NeuralExtractor})
 
@@ -238,8 +251,14 @@ if __name__ == '__main__':
     # model = TD3.load("results/PredatorPreyEasy-v0/td3//run_201/best_model.zip", env)
 
     # save hyperparams and args
+    saved_hyperparams = {}
+    saved_hyperparams.update(hyperparams)
+    saved_hyperparams.update(saved_action_noise_hyperparams)
+    saved_hyperparams.update(saved_aug_function_hyperparams)
+    del saved_hyperparams['action_noise']
+
     with open(os.path.join(save_dir, "config.yml"), "w") as f:
-        yaml.dump(hyperparams, f, sort_keys=True)
+        yaml.dump(saved_hyperparams, f, sort_keys=True)
     with open(os.path.join(save_dir, "args.yml"), "w") as f:
         yaml.dump(args, f, sort_keys=True)
 
