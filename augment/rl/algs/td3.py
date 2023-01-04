@@ -322,7 +322,7 @@ class TD3(OffPolicyAlgorithmAugment):
         self.critic.optimizer.step()
 
         # Delayed policy updates
-        if not self.skip_update and self._n_updates % self.policy_delay == 0:
+        if self._n_updates % self.policy_delay == 0:
             actor_loss = -self.critic.q1_forward(actor_replay_data.observations, self.actor(actor_replay_data.observations)).mean()
             actor_losses.append(actor_loss.item())
             actor_loss.backward()
