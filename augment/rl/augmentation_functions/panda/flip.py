@@ -1,8 +1,9 @@
 import copy
+from typing import Any, List, Dict
 
 import numpy as np
 
-from augment.rl.augmentation_functions.panda.common import GoalAugmentationFunction, PANDA_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.panda.common import GoalAugmentationFunction, PANDA_AUG_FUNCTIONS, HER, HERMixed
 
 
 class TranslateGoalProximal(GoalAugmentationFunction):
@@ -39,13 +40,69 @@ class TranslateGoalProximal(GoalAugmentationFunction):
             at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
 
             # resample if success (rejection sampling)
-            while at_goal:
-                new_goal = self.env.task._sample_n_goals(n)
+            while np.any(at_goal):
+                new_goal[at_goal] = self.env.task._sample_n_goals(n)[at_goal]
                 at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         return new_goal
+
+
+class TranslateGoalProximal0(TranslateGoalProximal):
+    def __init__(self, env, **kwargs):
+        super().__init__(env=env, p=0, **kwargs)
+
+
+class HERTranslateGoalProximal(HERMixed):
+    def __init__(self, env, strategy='future', q=0.5, p=0.5, **kwargs):
+        super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, q=q, p=p, **kwargs)
+
+class HERTranslateGoalProximal0(GoalAugmentationFunction):
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.HER = HER(env, strategy, **kwargs)
+        self.aug_function = TranslateGoalProximal(env, p=0, **kwargs)
+        self.q = q
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 ):
+
+        if np.random.random() < self.q:
+            return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
+        else:
+            return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
+
+class HERTranslateGoalProximal09(GoalAugmentationFunction):
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.HER = HER(env, strategy, **kwargs)
+        self.aug_function = TranslateGoalProximal(env, p=0.09, **kwargs)
+        self.q = q
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 ):
+
+        if np.random.random() < self.q:
+            return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
+        else:
+            return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
 
 PANDA_FLIP_AUG_FUNCTIONS = copy.deepcopy(PANDA_AUG_FUNCTIONS)
 PANDA_FLIP_AUG_FUNCTIONS.update(
     {
-    'translate_goal_proximal': TranslateGoalProximal,
+        'translate_goal_proximal': TranslateGoalProximal,
+        'translate_goal_proximal_0': TranslateGoalProximal,
+        'her_translate_goal_proximal_0': TranslateGoalProximal,
     })

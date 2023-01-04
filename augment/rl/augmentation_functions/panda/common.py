@@ -75,8 +75,8 @@ class TranslateGoalProximal(GoalAugmentationFunction):
             at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
 
             # resample if success (rejection sampling)
-            while at_goal:
-                new_goal = self.env.task._sample_n_goals(ep_length)
+            while np.any(at_goal):
+                new_goal[at_goal] = self.env.task._sample_n_goals(ep_length)[at_goal]
                 at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         return new_goal
 
