@@ -19,7 +19,8 @@ class TranslateGoalProximal(GoalAugmentationFunction):
                          -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
                          x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
 
-    def _sample_goals(self, next_obs, n):
+    def _sample_goals(self, next_obs):
+        n = next_obs.shape[0]
         achieved_goal = next_obs[:, self.env.achieved_idx]
 
         if np.random.random() < self.p:
