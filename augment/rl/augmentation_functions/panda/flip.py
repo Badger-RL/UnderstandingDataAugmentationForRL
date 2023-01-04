@@ -26,14 +26,14 @@ class TranslateGoalProximal(GoalAugmentationFunction):
 
         if np.random.random() < self.p:
             a = np.arccos(achieved_goal[0])
-            theta = np.random.uniform(-0.927, +0.927) # arccos(0.6) ~= +/-0.927
+            theta = np.random.uniform(-0.927, +0.927, size=(n,)) # arccos(0.6) ~= +/-0.927
             q_rotation = np.array([
                 np.cos(theta / 2),
                 a[0] * np.sin(theta / 2),
                 a[1] * np.sin(theta / 2),
                 a[2] * np.sin(theta / 2),
-            ])
-            new_goal = self.quaternion_multiply(achieved_goal, q_rotation)
+            ]).T
+            new_goal = self.quaternion_multiply(achieved_goal.T, q_rotation.T).T
         else:
             # new goal results in no reward signal
             new_goal = self.env.task._sample_n_goals(n)
