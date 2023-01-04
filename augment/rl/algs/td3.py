@@ -364,24 +364,6 @@ class TD3(OffPolicyAlgorithmAugment):
             actor_data = both_replay_data
             critic_data = both_replay_data
 
-            n_reward_signal = th.sum(both_replay_data.rewards > 0)
-            # print(n_reward_signal)
-            if n_reward_signal == 0:
-                self.skip_update = True
-                self.batch_size += self.batch_size
-                # self.train_freq = TrainFreq(frequency=int(self.train_freq.frequency*2), unit=TrainFrequencyUnit.STEP)
-
-                if self.batch_size > 1024:
-                    self.batch_size = 1024
-                    # self.train_freq = TrainFreq(frequency=32*8, unit=TrainFrequencyUnit.STEP)
-            else:
-                self.batch_size //= 2
-                # self.train_freq = TrainFreq(frequency=int(self.train_freq.frequency/2), unit=TrainFrequencyUnit.STEP)
-                if self.batch_size < 32:
-                    self.batch_size = 32
-                    # self.train_freq = TrainFreq(16, unit=TrainFrequencyUnit.STEP)
-                self.skip_update = False
-
             if self.critic_data_source == 'both':
                 critic_data = both_replay_data
             elif self.critic_data_source == 'obs':
