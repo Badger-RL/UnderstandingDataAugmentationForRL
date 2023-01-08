@@ -5,6 +5,61 @@ from augment.rl.augmentation_functions.augmentation_function import Augmentation
 from augment.rl.augmentation_functions.coda import CoDAPanda
 
 
+class ObjectAugmentationFunction(AugmentationFunction):
+    def __init__(self, env, **kwargs):
+        super().__init__(env=env, **kwargs)
+        self.delta = 0.05
+
+        self.obj_pos_mask = np.zeros_like(self.env.obj_idx, dtype=bool)
+        obj_pos_idx = np.argmax(self.env.obj_idx)
+        self.obj_pos_mask[obj_pos_idx:obj_pos_idx+3] = True
+
+    def _sample_object(self, next_obs):
+        raise NotImplementedError()
+
+    def _set_done_and_info(self, done, infos, at_goal):
+        done |= at_goal
+        infos[done & ~at_goal] = [{'TimeLimit.truncated': True}]
+        infos[done & at_goal] = [{'TimeLimit.truncated': False}]
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 ):
+
+        ee_pos = obs[:, :3]
+        next_ee_pos = next_obs[:, :3]
+        new_obj = self._sample_object(next_obs)
+        while np.linalg.norm(ee_pos-new_obj) < 0.1 or np.linalg.norm(next_ee_pos-new_obj) < 0.1:
+            new_obj = self._sample_object(next_obs)
+
+        delta_obj = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
+        obs[:, self.obj_pos_mask] = new_obj
+        next_obs[:, self.obj_pos_mask] = new_obj + delta_obj
+
+        achieved_goal = next_obs[:, self.env.achieved_idx]
+        desired_goal = next_obs[:, self.env.goal_idx]
+        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
+        reward = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
+        self._set_done_and_info(done, infos, at_goal)
+
+        return obs, next_obs, action, reward, done, infos
+
+class TranslateObject(ObjectAugmentationFunction):
+
+    def __init__(self, env,  **kwargs):
+        super().__init__(env=env, **kwargs)
+
+    def _sample_object(self, next_obs):
+        ep_length = next_obs.shape[0]
+        new_obj = self.env.task._sample_n_objects(ep_length)
+        return new_obj
+
 class GoalAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
@@ -291,4 +346,5 @@ PANDA_AUG_FUNCTIONS = {
     'translate_goal_proximal': TranslateGoalProximal,
     'translate_goal_proximal_0': TranslateGoalProximal0,
     'coda': CoDAPanda,
+    'translate_object': TranslateObject,
 }
