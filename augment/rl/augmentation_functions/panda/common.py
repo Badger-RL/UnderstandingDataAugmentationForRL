@@ -60,6 +60,17 @@ class TranslateObject(ObjectAugmentationFunction):
         new_obj = self.env.task._sample_n_objects(ep_length)
         return new_obj
 
+
+class TranslateObjectProximal(ObjectAugmentationFunction):
+
+    def __init__(self, env,  **kwargs):
+        super().__init__(env=env, **kwargs)
+
+    def _sample_object(self, next_obs):
+        ep_length = next_obs.shape[0]
+        new_obj = self.env.task._sample_n_objects(ep_length)
+        return new_obj
+
 class GoalAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
@@ -121,8 +132,9 @@ class TranslateGoalProximal(GoalAugmentationFunction):
             dy = r*np.sin(phi)*np.sin(theta)
             dz = r*np.cos(phi)
             if self.env.task.goal_range_high[-1] == 0:
-                dz = 0
-            new_goal = next_obs[:, self.env.goal_idx] + np.array([dx, dy, dz])
+                dz[:] = 0
+            noise = np.array([dx, dy, dz]).T
+            new_goal = next_obs[:, self.env.goal_idx] + noise
         else:
             # new goal results in no reward signal
             new_goal = self.env.task._sample_n_goals(ep_length)
