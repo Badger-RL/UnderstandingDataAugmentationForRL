@@ -38,9 +38,8 @@ class ObjectAugmentationFunction(AugmentationFunction):
         while np.linalg.norm(ee_pos-new_obj) < 0.1 or np.linalg.norm(next_ee_pos-new_obj) < 0.1:
             new_obj = self._sample_object(next_obs)
 
-        delta_obj = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
         obs[:, self.obj_pos_mask] = new_obj
-        next_obs[:, self.obj_pos_mask] = new_obj + delta_obj
+        next_obs[:, self.obj_pos_mask] = new_obj
 
         achieved_goal = next_obs[:, self.env.achieved_idx]
         desired_goal = next_obs[:, self.env.goal_idx]
