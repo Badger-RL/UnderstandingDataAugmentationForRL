@@ -88,6 +88,7 @@ class TD3(OffPolicyAlgorithmAugment):
         train_freq: Union[int, Tuple[int, str]] = 1,
         gradient_steps: int = -1,
         action_noise: Optional[ActionNoise] = None,
+        random_action_prob: Optional[float] = 0,
         replay_buffer_class: Optional[Type[ReplayBuffer]] = ReplayBuffer,
         replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
         optimize_memory_usage: bool = False,
@@ -151,6 +152,7 @@ class TD3(OffPolicyAlgorithmAugment):
             coda_n=coda_n
         )
 
+        self.random_action_prob = random_action_prob
         self.policy_delay = policy_delay
         self.target_noise_clip = target_noise_clip
         self.target_policy_noise = target_policy_noise
