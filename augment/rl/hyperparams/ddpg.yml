@@ -186,14 +186,15 @@ PandaPush-v3: &panda
   policy_kwargs: "dict(net_arch=[256,256,256])"
   noise_type: 'normal'
   noise_std: 0.2
+  random_action_prob: 0.3
 
 PandaSlide-v3:
   <<: *panda
 
 PandaPickAndPlace-v3:
   <<: *panda
+  policy_kwargs: "dict(net_arch=[512,512,512])"
   batch_size: 512
-
 
 PandaFlip-v3:
   <<: *panda
@@ -203,6 +204,28 @@ PandaStack-v3:
   <<: *panda
 
 PandaReach-v3:
+  <<: *panda
+
+
+######################
+FetchPush-v1:
+  <<: *panda
+
+FetchSlide-v1:
+  <<: *panda
+
+FetchPickAndPlace-v1:
+  <<: *panda
+  batch_size: 512
+
+FetchFlip-v1:
+  <<: *panda
+  batch_size: 512
+
+FetchStack-v1:
+  <<: *panda
+
+FetchReach-v1:
   <<: *panda
 
 Goal2D-v0: &predator_prey
