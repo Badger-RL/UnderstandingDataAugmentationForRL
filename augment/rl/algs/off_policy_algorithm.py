@@ -481,19 +481,20 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
     def _coda(self):
         num_coda_samples_made = 0
         while num_coda_samples_made < self.coda_n:
-            observations, actions, next_observations, rewards, dones, timeouts = self.replay_buffer.sample_array(
-                batch_size=2)
-
+            observation0, action0, next_observation0, reward0, done0, timeout0 = self.replay_buffer.sample_array(
+                batch_size=1)
+            observation1, action1, next_observation1, reward1, done1, timeout1 = self.replay_buffer.sample_array(
+                batch_size=1)
 
             aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info = self.coda_function.augment(
-                observations[0],
-                next_observations[0],
-                actions[0],
-                observations[1],
-                next_observations[1],
-                rewards[1],
-                dones[1],
-                timeouts[1]
+                observation0,
+                next_observation0,
+                action0,
+                observation1,
+                next_observation1,
+                reward1,
+                done1,
+                timeout1
             )
 
             if aug_obs is not None:  # When aug_n < 1, we only augment a fraction of transitions.
