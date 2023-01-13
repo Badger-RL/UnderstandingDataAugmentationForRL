@@ -193,7 +193,6 @@ PandaSlide-v3:
 
 PandaPickAndPlace-v3:
   <<: *panda
-  policy_kwargs: "dict(net_arch=[512,512,512])"
   batch_size: 512
 
 PandaFlip-v3:
