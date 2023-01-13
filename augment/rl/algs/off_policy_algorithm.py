@@ -155,6 +155,8 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         self.aug_constraint = aug_constraint
         self.coda_function = coda_function
         self.coda_n = coda_n
+        self.coda_n_floor = int(np.floor(coda_n))
+        self.coda_prob = coda_n - self.coda_n_floor
         self.use_coda = self.coda_function is not None
         self.aug_buffer_size = aug_buffer_size
 
@@ -480,7 +482,8 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
 
     def _coda(self):
         num_coda_samples_made = 0
-        while num_coda_samples_made < self.coda_n:
+        coda_n = self.coda_n_floor + int(np.random.random() < self.coda_prob)
+        while num_coda_samples_made < coda_n:
             observation0, action0, next_observation0, reward0, done0, timeout0 = self.replay_buffer.sample_array(
                 batch_size=1)
             observation1, action1, next_observation1, reward1, done1, timeout1 = self.replay_buffer.sample_array(
