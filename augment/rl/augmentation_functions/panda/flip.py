@@ -25,13 +25,13 @@ class TranslateGoalProximal(GoalAugmentationFunction):
         achieved_goal = next_obs[:, self.env.achieved_idx]
 
         if np.random.random() < self.p:
-            a = np.arccos(achieved_goal[0])
+            a = np.arccos(achieved_goal[:, 0])
             theta = np.random.uniform(-0.927, +0.927, size=(n,)) # arccos(0.6) ~= +/-0.927
             q_rotation = np.array([
                 np.cos(theta / 2),
-                a[0] * np.sin(theta / 2),
-                a[1] * np.sin(theta / 2),
-                a[2] * np.sin(theta / 2),
+                a * np.sin(theta / 2),
+                a * np.sin(theta / 2),
+                a * np.sin(theta / 2),
             ]).T
             new_goal = self.quaternion_multiply(achieved_goal.T, q_rotation.T).T
         else:
@@ -103,6 +103,6 @@ PANDA_FLIP_AUG_FUNCTIONS = copy.deepcopy(PANDA_AUG_FUNCTIONS)
 PANDA_FLIP_AUG_FUNCTIONS.update(
     {
         'translate_goal_proximal': TranslateGoalProximal,
-        'translate_goal_proximal_0': TranslateGoalProximal,
+        'translate_goal_proximal_0': TranslateGoalProximal0,
         'her_translate_goal_proximal_0': TranslateGoalProximal,
     })
