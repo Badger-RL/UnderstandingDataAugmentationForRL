@@ -21,8 +21,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # basic
-    parser.add_argument("--algo", help="RL Algorithm", default="td3", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="PandaPush-v3", help="environment ID")
+    parser.add_argument("--algo", help="RL Algorithm", default="ddpg", type=str, required=False, choices=list(ALGOS.keys()))
+    parser.add_argument("--env", type=str, default="PandaPickAndPlace-v3", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e6), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
@@ -235,6 +235,7 @@ if __name__ == '__main__':
     hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
     hyperparams['batch_size'] = int(hyperparams['batch_size'] * args.data_factor)
     hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * args.data_factor)
+    n_timesteps = int(args.n_timesteps * args.data_factor)
     print(hyperparams['train_freq'], hyperparams['batch_size'], hyperparams['buffer_size'])
 
     algo_class = ALGOS[algo]
