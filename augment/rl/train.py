@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     # basic
     parser.add_argument("--algo", help="RL Algorithm", default="ddpg", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("--env", type=str, default="PandaPickAndPlace-v3", help="environment ID")
+    parser.add_argument("--env", type=str, default="PandaPush-v3", help="environment ID")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=-1)
     parser.add_argument("-n", "--n-timesteps", help="Overwrite the number of timesteps", default=int(1e6), type=int)
     parser.add_argument("--eval-freq", help="Evaluate the agent every n steps (if negative, no evaluation).", default=10000, type=int,)
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument("--linear", type=bool, default=False)
     parser.add_argument("--linear-neural", type=bool, default=False)
     parser.add_argument("--data-factor", type=float, default=1)
-    parser.add_argument("--layers", type=list, default=None)
+    parser.add_argument("--layers", nargs='+', type=int, default=None)
     parser.add_argument("--n-critics", type=int, default=None)
 
 
@@ -210,6 +210,8 @@ if __name__ == '__main__':
     # More preprocessing that depends on the env object
 
     assert not(args.linear and args.linear_neural)
+    if args.layers:
+        hyperparams['policy_kwargs'] = {'net_arch':args.layers}
     if args.linear:
         hyperparams['policy_kwargs'] = {'net_arch':{'pi':[], 'qf':[]}}
     if args.n_critics:
