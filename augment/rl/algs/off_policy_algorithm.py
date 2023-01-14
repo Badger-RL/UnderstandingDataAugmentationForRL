@@ -483,6 +483,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
     def _coda(self):
         num_coda_samples_made = 0
         coda_n = self.coda_n_floor + int(np.random.random() < self.coda_prob)
+        if self.aug_replay_buffer.size() < 10000: return
         while num_coda_samples_made < coda_n:
             observation0, action0, next_observation0, reward0, done0, timeout0 = self.replay_buffer.sample_array_most_recent()
             observation1, action1, next_observation1, reward1, done1, timeout1 = self.replay_buffer.sample_array(
