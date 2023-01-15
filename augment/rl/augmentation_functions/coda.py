@@ -7,7 +7,7 @@ class CoDAPanda:
 
     def __init__(self, env, **kwargs):
         self.env = env
-
+        self.aug_threshold = 0.05
 
     def augment(
             self,
@@ -35,16 +35,22 @@ class CoDAPanda:
         '''
         ee_pos1 = obs1[:, :3]
         obj_obs2 = obs2[:, self.env.obj_idx]
-        obj_pos2 = obj_obs2[:, 3]
+        obj_pos2 = obj_obs2[:, :3]
 
-        next_ee_pos1 = next_obs1[:, 3]
+        next_ee_pos1 = next_obs1[:, :3]
         next_obj_obs2 = next_obs2[:, self.env.obj_idx]
-        next_obj_pos2 = next_obj_obs2[:, 3]
+        next_obj_pos2 = next_obj_obs2[:, :3]
 
         # Use 0.1 as the threshold, since the goal threshold is 0.05 and the arm can move at most 0.05 along any axis.
-        is_indepedent = np.linalg.norm(ee_pos1 - obj_pos2, axis=-1) > 0.1
-        next_is_indepedent = np.linalg.norm(next_ee_pos1 - next_obj_pos2, axis=-1) > 0.1
+        is_indepedent = (np.abs(ee_pos1[:, 0] - obj_pos2[:, 0])) > 0.03 \
+                        and (np.abs(ee_pos1[:, 1] - obj_pos2[:, 1])) > 0.05
 
+        next_is_indepedent = (np.abs(next_ee_pos1[:, 0] - next_obj_pos2[:, 0])) > 0.03 \
+                             and (np.abs(next_ee_pos1[:, 1] - next_obj_pos2[:, 1])) > 0.05
+
+
+        # is_indepedent = np.linalg.norm(ee_pos1 - obj_pos2, axis=-1) > 0.1
+        # next_is_indepedent = np.linalg.norm(next_ee_pos1 - next_obj_pos2, axis=-1) > 0.1
         # mask = (is_indepedent and next_is_indepedent).astype(bool)
 
         if (is_indepedent and next_is_indepedent):
@@ -57,6 +63,7 @@ class CoDAPanda:
                     done=done2,
                     terminated=terminated2
                 )
+
 
             goal2 = obs2[:, self.env.goal_idx].copy()
             next_goal2 = next_obs2[:, self.env.goal_idx].copy()

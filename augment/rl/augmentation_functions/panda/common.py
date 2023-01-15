@@ -9,10 +9,15 @@ class ObjectAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
         self.delta = 0.05
+        self.aug_threshold = 0.05 # largest distance from center to block edge = 0.02
 
         self.obj_pos_mask = np.zeros_like(self.env.obj_idx, dtype=bool)
         obj_pos_idx = np.argmax(self.env.obj_idx)
         self.obj_pos_mask[obj_pos_idx:obj_pos_idx+3] = True
+
+        self.obj_vel_mask = np.zeros_like(self.env.obj_idx, dtype=bool)
+        self.obj_vel_mask[obj_pos_idx+3:-3] = True
+
 
     def _sample_object(self, next_obs):
         raise NotImplementedError()
@@ -32,11 +37,19 @@ class ObjectAugmentationFunction(AugmentationFunction):
                  p=None,
                  ):
 
-        ee_pos = obs[:, :3]
-        next_ee_pos = next_obs[:, :3]
+        ee_xy = obs[:, :2]
+        next_ee_xy = next_obs[:, :2]
+        # ee_z = obs[:, 2]
+        # next_ee_z = next_obs[:, 2]
+
         new_obj = self._sample_object(next_obs)
-        while np.linalg.norm(ee_pos-new_obj) < 0.1 or np.linalg.norm(next_ee_pos-new_obj) < 0.1:
+        new_obj_xy = new_obj[:, :2]
+        # new_obj_z = new_obj[:, :2]
+
+        # if np.abs(new_obj_z - ee_z) < self.aug_threshold or np.abs(new_obj_z - next_ee_z) < self.aug_threshold:
+        while np.linalg.norm(ee_xy-new_obj_xy) < self.aug_threshold or np.linalg.norm(next_ee_xy-new_obj_xy) < self.aug_threshold:
             new_obj = self._sample_object(next_obs)
+            new_obj_xy = new_obj[:, :2]
 
         obs[:, self.obj_pos_mask] = new_obj
         next_obs[:, self.obj_pos_mask] = new_obj
