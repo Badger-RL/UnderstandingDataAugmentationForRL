@@ -220,6 +220,10 @@ class HERTranslateGoal(HERMixed):
     def __init__(self, env, strategy='future', q=0.5, **kwargs):
         super().__init__(env=env, aug_function=TranslateGoal, strategy=strategy, q=q, **kwargs)
 
+class HERTranslateObject(HERMixed):
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env=env, aug_function=TranslateObject, strategy=strategy, q=q, **kwargs)
+
 class HERTranslateGoalProximal(HERMixed):
     def __init__(self, env, strategy='future', q=0.5, p=0.5, **kwargs):
         super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, q=q, p=p, **kwargs)
@@ -362,6 +366,7 @@ class Reflect(RobotAugmentationFunction):
 # Reach, Push, Slide, PickAndPlace only
 PANDA_AUG_FUNCTIONS = {
     'her': HER,
+    'her_translate_object': HERTranslateObject,
     'her_translate_goal': HERTranslateGoal,
     'her_translate_goal_proximal': HERTranslateGoalProximal,
     'her_translate_goal_proximal_0': HERTranslateGoalProximal0,
