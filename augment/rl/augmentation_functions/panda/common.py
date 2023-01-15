@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 import numpy as np
 
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
-from augment.rl.augmentation_functions.coda import CoDAPanda
+# from augment.rl.augmentation_functions.coda import CoDAPanda
 
 
 class ObjectAugmentationFunction(AugmentationFunction):
@@ -35,6 +35,7 @@ class ObjectAugmentationFunction(AugmentationFunction):
                  done: np.ndarray,
                  infos: List[Dict[str, Any]],
                  p=None,
+                 **kwargs
                  ):
 
         ee_xy = obs[:, :2]
@@ -224,6 +225,10 @@ class HERTranslateObject(HERMixed):
     def __init__(self, env, strategy='future', q=0.5, **kwargs):
         super().__init__(env=env, aug_function=TranslateObject, strategy=strategy, q=q, **kwargs)
 
+class HERCoDA(HERMixed):
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env=env, aug_function=CoDAPanda, strategy=strategy, q=q, **kwargs)
+
 class HERTranslateGoalProximal(HERMixed):
     def __init__(self, env, strategy='future', q=0.5, p=0.5, **kwargs):
         super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, q=q, p=p, **kwargs)
@@ -362,10 +367,86 @@ class Reflect(RobotAugmentationFunction):
         return obs, next_obs, action, reward, done, infos
 
 
+class CoDAPanda(ObjectAugmentationFunction):
+
+    def __init__(self, env, **kwargs):
+        super().__init__(env, **kwargs)
+        self.aug_threshold = 0.05
+        # self.replay_buffer = replay_buffer
+
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 replay_buffer=None,
+                 p=None,
+                 **kwargs,
+                 ):
+        '''
+        robot obs, action -> comes from obs1
+        object obs, goal, reward, done -> comes from obs2
+
+        :param obs1:
+        :param obs2:
+        :return:
+        '''
+
+        is_independent = [False]
+        next_is_independent = [False]
+
+        if replay_buffer.size() < 1000:
+            return None, None, None, None, None, None,
+
+        while not(is_independent[0] and next_is_independent[0]):
+
+            obs2, action2, next_obs2, reward2, done2, timeout2 = replay_buffer.sample_array(batch_size=1)
+
+            ee_pos = obs[:, :3]
+            obj_obs2 = obs2[:, self.env.obj_idx]
+            obj_pos2 = obj_obs2[:, :3]
+
+            next_ee_pos = next_obs[:, :3]
+            next_obj_obs2 = next_obs2[:, self.env.obj_idx]
+            next_obj_pos2 = next_obj_obs2[:, :3]
+
+            # Use 0.1 as the threshold, since the goal threshold is 0.05 and the arm can move at most 0.05 along any axis.
+            is_independent = (np.abs(ee_pos[:, 0] - obj_pos2[:, 0])) > 0.03 \
+                            and (np.abs(ee_pos[:, 1] - obj_pos2[:, 1])) > 0.05
+
+            next_is_independent = (np.abs(next_ee_pos[:, 0] - next_obj_pos2[:, 0])) > 0.03 \
+                                 and (np.abs(next_ee_pos[:, 1] - next_obj_pos2[:, 1])) > 0.05
+
+
+        # is_indepedent = np.linalg.norm(ee_pos1 - obj_pos2, axis=-1) > 0.1
+        # next_is_indepedent = np.linalg.norm(next_ee_pos1 - next_obj_pos2, axis=-1) > 0.1
+        # mask = (is_indepedent and next_is_indepedent).astype(bool)
+
+        goal2 = obs2[:, self.env.goal_idx].copy()
+        next_goal2 = next_obs2[:, self.env.goal_idx].copy()
+
+        obs[:,self.env.obj_idx] = obj_obs2.copy()
+        obs[:,self.env.goal_idx] = goal2.copy()
+
+        next_obs[:,self.env.obj_idx] = next_obj_obs2.copy()
+        next_obs[:,self.env.goal_idx] = next_goal2.copy()
+
+        achieved_goal = next_obs[:, self.env.achieved_idx]
+        desired_goal = next_obs[:, self.env.goal_idx]
+        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
+        reward = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
+        self._set_done_and_info(done, infos, at_goal)
+
+        return obs, next_obs, action, reward, done, infos
+
 
 # Reach, Push, Slide, PickAndPlace only
 PANDA_AUG_FUNCTIONS = {
     'her': HER,
+    'her_coda': HERCoDA,
     'her_translate_object': HERTranslateObject,
     'her_translate_goal': HERTranslateGoal,
     'her_translate_goal_proximal': HERTranslateGoalProximal,

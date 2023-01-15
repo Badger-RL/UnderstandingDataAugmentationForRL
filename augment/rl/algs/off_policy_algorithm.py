@@ -206,7 +206,8 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             reward,
             done,
             info,
-            p=dist
+            p=dist,
+            replay_buffer=self.replay_buffer
             # p=self.replay_buffer.state_counts/self.replay_buffer.num_states
         )
 

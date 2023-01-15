@@ -10,7 +10,6 @@ import torch
 import yaml
 from stable_baselines3.common.monitor import Monitor
 
-from augment.rl.algs.policies import NeuralExtractor
 from augment.rl.augmentation_functions import AUGMENTATION_FUNCTIONS
 from augment.rl.callbacks import EvalCallback
 from augment.rl.utils import ALGOS, StoreDict, get_save_dir, preprocess_action_noise, read_hyperparameters, SCHEDULES
@@ -45,7 +44,7 @@ if __name__ == '__main__':
     parser.add_argument("--use-coda", type=str, default=False)
     parser.add_argument("--coda-n", type=float, default=1)
 
-    parser.add_argument("--aug-function", type=str, default=None)
+    parser.add_argument("--aug-function", type=str, default='coda')
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-n", type=float, default=1)
     parser.add_argument("--aug-ratio", type=float, default=1)
@@ -149,6 +148,22 @@ if __name__ == '__main__':
         hyperparams['buffer_size'] = int(hyperparams['buffer_size'])
     except:
         pass
+
+    # vec_env_cls = DummyVecEnv
+    # vec_env_kwargs = {}
+    # n_envs = 1
+    #
+    # def _make_env():
+    #     def _init():
+    #         env = Monitor(gym.make(env_id, **args.env_kwargs),)
+    #         return env
+    #     return _init
+    #
+    # vec_env = vec_env_cls([_make_env() for i in range(n_envs)])
+    # env = VecNormalize(vec_env, norm_reward=False, gamma=0.95)
+    #
+    # vec_env_eval = vec_env_cls([_make_env() for i in range(n_envs)])
+    # env_eval = VecNormalize(vec_env, norm_reward=False, gamma=0.95, training=False)
 
     # Make envs
     env = Monitor(gym.make(env_id, **args.env_kwargs),)
