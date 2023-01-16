@@ -44,7 +44,7 @@ if __name__ == '__main__':
     parser.add_argument("--use-coda", type=str, default=False)
     parser.add_argument("--coda-n", type=float, default=1)
 
-    parser.add_argument("--aug-function", type=str, default='coda')
+    parser.add_argument("--aug-function", type=str, default=None)
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-n", type=float, default=1)
     parser.add_argument("--aug-ratio", type=float, default=1)
@@ -249,6 +249,7 @@ if __name__ == '__main__':
     # if args.data_factor
     # NOTE: Data factor won't make sense if train_freq = [1, episode] since we can't guarantee we'll collect
     # e.g. twice as much data between updates.
+    args.eval_freq = int(args.eval_freq * args.data_factor)
     hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
     hyperparams['batch_size'] = int(hyperparams['batch_size'] * args.data_factor)
     hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * args.data_factor)
