@@ -365,9 +365,9 @@ class TranslateObject(ObjectAugmentationFunction):
 
 class TranslateObjectProximal0(ObjectAugmentationFunction):
 
-    def __init__(self, env, p, **kwargs):
+    def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
-        self.p = p
+        self.p = 0
 
     def _sample_object(self, next_obs):
         ep_length = next_obs.shape[0]

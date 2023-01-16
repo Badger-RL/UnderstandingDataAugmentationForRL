@@ -15,8 +15,8 @@ class TranslateObjectPick(TranslateObject):
 
 class TranslateObjectProximal0Pick(TranslateObjectProximal0):
 
-    def __init__(self, env, p, **kwargs):
-        super().__init__(env=env, p=p, **kwargs)
+    def __init__(self, env, **kwargs):
+        super().__init__(env=env, **kwargs)
         self.aug_threshold = np.array([0.03, 0.1, 0.05])  # largest distance from center to block edge = 0.02
 
 
