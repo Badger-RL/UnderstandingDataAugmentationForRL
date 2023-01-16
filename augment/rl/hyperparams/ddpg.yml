@@ -179,7 +179,7 @@ PandaPush-v3: &panda
   policy: 'MlpPolicy'
   buffer_size: 1000000
   batch_size: 256
-  gamma: 0.95
+  gamma: 0.98
   learning_rate: 0.001
   learning_starts: 1000
   tau: 0.05
@@ -187,6 +187,8 @@ PandaPush-v3: &panda
   noise_type: 'normal'
   noise_std: 0.2
   random_action_prob: 0.3
+  train_freq: 2
+  gradient_steps: 1
 
 PandaSlide-v3:
   <<: *panda

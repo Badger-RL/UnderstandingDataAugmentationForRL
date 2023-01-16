@@ -2,10 +2,15 @@ from copy import deepcopy
 from typing import Dict, List, Any
 
 import numpy as np
+# from stable_baselines3.common.vec_env import VecNormalize
 
 class AugmentationFunction:
 
     def __init__(self, env=None, **kwargs):
+        # if isinstance(env, VecNormalize):
+        #     self.env = env.venv.envs[0].unwrapped
+        # else:
+        #     self.env = env
         self.env = env
         self.is_her = True
         self.aug_n = None
