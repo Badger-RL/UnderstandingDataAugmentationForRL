@@ -34,8 +34,10 @@ class CoDAPick(CoDA):
         self.aug_threshold = np.array([0.03, 0.10, 0.05])  # largest distance from center to block edge = 0.02
 
 PANDA_PICKANDPLACE_AUG_FUNCTIONS = copy.deepcopy(PANDA_AUG_FUNCTIONS)
-# PANDA_PICKANDPLACE_AUG_FUNCTIONS.update(
-#     {
-#         'translate_object': TranslateObject,
-#     }
-# )
+PANDA_PICKANDPLACE_AUG_FUNCTIONS.update(
+    {
+        'translate_object': TranslateObjectPick,
+        'translate_object_proxmial_0': TranslateObjectProximal0Pick,
+        'translate_object_proximal': TranslateObjectProximalPick,
+    }
+)
