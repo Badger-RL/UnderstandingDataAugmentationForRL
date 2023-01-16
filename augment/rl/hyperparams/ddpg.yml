@@ -179,7 +179,7 @@ PandaPush-v3: &panda
   policy: 'MlpPolicy'
   buffer_size: 1000000
   batch_size: 256
-  gamma: 0.98
+  gamma: 0.95
   learning_rate: 0.001
   learning_starts: 1000
   tau: 0.05
