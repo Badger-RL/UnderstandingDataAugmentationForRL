@@ -74,6 +74,7 @@ class Goal2DAugmentationFunction(AugmentationFunction):
                  done: np.ndarray,
                  infos: List[Dict[str, Any]],
                  p=None,
+                 **kwargs
                  ):
         self._set_dynamics(obs, next_obs, action)
         self._clip_obs(next_obs)
@@ -223,6 +224,7 @@ class Goal2DHER(Goal2DAugmentationFunction):
                  done: np.ndarray,
                  infos: List[Dict[str, Any]],
                  p=None,
+                 **kwargs
                  ):
 
 
@@ -261,6 +263,7 @@ class Goal2DRotateRestrictedHER(Goal2DRotateRestricted):
                  done: np.ndarray,
                  infos: List[Dict[str, Any]],
                  p=None,
+                 **kwargs
                  ):
 
 
