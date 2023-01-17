@@ -250,14 +250,14 @@ if __name__ == '__main__':
     # NOTE: Data factor won't make sense if train_freq = [1, episode] since we can't guarantee we'll collect
     # e.g. twice as much data between updates.
     args.eval_freq = int(args.eval_freq * args.data_factor)
-    hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
+    # hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
     hyperparams['batch_size'] = int(hyperparams['batch_size'] * args.data_factor)
     hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * args.data_factor)
     n_timesteps = int(args.n_timesteps * args.data_factor)
-    print(hyperparams['train_freq'], hyperparams['batch_size'], hyperparams['buffer_size'])
+    # print(hyperparams['train_freq'], hyperparams['batch_size'], hyperparams['buffer_size'])
 
     algo_class = ALGOS[algo]
-    print(hyperparams)
+    # print(hyperparams)
     if args.trained_agent != "":
         assert args.trained_agent.endswith(".zip") and os.path.isfile(args.trained_agent), "The trained_agent must be a valid path to a .zip file"
         model = algo_class.load(args.trained_agent, env=env)
@@ -280,6 +280,9 @@ if __name__ == '__main__':
         yaml.dump(saved_hyperparams, f, sort_keys=True)
     with open(os.path.join(save_dir, "args.yml"), "w") as f:
         yaml.dump(args, f, sort_keys=True)
+
+    print(args)
+    print(saved_hyperparams)
 
     # Setting num threads to 1 makes things run faster on cpu
     torch.set_num_threads(1)
