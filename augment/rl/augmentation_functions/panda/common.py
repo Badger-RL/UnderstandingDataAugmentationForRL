@@ -32,7 +32,7 @@ class GoalAugmentationFunction(AugmentationFunction):
                  **kwargs,
                  ):
 
-        new_goal = self._sample_goals(next_obs, p)
+        new_goal = self._sample_goals(next_obs, p=p, **kwargs)
         obs[:, self.env.goal_idx] = new_goal
         next_obs[:, self.env.goal_idx] = new_goal
 
