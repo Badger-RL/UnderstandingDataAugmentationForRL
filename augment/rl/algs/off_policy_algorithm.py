@@ -206,7 +206,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             reward,
             done,
             info,
-            p=dist,
+            p=self.replay_buffer.get_reward_density(),
             replay_buffer=self.replay_buffer
             # p=self.replay_buffer.state_counts/self.replay_buffer.num_states
         )
@@ -395,6 +395,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
 
             # Store data in replay buffer (normalized action and unnormalized observation)
             self._store_transition(replay_buffer, buffer_actions, new_obs, rewards, dones, infos)
+            self.replay_buffer.update_success_queue(rewards)
 
             if self.use_coda:
                 self._coda()

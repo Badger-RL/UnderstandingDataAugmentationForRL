@@ -1,4 +1,5 @@
 import warnings
+from collections import deque
 from typing import Any, Dict, List, Optional, Union, Tuple
 
 import numpy as np
@@ -37,6 +38,15 @@ class ReplayBuffer(ReplayBuffer_original):
 
         super().__init__(buffer_size, observation_space, action_space, device, n_envs, optimize_memory_usage,
                          handle_timeout_termination)
+
+        self.success_queue = deque(maxlen=buffer_size)
+
+
+    def update_success_queue(self, reward):
+        self.success_queue.append(reward[0] == 0)
+
+    def get_reward_density(self):
+        return np.sum(self.success_queue)/self.size() # queue size = size of replay buffer
 
     def sample_array(self, batch_size: int, env: Optional[VecNormalize] = None) -> ReplayBufferSamples:
         """

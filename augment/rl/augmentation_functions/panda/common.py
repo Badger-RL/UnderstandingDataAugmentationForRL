@@ -2,8 +2,9 @@ from typing import Dict, List, Any
 import numpy as np
 
 from augment.rl.augmentation_functions.augmentation_function import AugmentationFunction
-# from augment.rl.augmentation_functions.coda import CoDAPanda
 
+#######################################################################################################################
+#######################################################################################################################
 
 class GoalAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
@@ -12,7 +13,7 @@ class GoalAugmentationFunction(AugmentationFunction):
 
         self.goal_length = self.env.goal_idx.shape[-1]
 
-    def _sample_goals(self, next_obs):
+    def _sample_goals(self, next_obs, **kwargs):
         raise NotImplementedError()
 
     def _set_done_and_info(self, done, infos, at_goal):
@@ -31,7 +32,7 @@ class GoalAugmentationFunction(AugmentationFunction):
                  **kwargs,
                  ):
 
-        new_goal = self._sample_goals(next_obs)
+        new_goal = self._sample_goals(next_obs, p)
         obs[:, self.env.goal_idx] = new_goal
         next_obs[:, self.env.goal_idx] = new_goal
 
@@ -47,7 +48,7 @@ class TranslateGoal(GoalAugmentationFunction):
     def __init__(self, env,  **kwargs):
         super().__init__(env=env, **kwargs)
 
-    def _sample_goals(self, next_obs):
+    def _sample_goals(self, next_obs, **kwargs):
         ep_length = next_obs.shape[0]
         return self.env.task._sample_n_goals(ep_length)
 
@@ -57,7 +58,7 @@ class TranslateGoalProximal(GoalAugmentationFunction):
         super().__init__(env=env, **kwargs)
         self.p = p
 
-    def _sample_goals(self, next_obs):
+    def _sample_goals(self, next_obs, **kwargs):
         ep_length = next_obs.shape[0]
         if np.random.random() < self.p:
             r = np.random.uniform(0, self.delta, size=ep_length)
@@ -85,6 +86,42 @@ class TranslateGoalProximal(GoalAugmentationFunction):
 class TranslateGoalProximal0(TranslateGoalProximal):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, p=0, **kwargs)
+
+
+class TranslateGoalDynamic(GoalAugmentationFunction):
+
+    def __init__(self, env,  **kwargs):
+        super().__init__(env=env, **kwargs)
+
+    def _sample_goals(self, next_obs, p=None, **kwargs):
+        ep_length = next_obs.shape[0]
+        print(p)
+        if np.random.random() < p:
+            r = np.random.uniform(0, self.delta, size=ep_length)
+            theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
+            phi = np.random.uniform(-np.pi/2, np.pi/2, size=ep_length)
+            dx = r*np.sin(phi)*np.cos(theta)
+            dy = r*np.sin(phi)*np.sin(theta)
+            dz = r*np.cos(phi)
+            if self.env.task.goal_range_high[-1] == 0:
+                dz[:] = 0
+            noise = np.array([dx, dy, dz]).T
+            new_goal = next_obs[:, self.env.goal_idx] + noise
+        else:
+            # new goal results in no reward signal
+            new_goal = self.env.task._sample_n_goals(ep_length)
+            achieved_goal = next_obs[:, self.env.achieved_idx]
+            at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
+
+            # resample if success (rejection sampling)
+            while np.any(at_goal):
+                new_goal[at_goal] = self.env.task._sample_n_goals(ep_length)[at_goal]
+                at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
+        return new_goal
+
+
+#######################################################################################################################
+#######################################################################################################################
 
 class HER(GoalAugmentationFunction):
     def __init__(self, env, strategy='future', **kwargs):
@@ -202,95 +239,8 @@ class HERTranslateGoalProximal09(GoalAugmentationFunction):
         else:
             return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
 
-class HERReflect(HERMixed):
-    def __init__(self, env, strategy='future', p=0.5, **kwargs):
-        super().__init__(env=env, aug_function=Reflect, strategy=strategy, p=p, **kwargs)
-
-class RobotAugmentationFunction(AugmentationFunction):
-    def __init__(self, env, **kwargs):
-        super().__init__(env=env, **kwargs)
-        self.delta = 0.05
-        self.goal_length = self.env.goal_idx.shape[-1]
-
-    def _sample_goals(self, next_obs, n):
-        raise NotImplementedError()
-
-    def _set_done_and_info(self, done, infos, at_goal):
-        done |= at_goal
-        infos[done & ~at_goal] = [{'TimeLimit.truncated': True}]
-        infos[done & at_goal] = [{'TimeLimit.truncated': False}]
-
-    def _augment(self,
-                 obs: np.ndarray,
-                 next_obs: np.ndarray,
-                 action: np.ndarray,
-                 reward: np.ndarray,
-                 done: np.ndarray,
-                 infos: List[Dict[str, Any]],
-                 p=None,
-                 ):
-
-        n = obs.shape[0]
-        new_goal = self._sample_goals(next_obs, n)
-        obs[:, self.env.goal_idx] = new_goal
-        next_obs[:, self.env.goal_idx] = new_goal
-
-        achieved_goal = next_obs[:, self.env.achieved_idx]
-        at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
-        reward = self.env.task.compute_reward(achieved_goal, new_goal, infos)
-        self._set_done_and_info(done, infos, at_goal)
-
-        return obs, next_obs, action, reward, done, infos
-
-class Reflect(RobotAugmentationFunction):
-
-    def __init__(self, env,  **kwargs):
-        super().__init__(env=env, **kwargs)
-        self.env = env
-        self.delta = 0.05
-
-    def _set_done_and_info(self, done, infos, at_goal):
-        done |= at_goal
-        infos[done & ~at_goal] = [{'TimeLimit.truncated': True}]
-        infos[done & at_goal] = [{'TimeLimit.truncated': False}]
-
-    def _reflect_robot_obs(self, obs):
-        # y reflection
-        obs[:, 1] *= -1
-        obs[:, 4] *= -1
-
-    def _reflect_object_obs(self, obs):
-        # y reflection
-        obs[:, 7] *= -1
-        obs[:, 9] *= -1
-        obs[:, 13] *= -1
-
-    def _reflect_goal_obs(self, obs):
-        # y reflection
-        obs[:, self.env.goal_idx[1]] *= -1
-
-    def _reflect_obs(self, obs):
-        self._reflect_robot_obs(obs)
-        self._reflect_object_obs(obs)
-        self._reflect_goal_obs(obs)
-
-    def _augment(self,
-                 obs: np.ndarray,
-                 next_obs: np.ndarray,
-                 action: np.ndarray,
-                 reward: np.ndarray,
-                 done: np.ndarray,
-                 infos: List[Dict[str, Any]],
-                 p=None,
-                 ):
-
-        self._reflect_obs(obs)
-        self._reflect_obs(next_obs)
-
-        action[:, 1] *= -1
-
-        return obs, next_obs, action, reward, done, infos
-
+#######################################################################################################################
+#######################################################################################################################
 
 class ObjectAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
@@ -491,6 +441,9 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
 
         return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
+#######################################################################################################################
+#######################################################################################################################
+
 class CoDAProximal0(ObjectAugmentationFunction):
 
     def __init__(self, env, **kwargs):
@@ -613,6 +566,7 @@ PANDA_AUG_FUNCTIONS = {
     'translate_goal': TranslateGoal,
     'translate_goal_proximal': TranslateGoalProximal,
     'translate_goal_proximal_0': TranslateGoalProximal0,
+    'translate_goal_dynamic': TranslateGoalDynamic,
     'coda': CoDA,
     'coda_proximal_0': CoDAProximal0,
     'translate_object': TranslateObject,
