@@ -95,7 +95,6 @@ class TranslateGoalDynamic(GoalAugmentationFunction):
 
     def _sample_goals(self, next_obs, p=None, **kwargs):
         ep_length = next_obs.shape[0]
-        print(p)
         if np.random.random() < p:
             r = np.random.uniform(0, self.delta, size=ep_length)
             theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
