@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
     parser.add_argument("--linear", type=bool, default=False)
     parser.add_argument("--linear-neural", type=bool, default=False)
-    parser.add_argument("--data-factor", type=int, default=1)
+    parser.add_argument("--data-factor", type=float, default=1)
     parser.add_argument("--layers", nargs='+', type=int, default=None)
     parser.add_argument("--n-critics", type=int, default=None)
 
@@ -248,8 +248,9 @@ if __name__ == '__main__':
     # NOTE: Data factor won't make sense if train_freq = [1, episode] since we can't guarantee we'll collect
     # e.g. twice as much data between updates.
     args.eval_freq = int(args.eval_freq * args.data_factor)
-    if isinstance(args.data_factor, float):
-        raise NotImplementedError("Float train_freq not supported")
+    if not np.isclose(int(args.data_factor), args.data_factor):
+        print("extra_collect_info", hyperparams['extra_collect_info'])
+        assert hyperparams['extra_collect_info'] != (0, 0)
     hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
     hyperparams['batch_size'] = int(hyperparams['batch_size'] * args.data_factor)
     hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * args.data_factor)
