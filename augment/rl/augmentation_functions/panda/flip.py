@@ -4,7 +4,7 @@ from typing import Any, List, Dict
 import numpy as np
 
 from augment.rl.augmentation_functions.panda.common import GoalAugmentationFunction, PANDA_AUG_FUNCTIONS, HER, HERMixed, \
-    ObjectAugmentationFunction
+    ObjectAugmentationFunction, TranslateObjectProximal0, TranslateObjectProximal
 
 
 class TranslateGoalProximal(GoalAugmentationFunction):
@@ -101,7 +101,7 @@ class HERTranslateGoalProximal09(GoalAugmentationFunction):
             return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
 
 
-class TranslateObject(ObjectAugmentationFunction):
+class TranslateObjectFlip(ObjectAugmentationFunction):
 
     def __init__(self, env,  **kwargs):
         super().__init__(env=env, **kwargs)
@@ -112,14 +112,56 @@ class TranslateObject(ObjectAugmentationFunction):
         self.obj_vel_mask = np.zeros_like(self.env.obj_idx, dtype=bool)
         self.obj_vel_mask[obj_pos_idx+3:-3] = True
 
-    def _sample_object(self, next_obs):
-        ep_length = next_obs.shape[0]
-        new_obj, new_rot = self.env.task._sample_n_objects(ep_length) # new_rot = np.zeros(3)
+    def _sample_object(self, n):
+        new_obj, new_rot = self.env.task._sample_n_objects(n) # new_rot = np.zeros(3)
         return new_obj
+
+class TranslateObjectProximal0Flip(TranslateObjectProximal):
+
+    def __init__(self, env, p=0.5, **kwargs):
+        super().__init__(env=env, **kwargs)
+        self.p = p
+        self.aug_threshold = np.array([0.03, 0.05, 0.05])  # largest distance from center to block edge = 0.02
+
+    def _sample_object(self, n):
+        new_obj, new_rot = self.env.task._sample_n_objects(n) # new_rot = np.zeros(3)
+        return new_obj
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs
+                 ):
+        ep_length = obs.shape[0]
+        assert ep_length == 1
+
+        if reward[0] == 0:
+            return None, None, None, None, None, None
+
+        mask = np.ones(ep_length, dtype=bool)
+        independent_obj = np.empty(shape=(ep_length, self.obj_size))
+        independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
+
+        sample_new_obj = True
+        while sample_new_obj:
+            new_obj, new_next_obj = self._sample_objects(obs, next_obs)
+            independent_obj[mask] = new_obj
+            independent_next_obj[mask] = new_next_obj
+
+            is_independent, next_is_independent = self._check_independence(obs, next_obs, new_obj, new_next_obj, mask)
+            mask[mask] = ~(is_independent & next_is_independent)
+            sample_new_obj = np.any(mask)
+
+        return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
 class HERTranslateObject(HERMixed):
     def __init__(self, env, strategy='future', q=0.5, **kwargs):
-        super().__init__(env=env, aug_function=TranslateObject, strategy=strategy, q=q, **kwargs)
+        super().__init__(env=env, aug_function=TranslateObjectFlip, strategy=strategy, q=q, **kwargs)
 
 PANDA_FLIP_AUG_FUNCTIONS = copy.deepcopy(PANDA_AUG_FUNCTIONS)
 PANDA_FLIP_AUG_FUNCTIONS.update(
@@ -127,6 +169,7 @@ PANDA_FLIP_AUG_FUNCTIONS.update(
         'translate_goal_proximal': TranslateGoalProximal,
         'translate_goal_proximal_0': TranslateGoalProximal0,
         'her_translate_goal_proximal_0': TranslateGoalProximal,
-        'translate_object': TranslateObject,
+        'translate_object': TranslateObjectFlip,
+        'translate_object_proximal_0': TranslateObjectProximal0Flip,
         'her_translate_object': HERTranslateObject,
     })
