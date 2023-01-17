@@ -4,7 +4,7 @@ import sys
 import time
 import warnings
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union, NamedTuple
 
 import gym
 import numpy as np
@@ -87,8 +87,8 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         batch_size: int = 256,
         tau: float = 0.005,
         gamma: float = 0.99,
-        train_freq: Union[int,
-        Tuple[int, str]] = (1, "step"),
+        train_freq: Union[int,Tuple[int, str]] = (1, "step"),
+        extra_collect_info: Tuple[int, int] = (0, 0),
         gradient_steps: int = 1,
         action_noise: Optional[ActionNoise] = None,
         replay_buffer_class: Optional[Type[ReplayBuffer]] = ReplayBuffer,
@@ -144,6 +144,8 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             use_sde_at_warmup,
             sde_support,
             supported_action_spaces)
+
+        self.num_extra_collects, self.extra_collect_freq = extra_collect_info
 
         self.aug_function = aug_function
         self.aug_ratio = aug_ratio
@@ -371,6 +373,11 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         continue_training = True
 
         while should_collect_more_steps(train_freq, num_collected_steps, num_collected_episodes):
+
+            if (self.extra_collect_freq > 0):
+                do_extra_collect = (self.num_timesteps % self.extra_collect_freq) <= (self.extra_collect_freq-self.num_extra_collects)
+                num_collected_steps -= do_extra_collect*self.num_extra_collects
+
             if self.use_sde and self.sde_sample_freq > 0 and num_collected_steps % self.sde_sample_freq == 0:
                 # Sample a new noise matrix
                 self.actor.reset_noise(env.num_envs)

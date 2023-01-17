@@ -86,6 +86,7 @@ class TD3(OffPolicyAlgorithmAugment):
         tau: float = 0.005,
         gamma: float = 0.99,
         train_freq: Union[int, Tuple[int, str]] = 1,
+        extra_collect_info:  Tuple[int, int] = (0, 0),
         gradient_steps: int = -1,
         action_noise: Optional[ActionNoise] = None,
         random_action_prob: Optional[float] = 0,
@@ -116,6 +117,7 @@ class TD3(OffPolicyAlgorithmAugment):
         separate_aug_critic: Optional[bool] = False,
         coda_function: Optional = None,
         coda_n: Optional = 1,
+        critic_clip: Optional = (-50, 0),
     ):
 
         super().__init__(
@@ -128,6 +130,7 @@ class TD3(OffPolicyAlgorithmAugment):
             tau,
             gamma,
             train_freq,
+            extra_collect_info,
             gradient_steps,
             action_noise=action_noise,
             replay_buffer_class=replay_buffer_class,
@@ -156,6 +159,7 @@ class TD3(OffPolicyAlgorithmAugment):
         self.policy_delay = policy_delay
         self.target_noise_clip = target_noise_clip
         self.target_policy_noise = target_policy_noise
+        self.critic_clip = critic_clip
 
         assert actor_data_source == 'obs' or actor_data_source == 'aug' or actor_data_source == 'both'
         assert critic_data_source == 'obs' or critic_data_source == 'aug' or critic_data_source == 'both'
@@ -224,6 +228,7 @@ class TD3(OffPolicyAlgorithmAugment):
             next_q_values = th.cat(self.critic_target(replay_data.next_observations, next_actions), dim=1)
             next_q_values, _ = th.min(next_q_values, dim=1, keepdim=True)
             target_q_values = replay_data.rewards + (1 - replay_data.dones) * self.gamma * next_q_values
+            # target_q_values.clamp(*self.critic_clip)
 
         # Get current Q-values estimates for each critic network
         current_q_values = self.critic(replay_data.observations, replay_data.actions)
