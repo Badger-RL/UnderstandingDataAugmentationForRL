@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict, help="Overwrite hyperparameter (e.g. learning_rate:0.01 train_freq:10)" )
     parser.add_argument("--linear", type=bool, default=False)
     parser.add_argument("--linear-neural", type=bool, default=False)
-    parser.add_argument("--data-factor", type=float, default=1)
+    parser.add_argument("--data-factor", type=int, default=1)
     parser.add_argument("--layers", nargs='+', type=int, default=None)
     parser.add_argument("--n-critics", type=int, default=None)
 
@@ -84,8 +84,6 @@ if __name__ == '__main__':
 
     env_id = args.env
     algo = args.algo
-    n_timesteps = args.n_timesteps
-
     ####################################################################################################################
     # Going through custom gym packages to let them register in the global registory
 
@@ -135,7 +133,7 @@ if __name__ == '__main__':
 
     # set n_timesteps
     if args.n_timesteps > 0:
-        print(f"Overwriting n_timesteps with n={n_timesteps}")
+        print(f"Overwriting n_timesteps with n={args.n_timesteps}")
         del hyperparams["n_timesteps"]
     else:
         n_timesteps = int(hyperparams.pop("n_timesteps"))
@@ -250,10 +248,12 @@ if __name__ == '__main__':
     # NOTE: Data factor won't make sense if train_freq = [1, episode] since we can't guarantee we'll collect
     # e.g. twice as much data between updates.
     args.eval_freq = int(args.eval_freq * args.data_factor)
-    # hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
+    if isinstance(args.data_factor, float):
+        raise NotImplementedError("Float train_freq not supported")
+    hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
     hyperparams['batch_size'] = int(hyperparams['batch_size'] * args.data_factor)
     hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * args.data_factor)
-    n_timesteps = int(args.n_timesteps * args.data_factor)
+    args.n_timesteps = int(args.n_timesteps * args.data_factor)
     # print(hyperparams['train_freq'], hyperparams['batch_size'], hyperparams['buffer_size'])
 
     algo_class = ALGOS[algo]
@@ -298,7 +298,7 @@ if __name__ == '__main__':
 
     if args.model_save_freq:
         model.save(f"{save_dir}/model_0")
-    model.learn(total_timesteps=int(n_timesteps), callback=callbacks)
+    model.learn(total_timesteps=int(args.n_timesteps), callback=callbacks)
 
     print(f"Saving to {save_dir}/{env_id}")
     model.save(f"{save_dir}/{env_id}")
