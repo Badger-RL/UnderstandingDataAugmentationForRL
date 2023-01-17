@@ -150,7 +150,7 @@ class HER(GoalAugmentationFunction):
         ep_length = next_obs.shape[0]
         return self.env.task._sample_n_goals(ep_length)
 
-    def _sample_goals(self, next_obs):
+    def _sample_goals(self, next_obs, **kwargs):
         return self.goal_sampler(next_obs)
 
 class HERMixed(GoalAugmentationFunction):
@@ -440,6 +440,70 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
 
         return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
+class TranslateObjectDynamic(ObjectAugmentationFunction):
+
+    def __init__(self, env, **kwargs):
+        super().__init__(env=env, **kwargs)
+        self.aug_threshold = np.array([0.03, 0.05, 0.05])  # largest distance from center to block edge = 0.02
+
+    def _sample_object(self, n):
+        new_obj = self.env.task._sample_n_objects(n)
+        return new_obj
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs
+                 ):
+        ep_length = obs.shape[0]
+        mask = np.ones(ep_length, dtype=bool)
+        independent_obj = np.empty(shape=(ep_length, self.obj_size))
+        independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
+
+        if np.random.random() < p:
+            desired_goal = next_obs[:, self.env.goal_idx]
+            ee_dist = (obs[:, :3] - desired_goal)
+            ee_next_dist = (next_obs[:, :3] - desired_goal)
+
+            # ee is too close to goal to generate reward signal
+            if np.all(ee_dist < self.aug_threshold) or np.all(ee_next_dist < self.aug_threshold):
+                return None, None, None, None, None, None
+
+            r = np.random.uniform(0, self.delta, size=ep_length)
+            theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
+            phi = np.random.uniform(-np.pi / 2, np.pi / 2, size=ep_length)
+            dx = r * np.sin(phi) * np.cos(theta)
+            dy = r * np.sin(phi) * np.sin(theta)
+            dz = r * np.cos(phi)
+            if self.env.task.goal_range_high[-1] == 0:
+                dz[:] = 0
+            noise = np.array([dx, dy, dz]).T
+            independent_obj = desired_goal + noise
+
+            obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
+            independent_next_obj = independent_obj + obj_pos_diff
+
+        else:
+            sample_new_obj = True
+            while sample_new_obj:
+                new_obj, new_next_obj = self._sample_objects(obs, next_obs)
+                independent_obj[mask] = new_obj
+                independent_next_obj[mask] = new_next_obj
+
+                is_independent, next_is_independent = self._check_independence(obs, next_obs, new_obj, new_next_obj, mask)
+
+                desired_goal = next_obs[:, self.env.goal_idx]
+                at_goal = self._check_at_goal(new_next_obj, desired_goal, mask)
+                mask[mask] = ~(is_independent & next_is_independent & ~at_goal)
+                sample_new_obj = np.any(mask)
+
+        return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
+
 #######################################################################################################################
 #######################################################################################################################
 
@@ -571,4 +635,6 @@ PANDA_AUG_FUNCTIONS = {
     'translate_object': TranslateObject,
     'translate_object_proximal': TranslateObjectProximal,
     'translate_object_proximal_0': TranslateObjectProximal0,
+    'translate_object_dynamic': TranslateObjectDynamic,
+
 }
