@@ -159,6 +159,120 @@ class TranslateObjectProximal0Flip(TranslateObjectProximal):
 
         return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
+class CoDAProximal0(ObjectAugmentationFunction):
+
+    def __init__(self, env, **kwargs):
+        super().__init__(env, **kwargs)
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 replay_buffer=None,
+                 **kwargs
+                 ):
+
+        if replay_buffer.size() < 1000:
+            return None, None, None, None, None, None,
+
+        if reward[0] == 0:
+            return None, None, None, None, None, None
+
+        ep_length = obs.shape[0]
+        mask = np.ones(ep_length, dtype=bool)
+        independent_obj = np.empty(shape=(ep_length, self.obj_size))
+        independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
+        desired_goal = next_obs[:, self.env.goal_idx]
+
+        sample_new_obj = True
+        while sample_new_obj:
+            new_obs, _, new_next_obs, _, _, _ = replay_buffer.sample_array(batch_size=ep_length)
+            new_obj = new_obs[:, self.obj_pos_mask]
+            new_next_obj = new_next_obs[:, self.obj_pos_mask]
+
+            independent_obj[mask] = new_obj[mask]
+            independent_next_obj[mask] = new_next_obj[mask]
+
+            diff = np.abs((obs[:, :self.obj_size] - new_obj)[mask])
+            next_diff = np.abs((next_obs[:, :self.obj_size] - new_next_obj)[mask])
+
+            is_independent = np.any(diff > self.aug_threshold, axis=-1)
+            next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+
+            mask[mask] = ~(is_independent & next_is_independent)
+            sample_new_obj = np.any(mask)
+
+        obs[:, self.obj_pos_mask] = independent_obj
+        next_obs[:, self.obj_pos_mask] = independent_next_obj
+
+        achieved_goal = next_obs[:, self.env.achieved_idx]
+        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
+        reward = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
+        self._set_done_and_info(done, infos, at_goal)
+
+        return obs, next_obs, action, reward, done, infos
+
+class CoDA(ObjectAugmentationFunction):
+
+    def __init__(self, env, **kwargs):
+        super().__init__(env, **kwargs)
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 replay_buffer=None,
+                 **kwargs
+                 ):
+
+        if replay_buffer.size() < 1000:
+            return None, None, None, None, None, None,
+
+        if reward[0] == 0:
+            return None, None, None, None, None, None
+
+        ep_length = obs.shape[0]
+        mask = np.ones(ep_length, dtype=bool)
+        independent_obj = np.empty(shape=(ep_length, self.obj_size))
+        independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
+
+        sample_new_obj = True
+        while sample_new_obj:
+            new_obs, _, new_next_obs, _, _, _ = replay_buffer.sample_array(batch_size=ep_length)
+            new_obj = new_obs[:, self.obj_pos_mask]
+            new_next_obj = new_next_obs[:, self.obj_pos_mask]
+
+            independent_obj[mask] = new_obj[mask]
+            independent_next_obj[mask] = new_next_obj[mask]
+
+            diff = np.abs((obs[:, :self.obj_size] - new_obj)[mask])
+            next_diff = np.abs((next_obs[:, :self.obj_size] - new_next_obj)[mask])
+
+            is_independent = np.any(diff > self.aug_threshold, axis=-1)
+            next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+
+            mask[mask] = ~(is_independent & next_is_independent)
+            sample_new_obj = np.any(mask)
+
+        obs[:, self.obj_pos_mask] = independent_obj
+        next_obs[:, self.obj_pos_mask] = independent_next_obj
+
+        achieved_goal = next_obs[:, self.env.achieved_idx]
+        desired_goal = next_obs[:, self.env.goal_idx]
+        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
+        reward = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
+        self._set_done_and_info(done, infos, at_goal)
+
+        return obs, next_obs, action, reward, done, infos
+
 class HERTranslateObject(HERMixed):
     def __init__(self, env, strategy='future', q=0.5, **kwargs):
         super().__init__(env=env, aug_function=TranslateObjectFlip, strategy=strategy, q=q, **kwargs)
@@ -172,4 +286,6 @@ PANDA_FLIP_AUG_FUNCTIONS.update(
         'translate_object': TranslateObjectFlip,
         'translate_object_proximal_0': TranslateObjectProximal0Flip,
         'her_translate_object': HERTranslateObject,
+        'coda': CoDA,
+        'coda_proximal_0': CoDAProximal0,
     })
