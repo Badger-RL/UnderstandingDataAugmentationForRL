@@ -148,9 +148,6 @@ class TranslateObjectFlip(ObjectAugmentationFunction):
         obj_pos_idx = np.argmax(self.env.obj_idx)
         self.obj_pos_mask[obj_pos_idx:obj_pos_idx+3] = True
 
-        self.obj_vel_mask = np.zeros_like(self.env.obj_idx, dtype=bool)
-        self.obj_vel_mask[obj_pos_idx+3:-3] = True
-
     def _sample_object(self, n):
         new_obj, new_rot = self.env.task._sample_n_objects(n) # new_rot = np.zeros(3)
         return new_obj
@@ -197,6 +194,30 @@ class TranslateObjectProximal0Flip(TranslateObjectProximal):
             sample_new_obj = np.any(mask)
 
         return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
+
+class TranslateObjectProximalFlip(TranslateObjectFlip):
+    def __init__(self, env, p=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.TranslateObjectProximal0 = TranslateObjectProximal0Flip(env, **kwargs)
+        self.TranslateGoalProximal1 = TranslateGoalProximal(env, p=1, **kwargs)
+        self.q = p
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs,
+                 ):
+
+        if np.random.random() < self.q:
+            return self.TranslateObjectProximal0._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
+        else:
+            return self.TranslateGoalProximal1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
+
 
 class CoDAProximal0(ObjectAugmentationFunction):
 
@@ -324,7 +345,7 @@ PANDA_FLIP_AUG_FUNCTIONS.update(
         'translate_goal_dynamic': TranslateGoalDynamic,
         'her_translate_goal_proximal_0': HERTranslateGoalProximal0,
         'translate_object': TranslateObjectFlip,
-        'translate_object_proximal': None, # not supported, can't generate additional reward signal by translation.
+        'translate_object_proximal': TranslateObjectProximalFlip, # not supported, can't generate additional reward signal by translation.
         'translate_object_proximal_0': TranslateObjectProximal0Flip,
         'her_translate_object': HERTranslateObject,
         'coda': CoDA,
