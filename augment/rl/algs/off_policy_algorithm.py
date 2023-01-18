@@ -375,7 +375,7 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         while should_collect_more_steps(train_freq, num_collected_steps, num_collected_episodes):
 
             if (self.extra_collect_freq > 0):
-                do_extra_collect = (self.num_timesteps % self.extra_collect_freq) <= (self.extra_collect_freq-self.num_extra_collects)
+                do_extra_collect = (self.num_timesteps % self.extra_collect_freq) < (self.extra_collect_freq-self.num_extra_collects)
                 num_collected_steps -= do_extra_collect*self.num_extra_collects
 
             if self.use_sde and self.sde_sample_freq > 0 and num_collected_steps % self.sde_sample_freq == 0:
