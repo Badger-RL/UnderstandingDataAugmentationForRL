@@ -282,8 +282,8 @@ class ObjectAugmentationFunction(AugmentationFunction):
 
     def _set_done_and_info(self, done, infos, at_goal):
         done |= at_goal
-        infos[done & ~at_goal] = [{'TimeLimit.truncated': True}]
-        infos[done & at_goal] = [{'TimeLimit.truncated': False}]
+        infos[done & ~at_goal] = [{'TimeLimit.truncated': True, 'is_success': False}]
+        infos[done & at_goal] = [{'TimeLimit.truncated': False, 'is_success': False}]
 
     def _make_transition(self, obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj):
         obs[:, self.obj_pos_mask] = independent_obj
@@ -307,7 +307,18 @@ class ObjectAugmentationFunction(AugmentationFunction):
                  p=None,
                  **kwargs
                  ):
+
         ep_length = obs.shape[0]
+        assert ep_length == 1
+
+        diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
+        next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
+        is_independent = np.any(diff > self.aug_threshold, axis=-1)
+        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+        if not np.any(is_independent & next_is_independent):
+            assert ep_length == 1  # REQUIRES LENGTH 1. POSSIBLE BUG IF YOU USE HER.
+            return None, None, None, None, None, None
+
         mask = np.ones(ep_length, dtype=bool)
         independent_obj = np.empty(shape=(ep_length, self.obj_size))
         independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
@@ -315,8 +326,8 @@ class ObjectAugmentationFunction(AugmentationFunction):
         sample_new_obj = True
         while sample_new_obj:
             new_obj, new_next_obj = self._sample_objects(obs, next_obs)
-            independent_obj[mask] = new_obj
-            independent_next_obj[mask] = new_next_obj
+            independent_obj[mask] = new_obj[mask]
+            independent_next_obj[mask] = new_next_obj[mask]
 
             is_independent, next_is_independent = self._check_independence(obs, next_obs, new_obj, new_next_obj, mask)
             mask[mask] = ~(is_independent & next_is_independent)
@@ -568,6 +579,11 @@ class CoDA(ObjectAugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env, **kwargs)
 
+    def _sample_goals(self, next_obs, **kwargs):
+        ep_length = next_obs.shape[0]
+        return self.env.task._sample_n_goals(ep_length)
+
+
     def _augment(self,
                  obs: np.ndarray,
                  next_obs: np.ndarray,
@@ -587,6 +603,7 @@ class CoDA(ObjectAugmentationFunction):
         mask = np.ones(ep_length, dtype=bool)
         independent_obj = np.empty(shape=(ep_length, self.obj_size))
         independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
+        new_goal = np.empty(shape=(ep_length, self.obj_size))
 
         sample_new_obj = True
         while sample_new_obj:
@@ -609,13 +626,108 @@ class CoDA(ObjectAugmentationFunction):
         obs[:, self.obj_pos_mask] = independent_obj
         next_obs[:, self.obj_pos_mask] = independent_next_obj
 
+        new_goal = self._sample_goals(next_obs)
+        obs[:, self.env.goal_idx] = new_goal
+        next_obs[:, self.env.goal_idx] = new_goal
+
         achieved_goal = next_obs[:, self.env.achieved_idx]
-        desired_goal = next_obs[:, self.env.goal_idx]
-        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
-        reward = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
+        at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
+        reward = self.env.task.compute_reward(achieved_goal, new_goal, infos)
         self._set_done_and_info(done, infos, at_goal)
 
         return obs, next_obs, action, reward, done, infos
+
+class TranslateObjectAndGoal(AugmentationFunction):
+    def __init__(self, env, **kwargs):
+        super().__init__(env=env, **kwargs)
+        self.delta = 0.05
+        self.aug_threshold = np.array([0.03, 0.05, 0.05])  # largest distance from center to block edge = 0.02
+
+        self.obj_pos_mask = np.zeros_like(self.env.obj_idx, dtype=bool)
+        obj_pos_idx = np.argmax(self.env.obj_idx)
+        self.obj_pos_mask[obj_pos_idx:obj_pos_idx + 3] = True
+
+        self.obj_size = 3
+
+    def _sample_goals(self, next_obs, **kwargs):
+        ep_length = next_obs.shape[0]
+        return self.env.task._sample_n_goals(ep_length)
+
+    def _sample_object(self, n):
+        new_obj = self.env.task._sample_n_objects(n)
+        return new_obj
+
+    def _sample_objects(self, obs, next_obs):
+        n = obs.shape[0]
+        new_obj = self._sample_object(n)
+        obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
+        new_next_obj = new_obj + obj_pos_diff
+        return new_obj, new_next_obj
+
+    def _check_independence(self, obs, next_obs, new_obj, new_next_obj, mask):
+        new_obj = new_obj[mask]
+        new_next_obj = new_next_obj[mask]
+
+        diff = np.abs((obs[mask, :3] - new_obj))
+        next_diff = np.abs((next_obs[mask, :3] - new_next_obj))
+
+        is_independent = np.any(diff > self.aug_threshold, axis=-1)
+        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+
+        # Stop sampling when new_obj is independent.
+        return is_independent, next_is_independent
+
+    def _check_at_goal(self, new_next_obj, desired_goal, mask):
+        at_goal = self.env.task.is_success(new_next_obj[mask], desired_goal[mask]).astype(bool)
+        return at_goal
+
+    def _set_done_and_info(self, done, infos, at_goal):
+        done |= at_goal
+        infos[done & ~at_goal] = [{'TimeLimit.truncated': True, 'is_success': False}]
+        infos[done & at_goal] = [{'TimeLimit.truncated': False, 'is_success': False}]
+
+    def _make_transition(self, obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj):
+        obs[:, self.obj_pos_mask] = independent_obj
+        next_obs[:, self.obj_pos_mask] = independent_next_obj
+
+        new_goal = self._sample_goals(next_obs)
+        obs[:, self.env.goal_idx] = new_goal
+        next_obs[:, self.env.goal_idx] = new_goal
+
+        achieved_goal = next_obs[:, self.env.achieved_idx]
+        at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
+        reward = self.env.task.compute_reward(achieved_goal, new_goal, infos)
+        self._set_done_and_info(done, infos, at_goal)
+
+        return obs, next_obs, action, reward, done, infos
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs
+                 ):
+        ep_length = obs.shape[0]
+        mask = np.ones(ep_length, dtype=bool)
+        independent_obj = np.empty(shape=(ep_length, self.obj_size))
+        independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
+
+        sample_new_obj = True
+        while sample_new_obj:
+            new_obj, new_next_obj = self._sample_objects(obs, next_obs)
+            independent_obj[mask] = new_obj[mask]
+            independent_next_obj[mask] = new_next_obj[mask]
+
+            is_independent, next_is_independent = self._check_independence(obs, next_obs, new_obj, new_next_obj, mask)
+            mask[mask] = ~(is_independent & next_is_independent)
+            sample_new_obj = np.any(mask)
+
+        return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
+
 
 # Reach, Push, Slide, PickAndPlace only
 PANDA_AUG_FUNCTIONS = {
@@ -636,5 +748,5 @@ PANDA_AUG_FUNCTIONS = {
     'translate_object_proximal': TranslateObjectProximal,
     'translate_object_proximal_0': TranslateObjectProximal0,
     'translate_object_dynamic': TranslateObjectDynamic,
-
+    'translate_object_and_goal': TranslateObjectAndGoal,
 }
