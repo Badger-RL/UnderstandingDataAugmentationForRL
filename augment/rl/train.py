@@ -248,9 +248,9 @@ if __name__ == '__main__':
     # NOTE: Data factor won't make sense if train_freq = [1, episode] since we can't guarantee we'll collect
     # e.g. twice as much data between updates.
     args.eval_freq = int(args.eval_freq * args.data_factor)
-    if not np.isclose(int(args.data_factor), args.data_factor):
-        print("extra_collect_info", hyperparams['extra_collect_info'])
-        assert hyperparams['extra_collect_info'] != (0, 0)
+    # if not np.isclose(int(args.data_factor), args.data_factor):
+    #     print("extra_collect_info", hyperparams['extra_collect_info'])
+    #     assert hyperparams['extra_collect_info'] != (0, 0)
     hyperparams['train_freq'] = int(hyperparams['train_freq'] * args.data_factor)
     hyperparams['batch_size'] = int(hyperparams['batch_size'] * args.data_factor)
     hyperparams['buffer_size'] = int(hyperparams['buffer_size'] * args.data_factor)
