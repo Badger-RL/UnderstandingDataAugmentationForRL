@@ -173,8 +173,20 @@ class TranslateObjectProximal0Flip(TranslateObjectProximal):
                  p=None,
                  **kwargs
                  ):
+        diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
+        next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
+        is_independent = np.any(diff > self.aug_threshold, axis=-1)
+        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+        observed_is_independent = is_independent & next_is_independent
+
+        obs = obs[observed_is_independent]
+        next_obs = next_obs[observed_is_independent]
+        action = action[observed_is_independent]
+        reward = reward[observed_is_independent]
+        done = done[observed_is_independent]
+        infos = infos[observed_is_independent]
+
         ep_length = obs.shape[0]
-        assert ep_length == 1
 
         if reward[0] == 0:
             return None, None, None, None, None, None
@@ -186,8 +198,8 @@ class TranslateObjectProximal0Flip(TranslateObjectProximal):
         sample_new_obj = True
         while sample_new_obj:
             new_obj, new_next_obj = self._sample_objects(obs, next_obs)
-            independent_obj[mask] = new_obj
-            independent_next_obj[mask] = new_next_obj
+            independent_obj[mask] = new_obj[mask]
+            independent_next_obj[mask] = new_next_obj[mask]
 
             is_independent, next_is_independent = self._check_independence(obs, next_obs, new_obj, new_next_obj, mask)
             mask[mask] = ~(is_independent & next_is_independent)
