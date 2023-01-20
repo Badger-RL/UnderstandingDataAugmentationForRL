@@ -308,16 +308,25 @@ class ObjectAugmentationFunction(AugmentationFunction):
                  **kwargs
                  ):
 
-        ep_length = obs.shape[0]
-        assert ep_length == 1
+        # assert ep_length == 1
 
         diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
         next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
         is_independent = np.any(diff > self.aug_threshold, axis=-1)
         next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
-        if not np.any(is_independent & next_is_independent):
-            assert ep_length == 1  # REQUIRES LENGTH 1. POSSIBLE BUG IF YOU USE HER.
-            return None, None, None, None, None, None
+        observed_is_independent = is_independent & next_is_independent
+
+        obs = obs[observed_is_independent]
+        next_obs = next_obs[observed_is_independent]
+        action = action[observed_is_independent]
+        reward = reward[observed_is_independent]
+        done = done[observed_is_independent]
+        infos = infos[observed_is_independent]
+
+        # if not np.any(is_independent & next_is_independent):
+        #     assert ep_length == 1  # REQUIRES LENGTH 1. POSSIBLE BUG IF YOU USE HER.
+        #     return None, None, None, None, None, None
+        ep_length = obs.shape[0]
 
         mask = np.ones(ep_length, dtype=bool)
         independent_obj = np.empty(shape=(ep_length, self.obj_size))
