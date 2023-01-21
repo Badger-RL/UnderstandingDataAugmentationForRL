@@ -303,8 +303,8 @@ if __name__ == '__main__':
         model.save(f"{save_dir}/model_0")
     model.learn(total_timesteps=int(args.n_timesteps), callback=callbacks)
 
-    print(f"Saving to {save_dir}/{env_id}")
-    model.save(f"{save_dir}/{env_id}")
+    # print(f"Saving to {save_dir}/{env_id}")
+    # model.save(f"{save_dir}/{env_id}")
     
     if args.save_replay_buffer:
         model.save_replay_buffer(f"{save_dir}/replay_buffer")
