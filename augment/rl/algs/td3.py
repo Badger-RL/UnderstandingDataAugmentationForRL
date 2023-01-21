@@ -406,8 +406,8 @@ class TD3(OffPolicyAlgorithmAugment):
                         opmse_aug = ((pi_aug-a_aug)**2).mean()
                         # self.logger.record("train/opmse_obs", opmse_obs)
                         # self.logger.record("train/opmse_aug", opmse_aug)
-                        self.opmse_obs.append(opmse_obs)
-                        self.opmse_aug.append(opmse_aug)
+                        self.opmse_obs.append(opmse_obs.cpu())
+                        self.opmse_aug.append(opmse_aug.cpu())
 
                     # print(opmse_obs, opmse_aug)
 
