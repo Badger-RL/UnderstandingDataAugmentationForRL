@@ -160,6 +160,8 @@ class TD3(OffPolicyAlgorithmAugment):
         self.target_noise_clip = target_noise_clip
         self.target_policy_noise = target_policy_noise
         self.critic_clip = critic_clip
+        self.opmse_obs = []
+        self.opmse_aug = []
 
         assert actor_data_source == 'obs' or actor_data_source == 'aug' or actor_data_source == 'both'
         assert critic_data_source == 'obs' or critic_data_source == 'aug' or critic_data_source == 'both'
@@ -330,7 +332,8 @@ class TD3(OffPolicyAlgorithmAugment):
 
         # Delayed policy updates
         if self._n_updates % self.policy_delay == 0:
-            actor_loss = -self.critic.q1_forward(actor_replay_data.observations, self.actor(actor_replay_data.observations)).mean()
+            pi = self.actor(actor_replay_data.observations)
+            actor_loss = -self.critic.q1_forward(actor_replay_data.observations, pi).mean()
             actor_losses.append(actor_loss.item())
             actor_loss.backward()
             self.actor.optimizer.step()
@@ -341,6 +344,8 @@ class TD3(OffPolicyAlgorithmAugment):
             # Copy running stats, see GH issue #996
             polyak_update(self.critic_batch_norm_stats, self.critic_batch_norm_stats_target, 1.0)
             polyak_update(self.actor_batch_norm_stats, self.actor_batch_norm_stats_target, 1.0)
+
+        return pi
 
     def _update_aug_critic(self, critic_replay_data):
         self.aug_critic.optimizer.zero_grad()
@@ -388,8 +393,23 @@ class TD3(OffPolicyAlgorithmAugment):
             if self.freeze_layers and aug_replay_data is not None:
                 self._update_freeze(observed_replay_data, aug_replay_data, actor_losses, critic_losses)
             else:
-                self._update(actor_replay_data=actor_data, critic_replay_data=critic_data,
+                pi = self._update(actor_replay_data=actor_data, critic_replay_data=critic_data,
                              actor_losses=actor_losses, critic_losses=critic_losses)
+
+                if self.use_aug:
+                    with th.no_grad():
+                        pi_obs = pi[:self.batch_size]
+                        pi_aug = pi[self.batch_size:]
+                        a_obs = observed_replay_data.actions
+                        a_aug = aug_replay_data.actions
+                        opmse_obs = ((pi_obs-a_obs)**2).mean()
+                        opmse_aug = ((pi_aug-a_aug)**2).mean()
+                        # self.logger.record("train/opmse_obs", opmse_obs)
+                        # self.logger.record("train/opmse_aug", opmse_aug)
+                        self.opmse_obs.append(opmse_obs)
+                        self.opmse_aug.append(opmse_aug)
+
+                    # print(opmse_obs, opmse_aug)
 
             if self.separate_aug_critic:
                 self._update_aug_critic(both_replay_data)

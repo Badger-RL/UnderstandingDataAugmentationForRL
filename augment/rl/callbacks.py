@@ -188,6 +188,49 @@ class SaveReplayDistribution(BaseCallback):
         continue_training = True
         return continue_training
 
+
+class SaveOPMSECallback(BaseCallback):
+    """
+    Stop the training once a threshold in episodic reward
+    has been reached (i.e. when the model is good enough).
+
+    It must be used with the ``EvalCallback``.
+
+    :param reward_threshold:  Minimum expected reward per episode
+        to stop training.
+    :param verbose:
+    """
+
+    def __init__(self, log_path: Optional[str] = None, save_freq = 10000, verbose: int = 0):
+        super().__init__(verbose=verbose)
+        if log_path is not None:
+            log_path = os.path.join(log_path, "opmse")
+
+        self.log_path = log_path
+        self.save_freq = save_freq
+
+        self.opmse_obs = []
+        self.opmse_aug = []
+
+    def _on_step(self) -> bool:
+
+        if self.save_freq > 0 and self.n_calls % self.save_freq == 0:
+
+            self.opmse_obs.append(np.average(self.model.opmse_obs))
+            self.opmse_aug.append(np.average(self.model.opmse_aug))
+
+            np.savez(
+                self.log_path,
+                opmse_obs=self.opmse_obs,
+                opmse_aug=self.opmse_aug,
+            )
+
+            self.model.opmse_obs.clear()
+            self.model.opmse_aug.clear()
+
+        continue_training = True
+        return continue_training
+
 class EvalCallback(EvalCallback_OG):
     def __init__(self, eval_env: Union[gym.Env, VecEnv], callback_on_new_best: Optional[BaseCallback] = None,
                  callback_after_eval: Optional[BaseCallback] = None, n_eval_episodes: int = 5, eval_freq: int = 10000,
@@ -251,6 +294,11 @@ class EvalCallback(EvalCallback_OG):
                     results=self.evaluations_results,
                     ep_lengths=self.evaluations_length,
                     **kwargs,
+                )
+
+                np.savez(
+                    self.log_path,
+
                 )
 
             mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
