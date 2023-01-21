@@ -173,19 +173,6 @@ class TranslateObjectProximal0Flip(TranslateObjectProximal):
                  p=None,
                  **kwargs
                  ):
-        diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
-        next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
-        is_independent = np.any(diff > self.aug_threshold, axis=-1)
-        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
-        observed_is_independent = is_independent & next_is_independent
-
-        obs = obs[observed_is_independent]
-        next_obs = next_obs[observed_is_independent]
-        action = action[observed_is_independent]
-        reward = reward[observed_is_independent]
-        done = done[observed_is_independent]
-        infos = infos[observed_is_independent]
-
         ep_length = obs.shape[0]
 
         if reward[0] == 0:
