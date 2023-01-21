@@ -157,7 +157,7 @@ class TranslateObjectProximal0Flip(TranslateObjectProximal):
     def __init__(self, env, p=0.5, **kwargs):
         super().__init__(env=env, **kwargs)
         self.p = p
-        self.aug_threshold = np.array([0.03, 0.05, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.05, 0.05, 0.05])  # largest distance from center to block edge = 0.02
 
     def _sample_object(self, n):
         new_obj, new_rot = self.env.task._sample_n_objects(n) # new_rot = np.zeros(3)

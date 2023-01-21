@@ -245,7 +245,7 @@ class ObjectAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
         self.delta = 0.05
-        self.aug_threshold = np.array([0.08, 0.08, 0.08])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.05, 0.05, 0.05])  # largest distance from center to block edge = 0.02
 
         self.obj_pos_mask = np.zeros_like(self.env.obj_idx, dtype=bool)
         obj_pos_idx = np.argmax(self.env.obj_idx)
@@ -443,7 +443,7 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
     def __init__(self, env, p=0.5, **kwargs):
         super().__init__(env=env, **kwargs)
         self.p = p
-        self.aug_threshold = np.array([0.03, 0.05, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.05, 0.05, 0.05])  # largest distance from center to block edge = 0.02
 
     def _sample_object(self, n):
         new_obj = self.env.task._sample_n_objects(n)
@@ -508,7 +508,7 @@ class TranslateObjectDynamic(ObjectAugmentationFunction):
 
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
-        self.aug_threshold = np.array([0.03, 0.05, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.05, 0.05, 0.05])  # largest distance from center to block edge = 0.02
 
     def _sample_object(self, n):
         new_obj = self.env.task._sample_n_objects(n)
@@ -695,7 +695,7 @@ class TranslateObjectAndGoal(AugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
         self.delta = 0.05
-        self.aug_threshold = np.array([0.03, 0.05, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.05, 0.05, 0.05])  # largest distance from center to block edge = 0.02
 
         self.obj_pos_mask = np.zeros_like(self.env.obj_idx, dtype=bool)
         obj_pos_idx = np.argmax(self.env.obj_idx)

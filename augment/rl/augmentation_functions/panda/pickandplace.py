@@ -11,13 +11,13 @@ class TranslateObjectPick(TranslateObject):
 
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
-        self.aug_threshold = np.array([0.03, 0.10, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.05, 0.10, 0.05])  # largest distance from center to block edge = 0.02
 
 class TranslateObjectProximal0Pick(TranslateObjectProximal0):
 
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
-        self.aug_threshold = np.array([0.03, 0.1, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.05, 0.1, 0.05])  # largest distance from center to block edge = 0.02
 
 #
 # class TranslateObjectProximalPick(TranslateObjectProximal):
@@ -57,7 +57,7 @@ class CoDAPick(CoDA):
 
     def __init__(self, env, **kwargs):
         super().__init__(env, **kwargs)
-        self.aug_threshold = np.array([0.03, 0.10, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.05, 0.10, 0.05])  # largest distance from center to block edge = 0.02
 
 PANDA_PICKANDPLACE_AUG_FUNCTIONS = copy.deepcopy(PANDA_AUG_FUNCTIONS)
 PANDA_PICKANDPLACE_AUG_FUNCTIONS.update(
