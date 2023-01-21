@@ -9,9 +9,10 @@ import numpy as np
 import torch
 import yaml
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
 from augment.rl.augmentation_functions import AUGMENTATION_FUNCTIONS
-from augment.rl.callbacks import EvalCallback
+from augment.rl.callbacks import EvalCallback, SaveOPMSECallback
 from augment.rl.utils import ALGOS, StoreDict, get_save_dir, preprocess_action_noise, read_hyperparameters, SCHEDULES
 from stable_baselines3.common.utils import set_random_seed
 
@@ -44,9 +45,9 @@ if __name__ == '__main__':
     parser.add_argument("--use-coda", type=str, default=False)
     parser.add_argument("--coda-n", type=float, default=1)
 
-    parser.add_argument("--aug-function", type=str, default=None)
+    parser.add_argument("--aug-function", type=str, default='translate_object_proximal_0')
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
-    parser.add_argument("--aug-n", type=float, default=1)
+    parser.add_argument("--aug-n", type=float, default=4)
     parser.add_argument("--aug-ratio", type=float, default=1)
     parser.add_argument("--aug-freq", type=str, default=1)
     parser.add_argument("--aug-schedule", type=str, default="constant")
@@ -292,7 +293,8 @@ if __name__ == '__main__':
     eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq,
                                  model_save_freq=args.model_save_freq,
                                  log_path=save_dir, best_model_save_path=best_model_save_dir)
-    callbacks = [eval_callback]
+    opmse_callback = SaveOPMSECallback(log_path=save_dir,)
+    callbacks = [eval_callback, opmse_callback]
     # if args.save_replay_buffer:
     #     hist_callback = SaveReplayDistribution(log_path=save_dir, save_freq=args.eval_freq)
     #     callbacks.append(hist_callback)
