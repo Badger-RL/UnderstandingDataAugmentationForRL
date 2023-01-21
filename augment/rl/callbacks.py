@@ -296,11 +296,6 @@ class EvalCallback(EvalCallback_OG):
                     **kwargs,
                 )
 
-                np.savez(
-                    self.log_path,
-
-                )
-
             mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
             mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)
             self.last_mean_reward = mean_reward
