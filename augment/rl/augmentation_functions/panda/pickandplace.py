@@ -12,13 +12,13 @@ class TranslateObjectPick(TranslateObject):
 
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
-        self.aug_threshold = np.array([0.05, 0.10, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.06, 0.1, 0.06])  # largest distance from center to block edge = 0.02
 
 class TranslateObjectProximal0Pick(TranslateObjectProximal0):
 
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
-        self.aug_threshold = np.array([0.05, 0.1, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.06, 0.1, 0.06])  # largest distance from center to block edge = 0.02
 
 #
 # class TranslateObjectProximalPick(TranslateObjectProximal):
@@ -32,7 +32,7 @@ class TranslateObjectProximal0Pick(TranslateObjectProximal0):
 class TranslateObjectProximalPick(TranslateObjectPick):
     def __init__(self, env, p=0.5, **kwargs):
         super().__init__(env, **kwargs)
-        self.aug_threshold = np.array([0.03, 0.10, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.06, 0.1, 0.06])  # largest distance from center to block edge = 0.02
         self.TranslateObjectProximal0 = TranslateObjectProximal0Pick(env, **kwargs)
         self.TranslateGoalProximal1 = TranslateGoalProximal(env, p=1, **kwargs)
         self.q = p
@@ -58,18 +58,18 @@ class CoDAPick(CoDA):
 
     def __init__(self, env, **kwargs):
         super().__init__(env, **kwargs)
-        self.aug_threshold = np.array([0.05, 0.10, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.06, 0.1, 0.06])  # largest distance from center to block edge = 0.02
 
 class CoDAProximal0Pick(CoDAProximal0):
 
     def __init__(self, env, **kwargs):
         super().__init__(env, **kwargs)
-        self.aug_threshold = np.array([0.05, 0.10, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.06, 0.1, 0.06])  # largest distance from center to block edge = 0.02
 
 class CoDAProximalPick(ObjectAugmentationFunction):
     def __init__(self, env, p=0.5, **kwargs):
         super().__init__(env, **kwargs)
-        self.aug_threshold = np.array([0.03, 0.10, 0.05])  # largest distance from center to block edge = 0.02
+        self.aug_threshold = np.array([0.06, 0.1, 0.06])  # largest distance from center to block edge = 0.02
         self.CoDA = CoDAPick(env, **kwargs)
         self.TranslateObjectProximalPick1 = TranslateObjectProximalPick(env, p=1, **kwargs)
         self.q = p
