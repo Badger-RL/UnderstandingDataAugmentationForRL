@@ -23,27 +23,10 @@ class TranslateGoalProximal(GoalAugmentationFunction):
 
     def _sample_goals(self, next_obs, **kwargs):
         n = next_obs.shape[0]
-        achieved_goal = next_obs[:, self.env.achieved_idx]
-
         if np.random.random() < self.p:
-            a = np.arccos(achieved_goal[:, 0])
-            theta = np.random.uniform(-0.927, +0.927, size=(n,)) # arccos(0.6) ~= +/-0.927
-            q_rotation = np.array([
-                np.cos(theta / 2),
-                a * np.sin(theta / 2),
-                a * np.sin(theta / 2),
-                a * np.sin(theta / 2),
-            ]).T
-            new_goal = self.quaternion_multiply(achieved_goal.T, q_rotation.T).T
+            new_goal = next_obs[:, self.env.achieved_idx]
         else:
-            # new goal results in no reward signal
             new_goal = self.env.task._sample_n_goals(n)
-            at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
-
-            # resample if success (rejection sampling)
-            while np.any(at_goal):
-                new_goal[at_goal] = self.env.task._sample_n_goals(n)[at_goal]
-                at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         return new_goal
 
 
@@ -67,26 +50,11 @@ class TranslateGoalDynamic(GoalAugmentationFunction):
 
     def _sample_goals(self, next_obs, p=None, **kwargs):
         n = next_obs.shape[0]
-        achieved_goal = next_obs[:, self.env.achieved_idx]
-        if np.random.random() < p:
-            a = np.arccos(achieved_goal[:, 0])
-            theta = np.random.uniform(-0.927, +0.927, size=(n,)) # arccos(0.6) ~= +/-0.927
-            q_rotation = np.array([
-                np.cos(theta / 2),
-                a * np.sin(theta / 2),
-                a * np.sin(theta / 2),
-                a * np.sin(theta / 2),
-            ]).T
-            new_goal = self.quaternion_multiply(achieved_goal.T, q_rotation.T).T
-        else:
-            # new goal results in no reward signal
-            new_goal = self.env.task._sample_n_goals(n)
-            at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
 
-            # resample if success (rejection sampling)
-            while np.any(at_goal):
-                new_goal[at_goal] = self.env.task._sample_n_goals(n)[at_goal]
-                at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
+        if np.random.random() < p:
+            new_goal = next_obs[:, self.env.achieved_idx]
+        else:
+            new_goal = self.env.task._sample_n_goals(n)
         return new_goal
 
 class HERTranslateGoalProximal(HERMixed):

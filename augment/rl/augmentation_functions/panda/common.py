@@ -61,26 +61,9 @@ class TranslateGoalProximal(GoalAugmentationFunction):
     def _sample_goals(self, next_obs, **kwargs):
         ep_length = next_obs.shape[0]
         if np.random.random() < self.p:
-            r = np.random.uniform(0, self.delta, size=ep_length)
-            theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
-            phi = np.random.uniform(-np.pi/2, np.pi/2, size=ep_length)
-            dx = r*np.sin(phi)*np.cos(theta)
-            dy = r*np.sin(phi)*np.sin(theta)
-            dz = r*np.cos(phi)
-            if self.env.task.goal_range_high[-1] == 0:
-                dz[:] = 0
-            noise = np.array([dx, dy, dz]).T
-            new_goal = next_obs[:, self.env.goal_idx] + noise
+            new_goal = next_obs[:, self.env.goal_idx]
         else:
-            # new goal results in no reward signal
             new_goal = self.env.task._sample_n_goals(ep_length)
-            achieved_goal = next_obs[:, self.env.achieved_idx]
-            at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
-
-            # resample if success (rejection sampling)
-            while np.any(at_goal):
-                new_goal[at_goal] = self.env.task._sample_n_goals(ep_length)[at_goal]
-                at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         return new_goal
 
 class TranslateGoalProximal0(TranslateGoalProximal):
@@ -96,26 +79,9 @@ class TranslateGoalDynamic(GoalAugmentationFunction):
     def _sample_goals(self, next_obs, p=None, **kwargs):
         ep_length = next_obs.shape[0]
         if np.random.random() < p:
-            r = np.random.uniform(0, self.delta, size=ep_length)
-            theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
-            phi = np.random.uniform(-np.pi/2, np.pi/2, size=ep_length)
-            dx = r*np.sin(phi)*np.cos(theta)
-            dy = r*np.sin(phi)*np.sin(theta)
-            dz = r*np.cos(phi)
-            if self.env.task.goal_range_high[-1] == 0:
-                dz[:] = 0
-            noise = np.array([dx, dy, dz]).T
-            new_goal = next_obs[:, self.env.goal_idx] + noise
+            new_goal = next_obs[:, self.env.goal_idx]
         else:
-            # new goal results in no reward signal
             new_goal = self.env.task._sample_n_goals(ep_length)
-            achieved_goal = next_obs[:, self.env.achieved_idx]
-            at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
-
-            # resample if success (rejection sampling)
-            while np.any(at_goal):
-                new_goal[at_goal] = self.env.task._sample_n_goals(ep_length)[at_goal]
-                at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         return new_goal
 
 
@@ -637,6 +603,54 @@ class CoDA(ObjectAugmentationFunction):
         ep_length = next_obs.shape[0]
         return self.env.task._sample_n_goals(ep_length)
 
+
+    def _deepcopy_transition(
+            self,
+            augmentation_n: int,
+            obs: np.ndarray,
+            next_obs: np.ndarray,
+            action: np.ndarray,
+            reward: np.ndarray,
+            done: np.ndarray,
+            infos: List[Dict[str, Any]],
+    ):
+        aug_obs = np.tile(obs, (augmentation_n,1))
+        aug_next_obs = np.tile(next_obs, (augmentation_n,1))
+        aug_action = np.tile(action, (augmentation_n,1))
+        aug_reward = np.tile(reward, (augmentation_n,))
+        aug_done = np.tile(done, (augmentation_n,)).astype(np.bool)
+        aug_infos = np.array(infos *augmentation_n)
+
+        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+
+
+
+    def augment(self,
+                 aug_n: int,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 **kwargs,):
+
+        assert obs.shape[0] == 1
+        diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
+        next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
+        is_independent = np.any(diff > self.aug_threshold, axis=-1)
+        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+        observed_is_independent = is_independent & next_is_independent
+
+        if not np.all(observed_is_independent):
+            return None, None, None, None, None, None
+
+        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = \
+            self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos)
+
+        self._augment(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos, **kwargs)
+
+        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
     def _augment(self,
                  obs: np.ndarray,
