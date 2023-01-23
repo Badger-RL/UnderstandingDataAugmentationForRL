@@ -439,18 +439,7 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
             # ee is too close to goal to generate reward signal
             if np.all(ee_dist < self.aug_threshold) or np.all(ee_next_dist < self.aug_threshold):
                 return None, None, None, None, None, None
-
-            r = np.random.uniform(0, self.delta, size=ep_length)
-            theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
-            phi = np.random.uniform(-np.pi / 2, np.pi / 2, size=ep_length)
-            dx = r * np.sin(phi) * np.cos(theta)
-            dy = r * np.sin(phi) * np.sin(theta)
-            dz = r * np.cos(phi)
-            if self.env.task.goal_range_high[-1] == 0:
-                dz[:] = 0
-            noise = np.array([dx, dy, dz]).T
-            independent_obj = desired_goal + noise
-
+            independent_obj = desired_goal
             obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
             independent_next_obj = independent_obj + obj_pos_diff
 
@@ -462,10 +451,7 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
                 independent_next_obj[mask] = new_next_obj
 
                 is_independent, next_is_independent = self._check_independence(obs, next_obs, new_obj, new_next_obj, mask)
-
-                desired_goal = next_obs[:, self.env.goal_idx]
-                at_goal = self._check_at_goal(new_next_obj, desired_goal, mask)
-                mask[mask] = ~(is_independent & next_is_independent & ~at_goal)
+                mask[mask] = ~(is_independent & next_is_independent)
                 sample_new_obj = np.any(mask)
 
         return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
@@ -671,7 +657,7 @@ class CoDA(ObjectAugmentationFunction):
         mask = np.ones(ep_length, dtype=bool)
         independent_obj = np.empty(shape=(ep_length, self.obj_size))
         independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
-        new_goal = np.empty(shape=(ep_length, self.obj_size))
+        # new_goal = np.empty(shape=(ep_length, self.obj_size))
 
         sample_new_obj = True
         while sample_new_obj:
@@ -694,16 +680,42 @@ class CoDA(ObjectAugmentationFunction):
         obs[:, self.obj_pos_mask] = independent_obj
         next_obs[:, self.obj_pos_mask] = independent_next_obj
 
-        new_goal = self._sample_goals(next_obs)
-        obs[:, self.env.goal_idx] = new_goal
-        next_obs[:, self.env.goal_idx] = new_goal
+        # new_goal = self._sample_goals(next_obs)
+        # obs[:, self.env.goal_idx] = new_goal
+        # next_obs[:, self.env.goal_idx] = new_goal
 
+        desired_goal = next_obs[:, self.env.goal_idx]
         achieved_goal = next_obs[:, self.env.achieved_idx]
-        at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
-        reward = self.env.task.compute_reward(achieved_goal, new_goal, infos)
+        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
+        reward = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
         self._set_done_and_info(done, infos, at_goal)
 
         return obs, next_obs, action, reward, done, infos
+
+class CoDAProximal(ObjectAugmentationFunction):
+    def __init__(self, env, p=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.aug_threshold = np.array([0.03, 0.10, 0.05])  # largest distance from center to block edge = 0.02
+        self.CoDA = CoDA(env, **kwargs)
+        self.TranslateObjectProximal1 = TranslateObjectProximal(env, p=1, **kwargs)
+        self.q = p
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs,
+                 ):
+
+        if np.random.random() < self.q:
+            return self.CoDA._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
+        else:
+            return self.TranslateObjectProximal1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
+
 
 class TranslateObjectAndGoal(AugmentationFunction):
     def __init__(self, env, **kwargs):
@@ -812,6 +824,7 @@ PANDA_AUG_FUNCTIONS = {
     'translate_goal_dynamic': TranslateGoalDynamic,
     'coda': CoDA,
     'coda_proximal_0': CoDAProximal0,
+    'coda_proximal': CoDAProximal,
     'translate_object': TranslateObject,
     'translate_object_proximal': TranslateObjectProximal,
     'translate_object_proximal_0': TranslateObjectProximal0,

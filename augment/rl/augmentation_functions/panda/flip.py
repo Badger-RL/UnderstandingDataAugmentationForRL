@@ -165,7 +165,7 @@ class TranslateObjectProximal0Flip(TranslateObjectProximal):
 class TranslateObjectProximalFlip(TranslateObjectFlip):
     def __init__(self, env, p=0.5, **kwargs):
         super().__init__(env, **kwargs)
-        self.TranslateObjectProximal0 = TranslateObjectProximal0Flip(env, **kwargs)
+        self.TranslateObjectFlip = TranslateObjectFlip(env, **kwargs)
         self.TranslateGoalProximal1 = TranslateGoalProximal(env, p=1, **kwargs)
         self.q = p
 
@@ -181,12 +181,13 @@ class TranslateObjectProximalFlip(TranslateObjectFlip):
                  ):
 
         if np.random.random() < self.q:
-            return self.TranslateObjectProximal0._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
-        else:
             return self.TranslateGoalProximal1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
+        else:
+            return self.TranslateObjectFlip._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
 
 
-class CoDAProximal0(ObjectAugmentationFunction):
+
+class CoDAProximalFlip0(ObjectAugmentationFunction):
 
     def __init__(self, env, **kwargs):
         super().__init__(env, **kwargs)
@@ -243,7 +244,7 @@ class CoDAProximal0(ObjectAugmentationFunction):
 
         return obs, next_obs, action, reward, done, infos
 
-class CoDA(ObjectAugmentationFunction):
+class CoDAFlip(ObjectAugmentationFunction):
 
     def __init__(self, env, **kwargs):
         super().__init__(env, **kwargs)
@@ -262,9 +263,6 @@ class CoDA(ObjectAugmentationFunction):
 
         if replay_buffer.size() < 1000:
             return None, None, None, None, None, None,
-
-        if reward[0] == 0:
-            return None, None, None, None, None, None
 
         ep_length = obs.shape[0]
         mask = np.ones(ep_length, dtype=bool)
@@ -299,6 +297,32 @@ class CoDA(ObjectAugmentationFunction):
         self._set_done_and_info(done, infos, at_goal)
 
         return obs, next_obs, action, reward, done, infos
+
+class CoDAProximalFlip(ObjectAugmentationFunction):
+    def __init__(self, env, p=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.aug_threshold = np.array([0.03, 0.10, 0.05])  # largest distance from center to block edge = 0.02
+        self.CoDA = CoDAFlip(env, **kwargs)
+        self.TranslateObjectProximalFlip1 = TranslateObjectProximalFlip(env, p=1, **kwargs)
+        self.q = p
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs,
+                 ):
+
+        if np.random.random() < self.q:
+            return self.CoDA._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
+        else:
+            return self.TranslateObjectProximalFlip1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
+
+
 
 class HERTranslateObject(HERMixed):
     def __init__(self, env, strategy='future', q=0.5, **kwargs):
@@ -315,6 +339,8 @@ PANDA_FLIP_AUG_FUNCTIONS.update(
         'translate_object_proximal': TranslateObjectProximalFlip, # not supported, can't generate additional reward signal by translation.
         'translate_object_proximal_0': TranslateObjectProximal0Flip,
         'her_translate_object': HERTranslateObject,
-        'coda': CoDA,
-        'coda_proximal_0': CoDAProximal0,
+        'coda': CoDAFlip,
+        'coda_proximal_0': CoDAProximalFlip0,
+        'coda_proximal': CoDAProximalFlip,
+
     })
