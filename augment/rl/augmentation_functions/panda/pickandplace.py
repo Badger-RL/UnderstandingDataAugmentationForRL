@@ -49,9 +49,9 @@ class TranslateObjectProximalPick(TranslateObjectPick):
                  ):
 
         if np.random.random() < self.q:
-            return self.TranslateObjectProximal0._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
-        else:
             return self.TranslateGoalProximal1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
+        else:
+            return self.TranslateObjectProximal0._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
 
 
 class CoDAPick(CoDA):

@@ -245,7 +245,7 @@ class ObjectAugmentationFunction(AugmentationFunction):
         self._set_done_and_info(done, infos, at_goal)
         return obs, next_obs, action, reward, done, infos
 
-    def _passes_checks(self, obs, next_obs):
+    def _passes_checks(self, obs, next_obs, reward, **kwargs):
         diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
         next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
         is_independent = np.any(diff > self.aug_threshold, axis=-1)
@@ -351,6 +351,25 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
         super().__init__(env=env, **kwargs)
         self.p = p
 
+    def _passes_checks(self, obs, next_obs, reward, **kwargs):
+        diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
+        next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
+        is_independent = np.any(diff > self.aug_threshold, axis=-1)
+        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+        observed_is_independent = is_independent & next_is_independent
+
+        if np.all(observed_is_independent):
+            desired_goal = next_obs[:, self.env.goal_idx]
+            ee_dist = (obs[:, :3] - desired_goal)
+            ee_next_dist = (next_obs[:, :3] - desired_goal)
+
+            # ee is too close to goal to generate reward signal
+            if np.all(ee_dist < self.aug_threshold) or np.all(ee_next_dist < self.aug_threshold):
+                return False
+            else:
+                return True
+        return False
+
     def _sample_object(self, n):
         new_obj = self.env.task._sample_n_objects(n)
         return new_obj
@@ -373,12 +392,6 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
 
         if np.random.random() < self.p:
             desired_goal = next_obs[:, self.env.goal_idx]
-            ee_dist = (obs[:, :3] - desired_goal)
-            ee_next_dist = (next_obs[:, :3] - desired_goal)
-
-            # ee is too close to goal to generate reward signal
-            if np.all(ee_dist < self.aug_threshold) or np.all(ee_next_dist < self.aug_threshold):
-                return None, None, None, None, None, None
             independent_obj = desired_goal
             obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
             independent_next_obj = independent_obj + obj_pos_diff

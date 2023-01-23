@@ -135,7 +135,41 @@ class TranslateObjectFlip(ObjectAugmentationFunction):
         new_obj, new_rot = self.env.task._sample_n_objects(n) # new_rot = np.zeros(3)
         return new_obj
 
-class TranslateObjectProximal0Flip(TranslateObjectProximal):
+class TranslateObjectProximalFlip(TranslateObjectFlip):
+    def __init__(self, env, p=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.TranslateObjectProximal0Flip = TranslateObjectFlip(env, **kwargs)
+        self.TranslateGoalProximal1 = TranslateGoalProximal(env, p=1, **kwargs)
+        self.q = p
+
+    def _passes_checks(self, obs, next_obs, reward, **kwargs):
+        diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
+        next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
+        is_independent = np.any(diff > self.aug_threshold, axis=-1)
+        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+        observed_is_independent = is_independent & next_is_independent
+
+        # No need to check if ee is too close to goal, since goal is an orientation.
+        return np.all(observed_is_independent)
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs,
+                 ):
+
+        if np.random.random() < self.q:
+            return self.TranslateGoalProximal1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
+        else:
+            return self.TranslateObjectProximal0Flip._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
+
+
+class TranslateObjectProximal0Flip(TranslateObjectProximalFlip):
 
     def __init__(self, env, p=0.5, **kwargs):
         super().__init__(env=env, **kwargs)
@@ -145,6 +179,20 @@ class TranslateObjectProximal0Flip(TranslateObjectProximal):
     def _sample_object(self, n):
         new_obj, new_rot = self.env.task._sample_n_objects(n) # new_rot = np.zeros(3)
         return new_obj
+
+    def _passes_checks(self, obs, next_obs, reward, **kwargs):
+
+        assert reward.shape[0] == 1
+        if reward[0] == 0:
+            return False
+        diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
+        next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
+        is_independent = np.any(diff > self.aug_threshold, axis=-1)
+        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+        observed_is_independent = is_independent & next_is_independent
+
+        # No need to check if ee is too close to goal, since goal is an orientation.
+        return np.all(observed_is_independent)
 
     def _augment(self,
                  obs: np.ndarray,
@@ -176,31 +224,6 @@ class TranslateObjectProximal0Flip(TranslateObjectProximal):
             sample_new_obj = np.any(mask)
 
         return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
-
-class TranslateObjectProximalFlip(TranslateObjectFlip):
-    def __init__(self, env, p=0.5, **kwargs):
-        super().__init__(env, **kwargs)
-        self.TranslateObjectFlip = TranslateObjectFlip(env, **kwargs)
-        self.TranslateGoalProximal1 = TranslateGoalProximal(env, p=1, **kwargs)
-        self.q = p
-
-    def _augment(self,
-                 obs: np.ndarray,
-                 next_obs: np.ndarray,
-                 action: np.ndarray,
-                 reward: np.ndarray,
-                 done: np.ndarray,
-                 infos: List[Dict[str, Any]],
-                 p=None,
-                 **kwargs,
-                 ):
-
-        if np.random.random() < self.q:
-            return self.TranslateGoalProximal1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
-        else:
-            return self.TranslateObjectFlip._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
-
-
 
 class CoDAProximalFlip0(ObjectAugmentationFunction):
 
