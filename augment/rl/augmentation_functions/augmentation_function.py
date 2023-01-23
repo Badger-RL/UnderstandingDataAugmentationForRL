@@ -52,11 +52,11 @@ class AugmentationFunction:
         for i in range(aug_n):
             self._augment(aug_obs[i], aug_next_obs[i], aug_action[i], aug_reward[i][0], aug_done[i][0], aug_infos[i], **kwargs)
 
-        aug_obs = aug_obs.reshape((-1, aug_obs.shape[-1]))
-        aug_next_obs = aug_next_obs.reshape((-1, aug_next_obs.shape[-1]))
-        aug_action = aug_action.reshape((-1, aug_action.shape[-1]))
-        aug_reward = aug_reward.reshape(-1)
-        aug_done = aug_done.reshape(-1)
+        aug_obs = aug_obs.reshape((-1, 1, aug_obs.shape[-1]))
+        aug_next_obs = aug_next_obs.reshape((-1, 1, aug_next_obs.shape[-1]))
+        aug_action = aug_action.reshape((-1, 1, aug_action.shape[-1]))
+        aug_reward = aug_reward.reshape(-1, 1)
+        aug_done = aug_done.reshape(-1, 1)
         aug_infos = aug_infos.reshape((-1,1))
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos

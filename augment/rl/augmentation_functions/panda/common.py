@@ -118,68 +118,96 @@ class HER(GoalAugmentationFunction):
 
     def _sample_goals(self, next_obs, **kwargs):
         return self.goal_sampler(next_obs)
-#
-# class HERMixed(GoalAugmentationFunction):
-#     def __init__(self, env, aug_function, strategy='future', q=0.5, **kwargs):
-#         super().__init__(env, **kwargs)
-#         self.HER = HER(env, strategy, **kwargs)
-#         self.aug_function = aug_function(env, **kwargs)
-#         self.q = q
-#
-#     def _augment(self,
-#                  obs: np.ndarray,
-#                  next_obs: np.ndarray,
-#                  action: np.ndarray,
-#                  reward: np.ndarray,
-#                  done: np.ndarray,
-#                  infos: List[Dict[str, Any]],
-#                  p=None,
-#                  **kwargs,
-#                  ):
-#
-#         if np.random.random() < self.q:
-#             return self.HER._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
-#         else:
-#             return self.aug_function._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
-#
-# class HERTranslateGoal(HERMixed):
-#     def __init__(self, env, strategy='future', q=0.5, **kwargs):
-#         super().__init__(env=env, aug_function=TranslateGoal, strategy=strategy, q=q, **kwargs)
-#
-# class HERTranslateObject(HERMixed):
-#     def __init__(self, env, strategy='future', q=0.5, **kwargs):
-#         super().__init__(env=env, aug_function=TranslateObject, strategy=strategy, q=q, **kwargs)
-#
-# class HERCoDA(HERMixed):
-#     def __init__(self, env, strategy='future', q=0.5, **kwargs):
-#         super().__init__(env=env, aug_function=CoDA, strategy=strategy, q=q, **kwargs)
-#
-# class HERTranslateGoalProximal(HERMixed):
-#     def __init__(self, env, strategy='future', q=0.5, p=0.5, **kwargs):
-#         super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, q=q, p=p, **kwargs)
-#
-# class HERTranslateGoalProximal0(GoalAugmentationFunction):
-#     def __init__(self, env, strategy='future', q=0.5, **kwargs):
-#         super().__init__(env, **kwargs)
-#         self.HER = HER(env, strategy, **kwargs)
-#         self.aug_function = TranslateGoalProximal(env, p=0, **kwargs)
-#         self.q = q
-#
-#     def _augment(self,
-#                  obs: np.ndarray,
-#                  next_obs: np.ndarray,
-#                  action: np.ndarray,
-#                  reward: np.ndarray,
-#                  done: np.ndarray,
-#                  infos: List[Dict[str, Any]],
-#                  p=None,
-#                  **kwargs,
-#                  ):
-#
-#         if np.random.random() < self.q:
-#             return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
-#         else:
-#             return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
+
+class HERMixed(GoalAugmentationFunction):
+    def __init__(self, env, aug_function, strategy='future', q=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.HER = HER(env, strategy, **kwargs)
+        self.aug_function = aug_function(env, **kwargs)
+        self.q = q
+
+
+    def augment(self,
+                 aug_n: int,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 **kwargs,):
+
+        aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = \
+            self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos)
+
+        for i in range(aug_n):
+            self._augment(aug_obs[i], aug_next_obs[i], aug_action[i], aug_reward[i][0], aug_done[i][0], aug_infos[i], **kwargs)
+
+        aug_obs = aug_obs.reshape((-1, aug_obs.shape[-1]))
+        aug_next_obs = aug_next_obs.reshape((-1, aug_next_obs.shape[-1]))
+        aug_action = aug_action.reshape((-1, aug_action.shape[-1]))
+        aug_reward = aug_reward.reshape(-1)
+        aug_done = aug_done.reshape(-1)
+        aug_infos = aug_infos.reshape((-1,1))
+
+        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs,
+                 ):
+
+        if np.random.random() < self.q:
+            return self.HER._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
+        else:
+            if not self._passes_checks(obs, next_obs, reward):
+                return None, None, None, None, None, None
+            return self.aug_function._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
+
+class HERTranslateGoal(HERMixed):
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env=env, aug_function=TranslateGoal, strategy=strategy, q=q, **kwargs)
+
+class HERTranslateObject(HERMixed):
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env=env, aug_function=TranslateObject, strategy=strategy, q=q, **kwargs)
+
+class HERCoDA(HERMixed):
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env=env, aug_function=CoDA, strategy=strategy, q=q, **kwargs)
+
+class HERTranslateGoalProximal(HERMixed):
+    def __init__(self, env, strategy='future', q=0.5, p=0.5, **kwargs):
+        super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, q=q, p=p, **kwargs)
+
+class HERTranslateGoalProximal0(GoalAugmentationFunction):
+    def __init__(self, env, strategy='future', q=0.5, **kwargs):
+        super().__init__(env, **kwargs)
+        self.HER = HER(env, strategy, **kwargs)
+        self.aug_function = TranslateGoalProximal(env, p=0, **kwargs)
+        self.q = q
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs,
+                 ):
+
+        if np.random.random() < self.q:
+            return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
+        else:
+            return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
 
 #######################################################################################################################
 #######################################################################################################################
@@ -268,13 +296,9 @@ class ObjectAugmentationFunction(AugmentationFunction):
         mask = np.ones(ep_length, dtype=bool)
         independent_obj = np.empty(shape=(ep_length, self.obj_size))
         independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
-        # successful_aug = np.ones(ep_length, dtype=bool)
 
         sample_new_obj = True
-        # its = 0
         while sample_new_obj:
-            # its += 1
-            n = obs.shape[0]
             new_obj, new_next_obj = self._sample_objects(obs, next_obs)
 
             independent_obj[mask] = new_obj[mask]
@@ -283,10 +307,6 @@ class ObjectAugmentationFunction(AugmentationFunction):
             is_independent, next_is_independent = self._check_independence(obs, next_obs, new_obj, new_next_obj, mask)
             mask[mask] = ~(is_independent & next_is_independent)
             sample_new_obj = np.any(mask)
-
-            # if its > 5:
-            #     successful_aug[mask] = 0
-            #     break
 
         self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
@@ -406,70 +426,6 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
 
         self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
-class TranslateObjectDynamic(ObjectAugmentationFunction):
-
-    def __init__(self, env, **kwargs):
-        super().__init__(env=env, **kwargs)
-
-    def _sample_object(self, n):
-        new_obj = self.env.task._sample_n_objects(n)
-        return new_obj
-
-    def _augment(self,
-                 obs: np.ndarray,
-                 next_obs: np.ndarray,
-                 action: np.ndarray,
-                 reward: np.ndarray,
-                 done: np.ndarray,
-                 infos: List[Dict[str, Any]],
-                 p=None,
-                 **kwargs
-                 ):
-
-        ep_length = obs.shape[0]
-        mask = np.ones(ep_length, dtype=bool)
-        independent_obj = np.empty(shape=(ep_length, self.obj_size))
-        independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
-
-        if np.random.random() < p:
-            desired_goal = next_obs[:, self.env.goal_idx]
-            ee_dist = (obs[:, :3] - desired_goal)
-            ee_next_dist = (next_obs[:, :3] - desired_goal)
-
-            # ee is too close to goal to generate reward signal
-            if np.all(ee_dist < self.aug_threshold) or np.all(ee_next_dist < self.aug_threshold):
-                return None, None, None, None, None, None
-
-            # r = np.random.uniform(0, self.delta, size=ep_length)
-            # theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
-            # phi = np.random.uniform(-np.pi / 2, np.pi / 2, size=ep_length)
-            # dx = r * np.sin(phi) * np.cos(theta)
-            # dy = r * np.sin(phi) * np.sin(theta)
-            # dz = r * np.cos(phi)
-            # if self.env.task.goal_range_high[-1] == 0:
-            #     dz[:] = 0
-            # noise = np.array([dx, dy, dz]).T
-            independent_obj = desired_goal #+ noise
-
-            obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
-            independent_next_obj = independent_obj + obj_pos_diff
-
-        else:
-            sample_new_obj = True
-            while sample_new_obj:
-                new_obj, new_next_obj = self._sample_objects(obs, next_obs)
-                independent_obj[mask] = new_obj
-                independent_next_obj[mask] = new_next_obj
-
-                is_independent, next_is_independent = self._check_independence(obs, next_obs, new_obj, new_next_obj, mask)
-
-                # desired_goal = next_obs[:, self.env.goal_idx]
-                # at_goal = self._check_at_goal(new_next_obj, desired_goal, mask)
-                mask[mask] = ~(is_independent & next_is_independent)
-                sample_new_obj = np.any(mask)
-
-        self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
-
 #######################################################################################################################
 #######################################################################################################################
 
@@ -524,7 +480,7 @@ class CoDAProximal0(ObjectAugmentationFunction):
 
         achieved_goal = next_obs[:, self.env.achieved_idx]
         at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
-        reward = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
+        reward[:] = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
         self._set_done_and_info(done, infos, at_goal)
 
         return obs, next_obs, action, reward, done, infos
@@ -538,26 +494,16 @@ class CoDA(ObjectAugmentationFunction):
         ep_length = next_obs.shape[0]
         return self.env.task._sample_n_goals(ep_length)
 
+    def _passes_checks(self, obs, next_obs, reward, replay_buffer=None, **kwargs):
+        if replay_buffer.size() < 1000:
+            return False
 
-    def _deepcopy_transition(
-            self,
-            augmentation_n: int,
-            obs: np.ndarray,
-            next_obs: np.ndarray,
-            action: np.ndarray,
-            reward: np.ndarray,
-            done: np.ndarray,
-            infos: List[Dict[str, Any]],
-    ):
-        aug_obs = np.tile(obs, (augmentation_n,1))
-        aug_next_obs = np.tile(next_obs, (augmentation_n,1))
-        aug_action = np.tile(action, (augmentation_n,1))
-        aug_reward = np.tile(reward, (augmentation_n,))
-        aug_done = np.tile(done, (augmentation_n,)).astype(np.bool)
-        aug_infos = np.array(infos *augmentation_n)
-
-        return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
-
+        diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
+        next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
+        is_independent = np.any(diff > self.aug_threshold, axis=-1)
+        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+        observed_is_independent = is_independent & next_is_independent
+        return np.all(observed_is_independent)
 
 
     def augment(self,
@@ -568,22 +514,24 @@ class CoDA(ObjectAugmentationFunction):
                  reward: np.ndarray,
                  done: np.ndarray,
                  infos: List[Dict[str, Any]],
+                 replay_buffer=None,
                  **kwargs,):
 
-        assert obs.shape[0] == 1
-        diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
-        next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
-        is_independent = np.any(diff > self.aug_threshold, axis=-1)
-        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
-        observed_is_independent = is_independent & next_is_independent
-
-        if not np.all(observed_is_independent):
+        if not self._passes_checks(obs, next_obs, reward, replay_buffer=replay_buffer):
             return None, None, None, None, None, None
 
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = \
             self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos)
 
-        self._augment(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos, **kwargs)
+        for i in range(aug_n):
+            self._augment(aug_obs[i], aug_next_obs[i], aug_action[i], aug_reward[i][0], aug_done[i][0], aug_infos[i], replay_buffer=replay_buffer, **kwargs)
+
+        aug_obs = aug_obs.reshape((-1, 1, aug_obs.shape[-1]))
+        aug_next_obs = aug_next_obs.reshape((-1, 1, aug_next_obs.shape[-1]))
+        aug_action = aug_action.reshape((-1, 1, aug_action.shape[-1]))
+        aug_reward = aug_reward.reshape(-1, 1)
+        aug_done = aug_done.reshape(-1, 1)
+        aug_infos = aug_infos.reshape((-1,1))
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
@@ -598,9 +546,6 @@ class CoDA(ObjectAugmentationFunction):
                  replay_buffer=None,
                  **kwargs
                  ):
-
-        if replay_buffer.size() < 1000:
-            return None, None, None, None, None, None,
 
         ep_length = obs.shape[0]
         mask = np.ones(ep_length, dtype=bool)
@@ -629,15 +574,7 @@ class CoDA(ObjectAugmentationFunction):
         obs[:, self.obj_pos_mask] = independent_obj
         next_obs[:, self.obj_pos_mask] = independent_next_obj
 
-        # new_goal = self._sample_goals(next_obs)
-        # obs[:, self.env.goal_idx] = new_goal
-        # next_obs[:, self.env.goal_idx] = new_goal
-
-        desired_goal = next_obs[:, self.env.goal_idx]
-        achieved_goal = next_obs[:, self.env.achieved_idx]
-        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
-        reward = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
-        self._set_done_and_info(done, infos, at_goal)
+        self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
         return obs, next_obs, action, reward, done, infos
 
@@ -723,7 +660,7 @@ class TranslateObjectAndGoal(ObjectAugmentationFunction):
 
         achieved_goal = next_obs[:, self.env.achieved_idx]
         at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
-        reward = self.env.task.compute_reward(achieved_goal, new_goal, infos)
+        reward[:] = self.env.task.compute_reward(achieved_goal, new_goal, infos)
         self._set_done_and_info(done, infos, at_goal)
 
         return obs, next_obs, action, reward, done, infos
@@ -902,11 +839,11 @@ class TranslateObjectJitter(TranslateObject):
 PANDA_AUG_FUNCTIONS = {
     'her': HER,
     # INDEPENDENCE CHECK SHOULD INSIDE _augment() FOR HER+TRANSLATE. RIGHT NOW IT HAPPENS IN PARENT augment()
-    # 'her_coda': HERCoDA,
-    # 'her_translate_object': HERTranslateObject,
-    # 'her_translate_goal': HERTranslateGoal,
-    # 'her_translate_goal_proximal': HERTranslateGoalProximal,
-    # 'her_translate_goal_proximal_0': HERTranslateGoalProximal0,
+    'her_coda': HERCoDA,
+    'her_translate_object': HERTranslateObject,
+    'her_translate_goal': HERTranslateGoal,
+    'her_translate_goal_proximal': HERTranslateGoalProximal,
+    'her_translate_goal_proximal_0': HERTranslateGoalProximal0,
     'translate_goal': TranslateGoal,
     'translate_goal_proximal': TranslateGoalProximal,
     'translate_goal_proximal_0': TranslateGoalProximal0,
