@@ -205,8 +205,8 @@ if __name__ == '__main__':
         hyperparams['aug_constraint'] = args.aug_constraint
         hyperparams['aug_n'] = aug_n
         # hyperparams['freeze_features_for_aug_update'] = args.freeze_features_for_aug_update
-        hyperparams['actor_data_source'] = args.actor_data_source
-        hyperparams['critic_data_source'] = args.critic_data_source
+        # hyperparams['actor_data_source'] = args.actor_data_source
+        # hyperparams['critic_data_source'] = args.critic_data_source
         hyperparams['separate_aug_critic'] = args.separate_aug_critic
 
         if args.aug_freq == 'episode':
