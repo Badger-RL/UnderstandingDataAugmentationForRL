@@ -56,56 +56,56 @@ class TranslateGoalDynamic(GoalAugmentationFunction):
         else:
             new_goal = self.env.task._sample_n_goals(n)
         return new_goal
-
-class HERTranslateGoalProximal(HERMixed):
-    def __init__(self, env, strategy='future', q=0.5, p=0.5, **kwargs):
-        super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, q=q, p=p, **kwargs)
-
-class HERTranslateGoalProximal0(GoalAugmentationFunction):
-    def __init__(self, env, strategy='future', q=0.5, **kwargs):
-        super().__init__(env, **kwargs)
-        self.HER = HER(env, strategy, **kwargs)
-        self.aug_function = TranslateGoalProximal(env, p=0, **kwargs)
-        self.q = q
-
-    def _augment(self,
-                 obs: np.ndarray,
-                 next_obs: np.ndarray,
-                 action: np.ndarray,
-                 reward: np.ndarray,
-                 done: np.ndarray,
-                 infos: List[Dict[str, Any]],
-                 p=None,
-                 **kwargs,
-                 ):
-
-        if np.random.random() < self.q:
-            return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
-        else:
-            return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
-
-class HERTranslateGoalProximal09(GoalAugmentationFunction):
-    def __init__(self, env, strategy='future', q=0.5, **kwargs):
-        super().__init__(env, **kwargs)
-        self.HER = HER(env, strategy, **kwargs)
-        self.aug_function = TranslateGoalProximal(env, p=0.09, **kwargs)
-        self.q = q
-
-    def _augment(self,
-                 obs: np.ndarray,
-                 next_obs: np.ndarray,
-                 action: np.ndarray,
-                 reward: np.ndarray,
-                 done: np.ndarray,
-                 infos: List[Dict[str, Any]],
-                 p=None,
-                 **kwargs
-                 ):
-
-        if np.random.random() < self.q:
-            return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
-        else:
-            return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
+#
+# class HERTranslateGoalProximal(HERMixed):
+#     def __init__(self, env, strategy='future', q=0.5, p=0.5, **kwargs):
+#         super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, q=q, p=p, **kwargs)
+#
+# class HERTranslateGoalProximal0(GoalAugmentationFunction):
+#     def __init__(self, env, strategy='future', q=0.5, **kwargs):
+#         super().__init__(env, **kwargs)
+#         self.HER = HER(env, strategy, **kwargs)
+#         self.aug_function = TranslateGoalProximal(env, p=0, **kwargs)
+#         self.q = q
+#
+#     def _augment(self,
+#                  obs: np.ndarray,
+#                  next_obs: np.ndarray,
+#                  action: np.ndarray,
+#                  reward: np.ndarray,
+#                  done: np.ndarray,
+#                  infos: List[Dict[str, Any]],
+#                  p=None,
+#                  **kwargs,
+#                  ):
+#
+#         if np.random.random() < self.q:
+#             return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
+#         else:
+#             return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
+#
+# class HERTranslateGoalProximal09(GoalAugmentationFunction):
+#     def __init__(self, env, strategy='future', q=0.5, **kwargs):
+#         super().__init__(env, **kwargs)
+#         self.HER = HER(env, strategy, **kwargs)
+#         self.aug_function = TranslateGoalProximal(env, p=0.09, **kwargs)
+#         self.q = q
+#
+#     def _augment(self,
+#                  obs: np.ndarray,
+#                  next_obs: np.ndarray,
+#                  action: np.ndarray,
+#                  reward: np.ndarray,
+#                  done: np.ndarray,
+#                  infos: List[Dict[str, Any]],
+#                  p=None,
+#                  **kwargs
+#                  ):
+#
+#         if np.random.random() < self.q:
+#             return self.HER._augment(obs, next_obs, action, reward, done, infos, p)
+#         else:
+#             return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
 
 
 class TranslateObjectFlip(ObjectAugmentationFunction):
@@ -334,7 +334,7 @@ PANDA_FLIP_AUG_FUNCTIONS.update(
         'translate_goal_proximal': TranslateGoalProximal,
         'translate_goal_proximal_0': TranslateGoalProximal0,
         'translate_goal_dynamic': TranslateGoalDynamic,
-        'her_translate_goal_proximal_0': HERTranslateGoalProximal0,
+        # 'her_translate_goal_proximal_0': HERTranslateGoalProximal0,
         'translate_object': TranslateObjectFlip,
         'translate_object_proximal': TranslateObjectProximalFlip, # not supported, can't generate additional reward signal by translation.
         'translate_object_proximal_0': TranslateObjectProximal0Flip,
