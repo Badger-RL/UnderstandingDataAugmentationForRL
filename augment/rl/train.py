@@ -293,8 +293,8 @@ if __name__ == '__main__':
     eval_callback = EvalCallback(eval_env=env_eval, n_eval_episodes=args.eval_episodes, eval_freq=args.eval_freq,
                                  model_save_freq=args.model_save_freq,
                                  log_path=save_dir, best_model_save_path=best_model_save_dir)
-    opmse_callback = SaveOPMSECallback(log_path=save_dir,)
-    callbacks = [eval_callback]
+    opmse_callback = SaveOPMSECallback(log_path=save_dir, save_freq=args.eval_freq)
+    callbacks = [eval_callback, opmse_callback]
     # if args.save_replay_buffer:
     #     hist_callback = SaveReplayDistribution(log_path=save_dir, save_freq=args.eval_freq)
     #     callbacks.append(hist_callback)
