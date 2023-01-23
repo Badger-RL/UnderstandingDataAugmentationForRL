@@ -398,7 +398,7 @@ class TD3(OffPolicyAlgorithmAugment):
                              actor_losses=actor_losses, critic_losses=critic_losses)
 
                 with th.no_grad():
-                    pi_obs = pi
+                    pi_obs = pi[:self.batch_size]
                     a_obs = observed_replay_data.actions
                     opmse_obs = ((pi_obs - a_obs) ** 2).mean()
                     self.opmse_obs.append(opmse_obs.cpu())
