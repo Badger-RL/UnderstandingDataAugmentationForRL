@@ -41,8 +41,6 @@ class GoalAugmentationFunction(AugmentationFunction):
         reward[:] = self.env.task.compute_reward(achieved_goal, new_goal, infos)
         self._set_done_and_info(done, infos, at_goal)
 
-        return obs, next_obs, action, reward, done, infos
-
 class TranslateGoal(GoalAugmentationFunction):
 
     def __init__(self, env,  **kwargs):
@@ -61,29 +59,31 @@ class TranslateGoalProximal(GoalAugmentationFunction):
     def _sample_goals(self, next_obs, **kwargs):
         ep_length = next_obs.shape[0]
         if np.random.random() < self.p:
-            new_goal = next_obs[:, self.env.goal_idx]
+            r = np.random.uniform(0, self.delta, size=ep_length)
+            theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
+            phi = np.random.uniform(-np.pi/2, np.pi/2, size=ep_length)
+            dx = r*np.sin(phi)*np.cos(theta)
+            dy = r*np.sin(phi)*np.sin(theta)
+            dz = r*np.cos(phi)
+            dz = np.clip(dz, 0.0, 0.2)
+            if self.env.task.goal_range_high[-1] == 0:
+                dz[:] = 0
+            noise = np.array([dx, dy, dz]).T
+            new_goal = next_obs[:, self.env.goal_idx] + noise
         else:
             new_goal = self.env.task._sample_n_goals(ep_length)
+            achieved_goal = next_obs[:, self.env.achieved_idx]
+            at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
+
+            # resample if success (rejection sampling)
+            while np.any(at_goal):
+                new_goal[at_goal] = self.env.task._sample_n_goals(ep_length)[at_goal]
+                at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         return new_goal
 
 class TranslateGoalProximal0(TranslateGoalProximal):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, p=0, **kwargs)
-
-
-class TranslateGoalDynamic(GoalAugmentationFunction):
-
-    def __init__(self, env,  **kwargs):
-        super().__init__(env=env, **kwargs)
-
-    def _sample_goals(self, next_obs, p=None, **kwargs):
-        ep_length = next_obs.shape[0]
-        if np.random.random() < p:
-            new_goal = next_obs[:, self.env.goal_idx]
-        else:
-            new_goal = self.env.task._sample_n_goals(ep_length)
-        return new_goal
-
 
 #######################################################################################################################
 #######################################################################################################################
@@ -342,7 +342,7 @@ class TranslateObjectProximal0(ObjectAugmentationFunction):
             mask[mask] = ~(is_independent & next_is_independent & ~at_goal)
             sample_new_obj = np.any(mask)
 
-        return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
+        self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
 
 class TranslateObjectProximal(ObjectAugmentationFunction):
@@ -394,7 +394,7 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
                 mask[mask] = ~(is_independent & next_is_independent)
                 sample_new_obj = np.any(mask)
 
-        return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
+        self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
 class TranslateObjectDynamic(ObjectAugmentationFunction):
 
@@ -458,7 +458,7 @@ class TranslateObjectDynamic(ObjectAugmentationFunction):
                 mask[mask] = ~(is_independent & next_is_independent)
                 sample_new_obj = np.any(mask)
 
-        return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
+        self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
 #######################################################################################################################
 #######################################################################################################################
@@ -743,7 +743,7 @@ class TranslateObjectAndGoal(ObjectAugmentationFunction):
             mask[mask] = ~(is_independent & next_is_independent)
             sample_new_obj = np.any(mask)
 
-        return self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
+        self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
 
 
 # Reach, Push, Slide, PickAndPlace only
@@ -758,13 +758,13 @@ PANDA_AUG_FUNCTIONS = {
     'translate_goal': TranslateGoal,
     'translate_goal_proximal': TranslateGoalProximal,
     'translate_goal_proximal_0': TranslateGoalProximal0,
-    'translate_goal_dynamic': TranslateGoalDynamic,
+    # 'translate_goal_dynamic': TranslateGoalDynamic,
     'coda': CoDA,
     'coda_proximal_0': CoDAProximal0,
     'coda_proximal': CoDAProximal,
     'translate_object': TranslateObject,
     'translate_object_proximal': TranslateObjectProximal,
     'translate_object_proximal_0': TranslateObjectProximal0,
-    'translate_object_dynamic': TranslateObjectDynamic,
+    # 'translate_object_dynamic': TranslateObjectDynamic,
     'translate_object_and_goal': TranslateObjectAndGoal,
 }

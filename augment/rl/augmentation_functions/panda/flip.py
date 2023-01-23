@@ -22,11 +22,26 @@ class TranslateGoalProximal(GoalAugmentationFunction):
                          x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
 
     def _sample_goals(self, next_obs, **kwargs):
-        n = next_obs.shape[0]
+        ep_length = next_obs.shape[0]
+        achieved_goal = next_obs[:, self.env.achieved_idx]
         if np.random.random() < self.p:
-            new_goal = next_obs[:, self.env.achieved_idx]
+            a = np.arccos(achieved_goal[:, 0])
+            theta = np.random.uniform(-0.927, +0.927, size=(ep_length,))  # arccos(0.6) ~= +/-0.927
+            q_rotation = np.array([
+                np.cos(theta / 2),
+                a * np.sin(theta / 2),
+                a * np.sin(theta / 2),
+                a * np.sin(theta / 2),
+            ]).T
+            new_goal = self.quaternion_multiply(achieved_goal.T, q_rotation.T).T
         else:
-            new_goal = self.env.task._sample_n_goals(n)
+            new_goal = self.env.task._sample_n_goals(ep_length)
+            at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
+
+            # resample if success (rejection sampling)
+            while np.any(at_goal):
+                new_goal[at_goal] = self.env.task._sample_n_goals(ep_length)[at_goal]
+                at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         return new_goal
 
 
