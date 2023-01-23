@@ -30,7 +30,7 @@ class AugmentationFunction:
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
-    def _passes_checks(self, obs, next_obs):
+    def _passes_checks(self, obs, next_obs, reward, **kwargs):
         return True
 
     def augment(self,
@@ -43,7 +43,7 @@ class AugmentationFunction:
                  infos: List[Dict[str, Any]],
                  **kwargs,):
 
-        if not self._passes_checks(obs, next_obs):
+        if not self._passes_checks(obs, next_obs, reward):
             return None, None, None, None, None, None
 
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = \
