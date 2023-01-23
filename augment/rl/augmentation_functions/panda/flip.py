@@ -3,7 +3,7 @@ from typing import Any, List, Dict
 
 import numpy as np
 
-from augment.rl.augmentation_functions.panda.common import GoalAugmentationFunction, PANDA_AUG_FUNCTIONS, HER, HERMixed, \
+from augment.rl.augmentation_functions.panda.common import GoalAugmentationFunction, PANDA_AUG_FUNCTIONS, HER, \
     ObjectAugmentationFunction, TranslateObjectProximal0, TranslateObjectProximal
 
 
@@ -324,9 +324,9 @@ class CoDAProximalFlip(ObjectAugmentationFunction):
 
 
 
-class HERTranslateObject(HERMixed):
-    def __init__(self, env, strategy='future', q=0.5, **kwargs):
-        super().__init__(env=env, aug_function=TranslateObjectFlip, strategy=strategy, q=q, **kwargs)
+# class HERTranslateObject(HERMixed):
+#     def __init__(self, env, strategy='future', q=0.5, **kwargs):
+#         super().__init__(env=env, aug_function=TranslateObjectFlip, strategy=strategy, q=q, **kwargs)
 
 PANDA_FLIP_AUG_FUNCTIONS = copy.deepcopy(PANDA_AUG_FUNCTIONS)
 PANDA_FLIP_AUG_FUNCTIONS.update(
@@ -338,7 +338,7 @@ PANDA_FLIP_AUG_FUNCTIONS.update(
         'translate_object': TranslateObjectFlip,
         'translate_object_proximal': TranslateObjectProximalFlip, # not supported, can't generate additional reward signal by translation.
         'translate_object_proximal_0': TranslateObjectProximal0Flip,
-        'her_translate_object': HERTranslateObject,
+        # 'her_translate_object': HERTranslateObject,
         'coda': CoDAFlip,
         'coda_proximal_0': CoDAProximalFlip0,
         'coda_proximal': CoDAProximalFlip,

@@ -7,10 +7,6 @@ import numpy as np
 class AugmentationFunction:
 
     def __init__(self, env=None, **kwargs):
-        # if isinstance(env, VecNormalize):
-        #     self.env = env.venv.envs[0].unwrapped
-        # else:
-        #     self.env = env
         self.env = env
         self.is_her = True
         self.aug_n = None
@@ -34,6 +30,9 @@ class AugmentationFunction:
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
+    def _passes_checks(self, obs, next_obs):
+        return True
+
     def augment(self,
                  aug_n: int,
                  obs: np.ndarray,
@@ -43,6 +42,10 @@ class AugmentationFunction:
                  done: np.ndarray,
                  infos: List[Dict[str, Any]],
                  **kwargs,):
+
+        if not self._passes_checks(obs, next_obs):
+            return None, None, None, None, None, None
+
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = \
             self._deepcopy_transition(aug_n, obs, next_obs, action, reward, done, infos)
 
@@ -67,3 +70,16 @@ class AugmentationFunction:
                  infos: List[Dict[str, Any]],
                  **kwargs,):
         raise NotImplementedError("Augmentation function not implemented.")
+
+
+        # successful_aug = self._augment(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos, **kwargs)
+        #
+        # if np.all(~successful_aug):
+        #     return None, None, None, None, None, None
+
+        # aug_obs = aug_obs[successful_aug]
+        # aug_next_obs = aug_next_obs[successful_aug]
+        # aug_action = aug_action[successful_aug]
+        # aug_reward = aug_reward[successful_aug]
+        # aug_done = aug_done[successful_aug]
+        # aug_infos = aug_infos[successful_aug]
