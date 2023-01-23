@@ -396,20 +396,19 @@ class TD3(OffPolicyAlgorithmAugment):
                 pi = self._update(actor_replay_data=actor_data, critic_replay_data=critic_data,
                              actor_losses=actor_losses, critic_losses=critic_losses)
 
-                if self.use_aug:
-                    with th.no_grad():
-                        pi_obs = pi[:self.batch_size]
+                with th.no_grad():
+                    pi_obs = pi[:self.batch_size]
+                    a_obs = observed_replay_data.actions
+                    opmse_obs = ((pi_obs-a_obs)**2).mean()
+                    self.opmse_obs.append(opmse_obs.cpu())
+
+                    if self.use_aug:
                         pi_aug = pi[self.batch_size:]
-                        a_obs = observed_replay_data.actions
                         a_aug = aug_replay_data.actions
-                        opmse_obs = ((pi_obs-a_obs)**2).mean()
-                        opmse_aug = ((pi_aug-a_aug)**2).mean()
-                        # self.logger.record("train/opmse_obs", opmse_obs)
-                        # self.logger.record("train/opmse_aug", opmse_aug)
-                        self.opmse_obs.append(opmse_obs.cpu())
+                        opmse_aug = ((pi_aug - a_aug) ** 2).mean()
                         self.opmse_aug.append(opmse_aug.cpu())
 
-                    # print(opmse_obs, opmse_aug)
+                # print(opmse_obs, opmse_aug)
 
             if self.separate_aug_critic:
                 self._update_aug_critic(both_replay_data)
