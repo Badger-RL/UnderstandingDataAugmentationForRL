@@ -70,8 +70,8 @@ class CoDAProximalPick(ObjectAugmentationFunction):
     def __init__(self, env, p=0.5, **kwargs):
         super().__init__(env, **kwargs)
         self.aug_threshold = np.array([0.06, 0.1, 0.06])  # largest distance from center to block edge = 0.02
-        self.CoDA = CoDAPick(env, **kwargs)
-        self.TranslateObjectProximalPick1 = TranslateObjectProximalPick(env, p=1, **kwargs)
+        self.CoDA0 = CoDAProximal0(env, **kwargs)
+        self.TranslateGoalProximalPick1 = TranslateGoalProximal(env, p=1, **kwargs)
         self.q = p
 
     def _augment(self,
@@ -86,9 +86,9 @@ class CoDAProximalPick(ObjectAugmentationFunction):
                  ):
 
         if np.random.random() < self.q:
-            return self.CoDA._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
+            return self.TranslateGoalProximalPick1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
         else:
-            return self.TranslateObjectProximalPick1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
+            return self.CoDA0._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
 
 
 

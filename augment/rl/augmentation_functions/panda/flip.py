@@ -230,6 +230,17 @@ class CoDAProximalFlip0(CoDA):
     def __init__(self, env, **kwargs):
         super().__init__(env, **kwargs)
 
+    def _passes_checks(self, obs, next_obs, reward, replay_buffer=None, **kwargs):
+        if replay_buffer.size() < 1000:
+            return False
+
+        diff = np.abs((obs[:, :3] - obs[:, self.obj_pos_mask]))
+        next_diff = np.abs((next_obs[:, :3] - next_obs[:,self.obj_pos_mask]))
+        is_independent = np.any(diff > self.aug_threshold, axis=-1)
+        next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+        observed_is_independent = is_independent & next_is_independent
+        return np.all(observed_is_independent)
+
     def _augment(self,
                  obs: np.ndarray,
                  next_obs: np.ndarray,
@@ -244,31 +255,35 @@ class CoDAProximalFlip0(CoDA):
 
         ep_length = obs.shape[0]
         mask = np.ones(ep_length, dtype=bool)
-        independent_obj = np.empty(shape=(ep_length, self.obj_size))
-        independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
+        independent_obj = np.empty(shape=(ep_length, self.env.obj_idx.shape[0]))
+        independent_next_obj = np.empty(shape=(ep_length, self.env.obj_idx.shape[0]))
         desired_goal = next_obs[:, self.env.goal_idx]
 
         sample_new_obj = True
         while sample_new_obj:
             new_obs, _, new_next_obs, _, _, _ = replay_buffer.sample_array(batch_size=ep_length)
-            new_obj = new_obs[:, self.obj_pos_mask]
-            new_next_obj = new_next_obs[:, self.obj_pos_mask]
+            independent_obj[mask] = new_obs[mask]
+            independent_next_obj[mask] = new_next_obs[mask]
 
-            independent_obj[mask] = new_obj[mask]
-            independent_next_obj[mask] = new_next_obj[mask]
-
-            diff = np.abs((obs[:, :self.obj_size] - new_obj)[mask])
-            next_diff = np.abs((next_obs[:, :self.obj_size] - new_next_obj)[mask])
+            diff = np.abs((obs[:, :3] - new_obs[:, self.obj_pos_mask])[mask])
+            next_diff = np.abs((next_obs[:, :3] - new_next_obs[:, self.obj_pos_mask])[mask])
 
             is_independent = np.any(diff > self.aug_threshold, axis=-1)
             next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
 
-            at_goal = self.env.task.is_success(new_next_obj[mask], desired_goal[mask]).astype(bool)
+            at_goal = self.env.task.is_success(new_next_obs[mask, self.env.achieved_idx], desired_goal[mask]).astype(bool)
 
             mask[mask] = ~(is_independent & next_is_independent & ~at_goal)
             sample_new_obj = np.any(mask)
 
-        self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
+        obs[:] = independent_obj
+        next_obs[:] = independent_next_obj
+
+        achieved_goal = next_obs[:, self.env.achieved_idx]
+        desired_goal = next_obs[:, self.env.goal_idx]
+        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
+        reward[:] = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
+        self._set_done_and_info(done, infos, at_goal)
 
         return obs, next_obs, action, reward, done, infos
 
@@ -283,7 +298,7 @@ class CoDAProximalFlip(CoDAFlip):
         super().__init__(env, **kwargs)
         self.aug_threshold = np.array([0.06, 0.1, 0.06])  # largest distance from center to block edge = 0.02
         self.CoDA0 = CoDAProximalFlip0(env, **kwargs)
-        self.TranslateObjectProximalFlip1 = TranslateObjectProximalFlip(env, p=1, **kwargs)
+        self.TranslateGoalProximalFlip1 = TranslateGoalProximal(env, p=1, **kwargs)
         self.q = p
 
     def _augment(self,
@@ -298,9 +313,9 @@ class CoDAProximalFlip(CoDAFlip):
                  ):
 
         if np.random.random() < self.q:
-            return self.CoDA0._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
+            return self.TranslateGoalProximalFlip1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
         else:
-            return self.TranslateObjectProximalFlip1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
+            return self.CoDA0._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
 
 
 

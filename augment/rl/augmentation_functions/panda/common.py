@@ -429,62 +429,6 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
 #######################################################################################################################
 #######################################################################################################################
 
-class CoDAProximal0(ObjectAugmentationFunction):
-
-    def __init__(self, env, **kwargs):
-        super().__init__(env, **kwargs)
-
-    def _augment(self,
-                 obs: np.ndarray,
-                 next_obs: np.ndarray,
-                 action: np.ndarray,
-                 reward: np.ndarray,
-                 done: np.ndarray,
-                 infos: List[Dict[str, Any]],
-                 p=None,
-                 replay_buffer=None,
-                 **kwargs
-                 ):
-
-        if replay_buffer.size() < 1000:
-            return None, None, None, None, None, None,
-
-        ep_length = obs.shape[0]
-        mask = np.ones(ep_length, dtype=bool)
-        independent_obj = np.empty(shape=(ep_length, self.obj_size))
-        independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
-        desired_goal = next_obs[:, self.env.goal_idx]
-
-        sample_new_obj = True
-        while sample_new_obj:
-            new_obs, _, new_next_obs, _, _, _ = replay_buffer.sample_array(batch_size=ep_length)
-            new_obj = new_obs[:, self.obj_pos_mask]
-            new_next_obj = new_next_obs[:, self.obj_pos_mask]
-
-            independent_obj[mask] = new_obj[mask]
-            independent_next_obj[mask] = new_next_obj[mask]
-
-            diff = np.abs((obs[:, :self.obj_size] - new_obj)[mask])
-            next_diff = np.abs((next_obs[:, :self.obj_size] - new_next_obj)[mask])
-
-            is_independent = np.any(diff > self.aug_threshold, axis=-1)
-            next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
-
-            at_goal = self.env.task.is_success(new_next_obj[mask], desired_goal[mask]).astype(bool)
-
-            mask[mask] = ~(is_independent & next_is_independent & ~at_goal)
-            sample_new_obj = np.any(mask)
-
-        obs[:, self.obj_pos_mask] = independent_obj
-        next_obs[:, self.obj_pos_mask] = independent_next_obj
-
-        achieved_goal = next_obs[:, self.env.achieved_idx]
-        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
-        reward[:] = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
-        self._set_done_and_info(done, infos, at_goal)
-
-        return obs, next_obs, action, reward, done, infos
-
 class CoDA(ObjectAugmentationFunction):
 
     def __init__(self, env, **kwargs):
@@ -551,7 +495,6 @@ class CoDA(ObjectAugmentationFunction):
         mask = np.ones(ep_length, dtype=bool)
         independent_obj = np.empty(shape=(ep_length, self.env.obj_idx.shape[0]))
         independent_next_obj = np.empty(shape=(ep_length, self.env.obj_idx.shape[0]))
-        independent_reward = np.empty(shape=(ep_length, 1))
 
         # new_goal = np.empty(shape=(ep_length, self.obj_size))
 
@@ -585,11 +528,63 @@ class CoDA(ObjectAugmentationFunction):
         return obs, next_obs, action, reward, done, infos
 
 
+class CoDAProximal0(CoDA):
+
+    def __init__(self, env, **kwargs):
+        super().__init__(env, **kwargs)
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 replay_buffer=None,
+                 **kwargs
+                 ):
+
+        ep_length = obs.shape[0]
+        mask = np.ones(ep_length, dtype=bool)
+        independent_obj = np.empty(shape=(ep_length, self.obj_size))
+        independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
+        desired_goal = next_obs[:, self.env.goal_idx]
+
+        sample_new_obj = True
+        while sample_new_obj:
+            new_obs, _, new_next_obs, _, _, _ = replay_buffer.sample_array(batch_size=ep_length)
+            independent_obj[mask] = new_obs[mask]
+            independent_next_obj[mask] = new_next_obs[mask]
+
+            diff = np.abs((obs[:, :3] - new_obs[:, self.obj_pos_mask])[mask])
+            next_diff = np.abs((next_obs[:, :3] - new_next_obs[:, self.obj_pos_mask])[mask])
+
+            is_independent = np.any(diff > self.aug_threshold, axis=-1)
+            next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+
+            at_goal = self.env.task.is_success(new_next_obs[mask, self.env.achieved_idx], desired_goal[mask]).astype(bool)
+
+            mask[mask] = ~(is_independent & next_is_independent & ~at_goal)
+            sample_new_obj = np.any(mask)
+
+        obs[:] = independent_obj
+        next_obs[:] = independent_next_obj
+
+        achieved_goal = next_obs[:, self.env.achieved_idx]
+        desired_goal = next_obs[:, self.env.goal_idx]
+        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
+        reward[:] = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
+        self._set_done_and_info(done, infos, at_goal)
+
+        return obs, next_obs, action, reward, done, infos
+
+
 class CoDAProximal(ObjectAugmentationFunction):
     def __init__(self, env, p=0.5, **kwargs):
         super().__init__(env, **kwargs)
-        self.CoDA = CoDA(env, **kwargs)
-        self.TranslateObjectProximal1 = TranslateObjectProximal(env, p=1, **kwargs)
+        self.CoDA0 = CoDAProximal0(env, **kwargs)
+        self.TranslateGoalProximal1 = TranslateGoalProximal(env, p=1, **kwargs)
         self.q = p
 
     def _augment(self,
@@ -604,9 +599,9 @@ class CoDAProximal(ObjectAugmentationFunction):
                  ):
 
         if np.random.random() < self.q:
-            return self.CoDA._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
+            return self.TranslateGoalProximal1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
         else:
-            return self.TranslateObjectProximal1._augment(obs, next_obs, action, reward, done, infos, **kwargs,)
+            return self.CoDA0._augment(obs, next_obs, action, reward, done, infos, p, **kwargs)
 
 
 class TranslateObjectAndGoal(ObjectAugmentationFunction):
