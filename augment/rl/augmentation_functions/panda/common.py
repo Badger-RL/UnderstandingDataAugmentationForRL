@@ -549,21 +549,24 @@ class CoDA(ObjectAugmentationFunction):
 
         ep_length = obs.shape[0]
         mask = np.ones(ep_length, dtype=bool)
-        independent_obj = np.empty(shape=(ep_length, self.obj_size))
-        independent_next_obj = np.empty(shape=(ep_length, self.obj_size))
+        independent_obj = np.empty(shape=(ep_length, self.env.obj_idx.shape[0]))
+        independent_next_obj = np.empty(shape=(ep_length, self.env.obj_idx.shape[0]))
+        independent_reward = np.empty(shape=(ep_length, 1))
+
         # new_goal = np.empty(shape=(ep_length, self.obj_size))
 
         sample_new_obj = True
         while sample_new_obj:
-            new_obs, _, new_next_obs, _, _, _ = replay_buffer.sample_array(batch_size=ep_length)
-            new_obj = new_obs[:, self.obj_pos_mask]
-            new_next_obj = new_next_obs[:, self.obj_pos_mask]
+            new_obs, _, new_next_obs, new_reward, new_done, new_info = replay_buffer.sample_array(batch_size=ep_length)
+            independent_obj[mask] = new_obs[mask]
+            independent_next_obj[mask] = new_next_obs[mask]
+            # reward[mask] = new_reward[mask]
+            # done[mask] = new_done
+            # infos[mask] = new_done
 
-            independent_obj[mask] = new_obj[mask]
-            independent_next_obj[mask] = new_next_obj[mask]
 
-            diff = np.abs((obs[:, :self.obj_size] - new_obj)[mask])
-            next_diff = np.abs((next_obs[:, :self.obj_size] - new_next_obj)[mask])
+            diff = np.abs((obs[:, :3] - new_obs[:, self.obj_pos_mask])[mask])
+            next_diff = np.abs((next_obs[:, :3] - new_next_obs[:, self.obj_pos_mask])[mask])
 
             is_independent = np.any(diff > self.aug_threshold, axis=-1)
             next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
@@ -571,12 +574,16 @@ class CoDA(ObjectAugmentationFunction):
             mask[mask] = ~(is_independent & next_is_independent)
             sample_new_obj = np.any(mask)
 
-        obs[:, self.obj_pos_mask] = independent_obj
-        next_obs[:, self.obj_pos_mask] = independent_next_obj
+        obs[:] = independent_obj
+        next_obs[:] = independent_next_obj
 
-        self._make_transition(obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj)
-
+        achieved_goal = next_obs[:, self.env.achieved_idx]
+        desired_goal = next_obs[:, self.env.goal_idx]
+        at_goal = self.env.task.is_success(achieved_goal, desired_goal).astype(bool)
+        reward[:] = self.env.task.compute_reward(achieved_goal, desired_goal, infos)
+        self._set_done_and_info(done, infos, at_goal)
         return obs, next_obs, action, reward, done, infos
+
 
 class CoDAProximal(ObjectAugmentationFunction):
     def __init__(self, env, p=0.5, **kwargs):
@@ -702,8 +709,8 @@ class TranslateObjectJitter(TranslateObject):
         self.lo = np.array([-0.02, -0.02, 0])
         self.hi = np.array([0.02, 0.02, 0])
 
-        self.min = np.array([-0.15, -0.15, 0.2])
-        self.max = np.array([0.15, 0.15, 0.2])
+        self.min = np.array([-0.15, -0.15, 0])
+        self.max = np.array([0.15, 0.15, 0.18])
 
     def _sample_objects(self, obs, next_obs):
         n = obs.shape[0]
