@@ -937,14 +937,16 @@ class SafeObjectAugmentationFunction(ObjectAugmentationFunction):
             new_obj, new_next_obj = self._sample_objects(obs, next_obs)
             new_obs[:, self.obj_pos_mask] = new_obj
             true_action = pi(torch.from_numpy(new_obs)).detach().numpy()
-            action_norm = np.linalg.norm(action)
-            inner_product = true_action.dot(action.T)/(action_norm*np.linalg.norm(true_action))
-            while inner_product > self.op_threshold:
+            action_norm = np.linalg.norm(action, axis=-1)
+            true_action_norm = np.linalg.norm(true_action)
+            inner_product = true_action.dot(action.T)/(action_norm*true_action_norm)
+            while inner_product < self.op_threshold and np.abs(action_norm-true_action_norm) < 0.2:
                 its += 1
                 new_obj, new_next_obj = self._sample_objects(obs, next_obs)
                 new_obs[:, self.obj_pos_mask] = new_obj
                 true_action = pi(torch.from_numpy(new_obs)).detach().numpy()
-                inner_product = true_action.dot(action.T) / (action_norm * np.linalg.norm(true_action))
+                true_action_norm = np.linalg.norm(true_action)
+                inner_product = true_action.dot(action.T) / (action_norm * true_action_norm)
 
                 if its > 5:
                     successful_aug[mask] = 0
