@@ -5,7 +5,14 @@ import numpy as np
 
 from augment.rl.augmentation_functions.panda.common import PANDA_AUG_FUNCTIONS, TranslateObject, \
     TranslateObjectProximal0, TranslateObjectProximal, CoDA, TranslateGoalProximal, CoDAProximal0, \
-    ObjectAugmentationFunction
+    ObjectAugmentationFunction, TranslateObjectJitter
+
+
+class TranslateObjectJitterPick(TranslateObjectJitter):
+
+    def __init__(self, env, **kwargs):
+        super().__init__(env=env, **kwargs)
+        self.aug_threshold = np.array([0.06, 0.1, 0.06])  # largest distance from center to block edge = 0.02
 
 
 class TranslateObjectPick(TranslateObject):
@@ -98,6 +105,7 @@ PANDA_PICKANDPLACE_AUG_FUNCTIONS.update(
         'translate_object': TranslateObjectPick,
         'translate_object_proxmial_0': TranslateObjectProximal0Pick,
         'translate_object_proximal': TranslateObjectProximalPick,
+        'translate_object_jitter': TranslateObjectJitterPick,
         'coda': CoDAPick,
         'coda_proximal_0': CoDAProximal0Pick,
         'coda_proximal': CoDAProximalPick,

@@ -154,7 +154,6 @@ class HERFlip(HER):
 #         else:
 #             return self.aug_function._augment(obs, next_obs, action, reward, done, infos)
 
-
 class TranslateObjectFlip(ObjectAugmentationFunction):
 
     def __init__(self, env,  **kwargs):
