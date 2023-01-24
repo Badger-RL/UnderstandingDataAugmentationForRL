@@ -397,13 +397,13 @@ class TD3(OffPolicyAlgorithmAugment):
                 pi = self._update(actor_replay_data=actor_data, critic_replay_data=critic_data,
                              actor_losses=actor_losses, critic_losses=critic_losses)
 
-                if pi is not None:
+                if self.policy_delay <= 1:
                     with th.no_grad():
                         pi_obs = pi[:self.batch_size]
                         a_obs = observed_replay_data.actions
                         opmse_obs = ((pi_obs - a_obs) ** 2).mean()
                         self.opmse_obs.append(opmse_obs.cpu())
-
+    
                         if self.use_aug:
                             if self.actor_data_source == 'both' and aug_replay_data is not None:
                                 pi_obs = pi[:self.batch_size]
