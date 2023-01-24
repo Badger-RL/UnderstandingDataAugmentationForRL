@@ -230,8 +230,8 @@ class ObjectAugmentationFunction(AugmentationFunction):
         self.aug_threshold = np.array([0.06, 0.06, 0.06])  # largest distance from center to block edge = 0.02
 
         self.obj_pos_mask = np.zeros_like(self.env.obj_idx, dtype=bool)
-        obj_pos_idx = np.argmax(self.env.obj_idx)
-        self.obj_pos_mask[obj_pos_idx:obj_pos_idx + 3] = True
+        self.obj_pos_idx = np.argmax(self.env.obj_idx)
+        self.obj_pos_mask[self.obj_pos_idx:self.obj_pos_idx + 3] = True
 
         self.obj_size = 3
 
@@ -247,8 +247,8 @@ class ObjectAugmentationFunction(AugmentationFunction):
     def _sample_objects(self, obs, next_obs):
         n = obs.shape[0]
         new_obj = self._sample_object(n)
-        obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
-        new_next_obj = new_obj + obj_pos_diff
+        # obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
+        new_next_obj = new_obj #+ obj_pos_diff
         return new_obj, new_next_obj
 
     def _check_independence(self, obs, next_obs, new_obj, new_next_obj, mask):
@@ -276,6 +276,8 @@ class ObjectAugmentationFunction(AugmentationFunction):
     def _make_transition(self, obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj):
         obs[:, self.obj_pos_mask] = independent_obj
         next_obs[:, self.obj_pos_mask] = independent_next_obj
+        obs[:, self.obj_pos_idx:-3] = 0
+        next_obs[:, self.obj_pos_idx:-3] = 0
 
         achieved_goal = next_obs[:, self.env.achieved_idx]
         desired_goal = next_obs[:, self.env.goal_idx]
@@ -852,7 +854,7 @@ class TranslateObjectJitter(TranslateObject):
 ########################################################################################################################
 
 class SafeObjectAugmentationFunction(ObjectAugmentationFunction):
-    def __init__(self, env, max_theta=45, **kwargs):
+    def __init__(self, env, max_theta=45, max_norm=0.1, **kwargs):
         super().__init__(env=env, **kwargs)
         self.delta = 0.05
         self.aug_threshold = np.array([0.06, 0.06, 0.06])  # largest distance from center to block edge = 0.02
@@ -863,6 +865,7 @@ class SafeObjectAugmentationFunction(ObjectAugmentationFunction):
 
         self.obj_size = 3
         self.op_threshold = np.cos(max_theta*np.pi/180)
+        self.max_norm = max_norm
 
         # self.lo = np.array([-0.02, -0.02, 0])
         # self.hi = np.array([0.02, 0.02, 0])
@@ -876,8 +879,8 @@ class SafeObjectAugmentationFunction(ObjectAugmentationFunction):
     def _sample_objects(self, obs, next_obs):
         n = obs.shape[0]
         new_obj = self._sample_object(n)
-        obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
-        new_next_obj = new_obj + obj_pos_diff
+        # obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
+        new_next_obj = new_obj #+ obj_pos_diff
         return new_obj, new_next_obj
 
     def _check_independence(self, obs, next_obs, new_obj, new_next_obj, mask):
@@ -905,6 +908,8 @@ class SafeObjectAugmentationFunction(ObjectAugmentationFunction):
     def _make_transition(self, obs, next_obs, action, reward, done, infos, independent_obj, independent_next_obj):
         obs[:, self.obj_pos_mask] = independent_obj
         next_obs[:, self.obj_pos_mask] = independent_next_obj
+        obs[:, self.obj_pos_idx:-3] = 0
+        next_obs[:, self.obj_pos_idx:-3] = 0
 
         achieved_goal = next_obs[:, self.env.achieved_idx]
         desired_goal = next_obs[:, self.env.goal_idx]
@@ -950,7 +955,7 @@ class SafeObjectAugmentationFunction(ObjectAugmentationFunction):
             action_norm = np.linalg.norm(action, axis=-1)
             true_action_norm = np.linalg.norm(true_action)
             inner_product = true_action.dot(action.T)/(action_norm*true_action_norm)
-            while inner_product < self.op_threshold and np.abs(action_norm-true_action_norm) < 0.05:
+            while inner_product < self.op_threshold and np.abs(action_norm-true_action_norm) < self.max_norm:
                 its += 1
                 new_obj, new_next_obj = self._sample_objects(obs, next_obs)
                 new_obs[:, self.obj_pos_mask] = new_obj
