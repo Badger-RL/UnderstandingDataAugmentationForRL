@@ -346,7 +346,7 @@ class TD3(OffPolicyAlgorithmAugment):
             polyak_update(self.critic_batch_norm_stats, self.critic_batch_norm_stats_target, 1.0)
             polyak_update(self.actor_batch_norm_stats, self.actor_batch_norm_stats_target, 1.0)
 
-        return pi
+            return pi
 
     def _update_aug_critic(self, critic_replay_data):
         self.aug_critic.optimizer.zero_grad()
