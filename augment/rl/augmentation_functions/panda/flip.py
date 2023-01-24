@@ -71,7 +71,39 @@ class TranslateGoalDynamic(GoalAugmentationFunction):
         else:
             new_goal = self.env.task._sample_n_goals(n)
         return new_goal
-#
+
+
+class HERFlip(HER):
+    def __init__(self, env, strategy='future', **kwargs):
+        super().__init__(env=env, **kwargs)
+
+    def quaternion_multiply(self, q0, q1):
+        w0, x0, y0, z0 = q0
+        w1, x1, y1, z1 = q1
+        return np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
+                         x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                         -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                         x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
+
+    def _sample_future(self, next_obs):
+        ep_length = next_obs.shape[0]
+        low = np.arange(ep_length)
+        indices = np.random.randint(low=low, high=ep_length)
+        final_pos = next_obs[indices]
+        final_pos = final_pos[:, self.env.achieved_idx]
+
+        a = np.arccos(final_pos[:, 0])
+        theta = np.random.uniform(-0.927, +0.927, size=(ep_length,))  # arccos(0.6) ~= +/-0.927
+        q_rotation = np.array([
+            np.cos(theta / 2),
+            a * np.sin(theta / 2),
+            a * np.sin(theta / 2),
+            a * np.sin(theta / 2),
+        ]).T
+        new_goal = self.quaternion_multiply(final_pos.T, q_rotation.T).T
+        return new_goal
+
+
 # class HERTranslateGoalProximal(HERMixed):
 #     def __init__(self, env, strategy='future', q=0.5, p=0.5, **kwargs):
 #         super().__init__(env=env, aug_function=TranslateGoalProximal, strategy=strategy, q=q, p=p, **kwargs)
@@ -337,5 +369,6 @@ PANDA_FLIP_AUG_FUNCTIONS.update(
         'coda': CoDAFlip,
         'coda_proximal_0': CoDAProximalFlip0,
         'coda_proximal': CoDAProximalFlip,
+        'her': HERFlip,
 
     })

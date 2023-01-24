@@ -66,9 +66,7 @@ class TranslateGoalProximal(GoalAugmentationFunction):
             dx = r*np.sin(phi)*np.cos(theta)
             dy = r*np.sin(phi)*np.sin(theta)
             dz = r*np.cos(phi)
-            dz = np.clip(dz, 0.0, 0.2)
-            if self.env.task.goal_range_high[-1] == 0:
-                dz[:] = 0
+            dz[:] = 0
             noise = np.array([dx, dy, dz]).T
             new_goal = next_obs[:, self.env.goal_idx] + noise
         else:
@@ -105,9 +103,21 @@ class HER(GoalAugmentationFunction):
         ep_length = next_obs.shape[0]
         low = np.arange(ep_length)
         indices = np.random.randint(low=low, high=ep_length)
-        final_pos = next_obs[indices].copy()
+        final_pos = next_obs[indices]
         final_pos = final_pos[:, self.env.achieved_idx]
-        return final_pos
+
+        r = np.random.uniform(0, self.delta, size=ep_length)
+        theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
+        phi = np.random.uniform(-np.pi / 2, np.pi / 2, size=ep_length)
+        dx = r * np.sin(phi) * np.cos(theta)
+        dy = r * np.sin(phi) * np.sin(theta)
+        dz = r * np.cos(phi)
+        dz = np.clip(dz, 0.0, 0.18)
+        if self.env.task.goal_range_high[-1] == 0:
+            dz[:] = 0
+        noise = np.array([dx, dy, dz]).T
+        new_goal = final_pos + noise
+        return new_goal
 
     def _sample_last(self, next_obs):
         final_pos = next_obs[:, self.env.achieved_idx].copy()
@@ -940,7 +950,7 @@ class SafeObjectAugmentationFunction(ObjectAugmentationFunction):
             action_norm = np.linalg.norm(action, axis=-1)
             true_action_norm = np.linalg.norm(true_action)
             inner_product = true_action.dot(action.T)/(action_norm*true_action_norm)
-            while inner_product < self.op_threshold and np.abs(action_norm-true_action_norm) < 0.2:
+            while inner_product < self.op_threshold and np.abs(action_norm-true_action_norm) < 0.05:
                 its += 1
                 new_obj, new_next_obj = self._sample_objects(obs, next_obs)
                 new_obs[:, self.obj_pos_mask] = new_obj
