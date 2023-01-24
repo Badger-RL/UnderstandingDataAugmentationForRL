@@ -387,17 +387,7 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
         next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
         observed_is_independent = is_independent & next_is_independent
 
-        if np.all(observed_is_independent):
-            desired_goal = next_obs[:, self.env.goal_idx]
-            ee_dist = (obs[:, :3] - desired_goal)
-            ee_next_dist = (next_obs[:, :3] - desired_goal)
-
-            # ee is too close to goal to generate reward signal
-            if np.all(ee_dist < self.aug_threshold) or np.all(ee_next_dist < self.aug_threshold):
-                return False
-            else:
-                return True
-        return False
+        return np.all(observed_is_independent)
 
     def _sample_object(self, n):
         new_obj = self.env.task._sample_n_objects(n)
@@ -411,6 +401,7 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
                  done: np.ndarray,
                  infos: List[Dict[str, Any]],
                  p=None,
+                 prox=None,
                  **kwargs
                  ):
 
@@ -421,10 +412,17 @@ class TranslateObjectProximal(ObjectAugmentationFunction):
 
         if np.random.random() < self.p:
             desired_goal = next_obs[:, self.env.goal_idx]
-            independent_obj = desired_goal
-            obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
-            independent_next_obj = independent_obj + obj_pos_diff
+            ee_dist = (obs[:, :3] - desired_goal)
+            ee_next_dist = (next_obs[:, :3] - desired_goal)
 
+            # ee is too close to goal to generate reward signal
+            if np.all(ee_dist < self.aug_threshold) or np.all(ee_next_dist < self.aug_threshold):
+                obs[:, self.env.goal_idx] = obs[:, self.obj_pos_mask]
+                next_obs[:, self.env.goal_idx] = next_obs[:, self.obj_pos_mask]
+            else:
+                independent_obj = desired_goal
+                obj_pos_diff = next_obs[:, self.obj_pos_mask] - obs[:, self.obj_pos_mask]
+                independent_next_obj = independent_obj + obj_pos_diff
         else:
             sample_new_obj = True
             while sample_new_obj:
