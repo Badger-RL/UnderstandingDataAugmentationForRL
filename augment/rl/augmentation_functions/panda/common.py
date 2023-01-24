@@ -939,7 +939,7 @@ class SafeObjectAugmentationFunction(ObjectAugmentationFunction):
             true_action = pi(torch.from_numpy(new_obs)).detach().numpy()
             action_norm = np.linalg.norm(action)
             inner_product = true_action.dot(action.T)/(action_norm*np.linalg.norm(true_action))
-            while inner_product < self.op_threshold:
+            while inner_product > self.op_threshold:
                 its += 1
                 new_obj, new_next_obj = self._sample_objects(obs, next_obs)
                 new_obs[:, self.obj_pos_mask] = new_obj
