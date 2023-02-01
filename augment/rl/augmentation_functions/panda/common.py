@@ -10,11 +10,16 @@ from augment.rl.augmentation_functions.augmentation_function import Augmentation
 class GoalAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
-        self.delta = 0.05
-
         self.goal_length = self.env.goal_idx.shape[-1]
+        # self.desired_goal_mask = None
+        # self.achieved_goal_mask = None
+        # self.robot_mask = None
+        # self.object_mask = None
 
     def _sample_goals(self, next_obs, **kwargs):
+        raise NotImplementedError()
+
+    def _sample_goal_noise(self, n, **kwargs):
         raise NotImplementedError()
 
     def _set_done_and_info(self, done, infos, at_goal):
@@ -35,7 +40,7 @@ class GoalAugmentationFunction(AugmentationFunction):
 
         new_goal = self._sample_goals(next_obs, p=p, **kwargs)
         obs[:, self.env.goal_idx] = new_goal
-        next_obs[:, self.env.goal_idx] = new_goal
+        next_obs[:, self.env.achieved_idx] = new_goal
 
         achieved_goal = next_obs[:, self.env.achieved_idx]
         at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
@@ -43,8 +48,7 @@ class GoalAugmentationFunction(AugmentationFunction):
         self._set_done_and_info(done, infos, at_goal)
 
 class TranslateGoal(GoalAugmentationFunction):
-
-    def __init__(self, env,  **kwargs):
+    def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
 
     def _sample_goals(self, next_obs, **kwargs):
@@ -52,33 +56,37 @@ class TranslateGoal(GoalAugmentationFunction):
         return self.env.task._sample_n_goals(ep_length)
 
 class TranslateGoalProximal(GoalAugmentationFunction):
-
-    def __init__(self, env, p=0.5,  **kwargs):
+    def __init__(self, env, p=0.5, **kwargs):
         super().__init__(env=env, **kwargs)
         self.p = p
 
+    def _sample_goal_noise(self, n):
+        r = np.random.uniform(0, self.delta, size=n)
+        theta = np.random.uniform(-np.pi, np.pi, size=n)
+        phi = np.random.uniform(-np.pi / 2, np.pi / 2, size=n)
+        dx = r * np.sin(phi) * np.cos(theta)
+        dy = r * np.sin(phi) * np.sin(theta)
+        dz = r * np.cos(phi)
+        dz[:] = 0
+        noise = np.array([dx, dy, dz]).T
+        return noise
+
     def _sample_goals(self, next_obs, **kwargs):
-        ep_length = next_obs.shape[0]
+        n = next_obs.shape[0]
         if np.random.random() < self.p:
-            r = np.random.uniform(0, self.delta, size=ep_length)
-            theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
-            phi = np.random.uniform(-np.pi/2, np.pi/2, size=ep_length)
-            dx = r*np.sin(phi)*np.cos(theta)
-            dy = r*np.sin(phi)*np.sin(theta)
-            dz = r*np.cos(phi)
-            dz[:] = 0
-            noise = np.array([dx, dy, dz]).T
+            noise = self._sample_goal_noise(n)
             new_goal = next_obs[:, self.env.goal_idx] + noise
         else:
-            new_goal = self.env.task._sample_n_goals(ep_length)
+            new_goal = self.env.task._sample_n_goals(n)
             achieved_goal = next_obs[:, self.env.achieved_idx]
             at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
 
             # resample if success (rejection sampling)
             while np.any(at_goal):
-                new_goal[at_goal] = self.env.task._sample_n_goals(ep_length)[at_goal]
+                new_goal[at_goal] = self.env.task._sample_n_goals(n)[at_goal]
                 at_goal = self.env.task.is_success(achieved_goal, new_goal).astype(bool)
         return new_goal
+
 
 class TranslateGoalProximal0(TranslateGoalProximal):
     def __init__(self, env, **kwargs):
@@ -100,23 +108,13 @@ class HER(GoalAugmentationFunction):
             self.goal_sampler = self._sample_last
 
     def _sample_future(self, next_obs):
-        ep_length = next_obs.shape[0]
-        low = np.arange(ep_length)
-        indices = np.random.randint(low=low, high=ep_length)
+        n = next_obs.shape[0]
+        low = np.arange(n)
+        indices = np.random.randint(low=low, high=n)
         final_pos = next_obs[indices]
         final_pos = final_pos[:, self.env.achieved_idx]
 
-        r = np.random.uniform(0, self.delta, size=ep_length)
-        theta = np.random.uniform(-np.pi, np.pi, size=ep_length)
-        phi = np.random.uniform(-np.pi / 2, np.pi / 2, size=ep_length)
-        dx = r * np.sin(phi) * np.cos(theta)
-        dy = r * np.sin(phi) * np.sin(theta)
-        dz = r * np.cos(phi)
-        dz[:] = 0
-        # dz = np.clip(dz, 0.0, 0.18)
-        # if self.env.task.goal_range_high[-1] == 0:
-        #     dz[:] = 0
-        noise = np.array([dx, dy, dz]).T
+        noise = self._sample_goal_noise(n)
         new_goal = final_pos + noise
         return new_goal
 
@@ -125,8 +123,7 @@ class HER(GoalAugmentationFunction):
         return final_pos
 
     def _sample_random(self, next_obs):
-        ep_length = next_obs.shape[0]
-        return self.env.task._sample_n_goals(ep_length)
+        raise NotImplementedError
 
     def _sample_goals(self, next_obs, **kwargs):
         return self.goal_sampler(next_obs)
@@ -862,6 +859,7 @@ class SafeObjectAugmentationFunction(ObjectAugmentationFunction):
 
         self.obj_size = 3
         self.op_threshold = np.cos(max_theta*np.pi/180)
+        self.max_norm = max_norm
 
         # self.lo = np.array([-0.02, -0.02, 0])
         # self.hi = np.array([0.02, 0.02, 0])

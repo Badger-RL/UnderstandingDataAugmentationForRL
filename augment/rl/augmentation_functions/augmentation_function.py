@@ -30,7 +30,7 @@ class AugmentationFunction:
 
         return aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos
 
-    def _passes_checks(self, obs, next_obs, reward, **kwargs):
+    def _check_observed_constraints(self, obs, next_obs, reward, **kwargs):
         return True
 
     def augment(self,
@@ -43,7 +43,7 @@ class AugmentationFunction:
                  infos: List[Dict[str, Any]],
                  **kwargs,):
 
-        if not self._passes_checks(obs, next_obs, reward):
+        if not self._check_observed_constraints(obs, next_obs, reward):
             return None, None, None, None, None, None
 
         aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos = \
@@ -70,16 +70,3 @@ class AugmentationFunction:
                  infos: List[Dict[str, Any]],
                  **kwargs,):
         raise NotImplementedError("Augmentation function not implemented.")
-
-
-        # successful_aug = self._augment(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_infos, **kwargs)
-        #
-        # if np.all(~successful_aug):
-        #     return None, None, None, None, None, None
-
-        # aug_obs = aug_obs[successful_aug]
-        # aug_next_obs = aug_next_obs[successful_aug]
-        # aug_action = aug_action[successful_aug]
-        # aug_reward = aug_reward[successful_aug]
-        # aug_done = aug_done[successful_aug]
-        # aug_infos = aug_infos[successful_aug]
