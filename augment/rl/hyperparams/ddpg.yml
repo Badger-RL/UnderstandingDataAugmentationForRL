@@ -209,25 +209,18 @@ PandaReach-v3:
 
 
 ######################
-FetchPush-v1:
+FetchReach-v2:
   <<: *panda
 
-FetchSlide-v1:
+FetchPush-v2:
   <<: *panda
 
-FetchPickAndPlace-v1:
+FetchSlide-v2:
+  <<: *panda
+
+FetchPickAndPlace-v2:
   <<: *panda
   batch_size: 512
-
-FetchFlip-v1:
-  <<: *panda
-  batch_size: 512
-
-FetchStack-v1:
-  <<: *panda
-
-FetchReach-v1:
-  <<: *panda
 
 Goal2D-v0: &predator_prey
   n_timesteps: !!float 1e6
