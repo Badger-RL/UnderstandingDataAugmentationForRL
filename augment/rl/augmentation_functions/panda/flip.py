@@ -4,7 +4,7 @@ from typing import Any, List, Dict
 import numpy as np
 
 from augment.rl.augmentation_functions.panda.common import GoalAugmentationFunction, PANDA_AUG_FUNCTIONS, HER, \
-    ObjectAugmentationFunction, TranslateObjectProximal0, TranslateObjectProximal, CoDA, HERMixed
+    ObjectAugmentationFunction, CoDA, HERMixed
 
 
 class TranslateGoalProximal(GoalAugmentationFunction):

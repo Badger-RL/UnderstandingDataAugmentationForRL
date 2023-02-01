@@ -70,3 +70,99 @@ class AugmentationFunction:
                  infos: List[Dict[str, Any]],
                  **kwargs,):
         raise NotImplementedError("Augmentation function not implemented.")
+
+
+class GoalAugmentationFunction(AugmentationFunction):
+    def __init__(self, env, **kwargs):
+        super().__init__(env=env, **kwargs)
+        self.goal_length = self.env.goal_idx.shape[-1]
+        self.desired_goal_mask = None
+        self.achieved_goal_mask = None
+        # self.robot_mask = None
+        # self.object_mask = None
+
+    def _sample_goals(self, next_obs, **kwargs):
+        raise NotImplementedError()
+
+    def _sample_goal_noise(self, n, **kwargs):
+        raise NotImplementedError()
+
+    def _set_done_and_info(self, done, infos, at_goal):
+        done |= at_goal
+        infos[done & ~at_goal] = [{'TimeLimit.truncated': True}]
+        infos[done & at_goal] = [{'TimeLimit.truncated': False}]
+
+    def _is_at_goal(self, achieved_goal, desired_goal, **kwargs):
+        raise NotImplementedError()
+
+    def _compute_reward(self, achieved_goal, desired_goal, **kwargs):
+        raise NotImplementedError()
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs,
+                 ):
+
+        new_goal = self._sample_goals(next_obs, p=p, **kwargs)
+        obs[:, self.desired_goal_mask] = new_goal
+        next_obs[:, self.desired_goal_mask] = new_goal
+
+        achieved_goal = next_obs[:, self.achieved_goal_mask]
+        at_goal = self._is_at_goal(achieved_goal, new_goal)
+        reward[:] = self._compute_reward(achieved_goal, new_goal)
+        self._set_done_and_info(done, infos, at_goal)
+
+
+class ObjectAugmentationFunction(AugmentationFunction):
+    def __init__(self, env, **kwargs):
+        super().__init__(env=env, **kwargs)
+        self.goal_length = self.env.goal_idx.shape[-1]
+        self.desired_goal_mask = None
+        self.achieved_goal_mask = None
+        self.robot_mask = None
+        self.object_mask = None
+
+    def _sample_object(self, n, **kwargs):
+        raise NotImplementedError()
+
+    def _sample_objects(self, obs, next_obs, **kwargs):
+        raise NotImplementedError()
+
+    def _set_done_and_info(self, done, infos, at_goal):
+        done |= at_goal
+        infos[done & ~at_goal] = [{'TimeLimit.truncated': True}]
+        infos[done & at_goal] = [{'TimeLimit.truncated': False}]
+
+    def _is_at_goal(self, achieved_goal, desired_goal, **kwargs):
+        raise NotImplementedError()
+
+    def _compute_reward(self, achieved_goal, desired_goal, **kwargs):
+        raise NotImplementedError()
+
+    def _augment(self,
+                 obs: np.ndarray,
+                 next_obs: np.ndarray,
+                 action: np.ndarray,
+                 reward: np.ndarray,
+                 done: np.ndarray,
+                 infos: List[Dict[str, Any]],
+                 p=None,
+                 **kwargs,
+                 ):
+
+        new_obj, new_next_obj = self._sample_objects(obs, next_obs, p=p, **kwargs)
+        obs[:, self.object_mask] = new_obj
+        next_obs[:, self.object_mask] = new_next_obj
+
+        achieved_goal = next_obs[:, self.achieved_goal_mask]
+        desired_goal = next_obs[:, self.desired_goal_mask]
+
+        at_goal = self._is_at_goal(achieved_goal, desired_goal)
+        reward[:] = self._compute_reward(achieved_goal, desired_goal)
+        self._set_done_and_info(done, infos, at_goal)
