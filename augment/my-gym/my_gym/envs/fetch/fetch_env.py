@@ -121,13 +121,14 @@ def get_base_fetch_env(RobotEnvClass: Union[MujocoRobotEnv]):
                 [ # everyything is 3d except gripper state and vel
                     grip_pos,
                     object_pos.ravel(),
-                    object_rel_pos.ravel(),
+                    # object_rel_pos.ravel(),
                     gripper_state, # 2
                     object_rot.ravel(),
                     object_velp.ravel(),
                     object_velr.ravel(),
                     grip_velp,
                     gripper_vel, # 2
+                    self.goal,
                 ]
             )
 
@@ -164,6 +165,23 @@ def get_base_fetch_env(RobotEnvClass: Union[MujocoRobotEnv]):
                     goal[2] += self.np_random.uniform(0, 0.45)
             else:
                 goal = self.initial_gripper_xpos[:3] + self.np_random.uniform(
+                    -self.target_range, self.target_range, size=3
+                )
+            return goal.copy()
+
+        def sample_n_goals(self, n):
+            if self.has_object:
+                goal = self.initial_gripper_xpos[:3] + self.np_random.uniform(
+                    -self.target_range, self.target_range, size=(n,3)
+                )
+                goal += self.target_offset
+                goal[:, 2] = self.height_offset
+                if self.target_in_the_air:
+                    in_the_air_targets = self.np_random.uniform(0, 0.45, n)
+                    target_in_the_air_mask = self.np_random.uniform(0, 1, n) < 0.5
+                    goal[target_in_the_air_mask, 2] += in_the_air_targets[target_in_the_air_mask]
+            else:
+                goal = self.initial_gripper_xpos[:, 3] + self.np_random.uniform(
                     -self.target_range, self.target_range, size=3
                 )
             return goal.copy()

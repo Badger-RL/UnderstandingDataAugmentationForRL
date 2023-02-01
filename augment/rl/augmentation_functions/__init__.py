@@ -1,4 +1,5 @@
 # from augment.rl.augmentation_functions.fetch import FETCH_PUSH_AUG_FUNCTIONS, FETCH_SLIDE_AUG_FUNCTIONS, FETCH_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.fetch.push import FETCH_PUSH_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.goal2d import GOAL2D_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.goal2dkey import GOAL2DKEY_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.humanoidstandup import HUMANOIDSTANDUP_AUG_FUNCTIONS
@@ -16,9 +17,6 @@ from augment.rl.augmentation_functions.swimmer import SWIMMER_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.reacher_k import *
 from augment.rl.augmentation_functions.walker2d import WALKER2D_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.ant import ANT_AUG_FUNCTIONS
-
-from augment.simulate import simulate
-
 
 
 AUGMENTATION_FUNCTIONS = {
@@ -54,7 +52,7 @@ AUGMENTATION_FUNCTIONS = {
     # 'PandaStack': PANDA_AUG_FUNCTIONS,
 
     # 'FetchReach': FETCH_AUG_FUNCTIONS,
-    # 'FetchPush': FETCH_PUSH_AUG_FUNCTIONS,
+    'FetchPush': FETCH_PUSH_AUG_FUNCTIONS,
     # 'FetchSlide': FETCH_SLIDE_AUG_FUNCTIONS,
     # 'FetchPickAndPlace': FETCH_AUG_FUNCTIONS,
 }

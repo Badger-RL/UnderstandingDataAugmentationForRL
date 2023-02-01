@@ -75,7 +75,7 @@ class AugmentationFunction:
 class GoalAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
-        self.goal_length = self.env.goal_idx.shape[-1]
+        # self.goal_length = self.env.goal_idx.shape[-1]
         self.desired_goal_mask = None
         self.achieved_goal_mask = None
         # self.robot_mask = None
@@ -122,7 +122,7 @@ class GoalAugmentationFunction(AugmentationFunction):
 class ObjectAugmentationFunction(AugmentationFunction):
     def __init__(self, env, **kwargs):
         super().__init__(env=env, **kwargs)
-        self.goal_length = self.env.goal_idx.shape[-1]
+        # self.goal_length = self.env.goal_idx.shape[-1]
         self.desired_goal_mask = None
         self.achieved_goal_mask = None
         self.robot_mask = None

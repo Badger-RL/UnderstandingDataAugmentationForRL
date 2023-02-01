@@ -175,6 +175,36 @@ register(
 #     )
 
 ############################################################################
+### Fetch
+
+
+# Fetch
+
+register(
+    id=f"FetchReach-v2",
+    entry_point="my_gym.envs.fetch:MujocoFetchReachEnv",
+    max_episode_steps=50,
+)
+
+register(
+    id=f"FetchPush-v2",
+    entry_point="my_gym.envs.fetch:MujocoFetchPushEnv",
+    max_episode_steps=50,
+)
+
+register(
+    id=f"FetchSlide-v2",
+    entry_point="my_gym.envs.fetch:MujocoFetchSlideEnv",
+    max_episode_steps=50,
+)
+
+register(
+    id=f"FetchPickAndPlace-v2",
+    entry_point="my_gym.envs.fetch:MujocoFetchPickAndPlaceEnv",
+    max_episode_steps=50,
+)
+
+############################################################################
 ### Toy
 
 register(

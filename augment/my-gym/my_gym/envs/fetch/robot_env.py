@@ -93,9 +93,19 @@ class BaseRobotEnv(GoalEnv):
         #         ),
         #     )
         # )
+        obs_dim = obs['observation'].shape[0]+obs['achieved_goal'].shape[0]
+        self.observation_space = spaces.Box(-np.inf, np.inf, shape=(obs_dim,), dtype=np.float64)
 
-        self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype=np.float64)
+        self.achieved_goal_mask = np.zeros(self.observation_space.shape, dtype=bool)
+        self.desired_goal_mask = np.zeros(self.observation_space.shape, dtype=bool)
+        self.object_pos_mask = np.zeros(self.observation_space.shape, dtype=bool)
+        self.robot_pos_mask = np.zeros(self.observation_space.shape, dtype=bool)
 
+        # Only valid for envs with object
+        self.achieved_goal_mask[3:6] = True
+        self.desired_goal_mask[-3:] = True
+        self.object_pos_mask[3:6] = True
+        self.robot_pos_mask[:3] = True
 
         self.render_mode = render_mode
 
