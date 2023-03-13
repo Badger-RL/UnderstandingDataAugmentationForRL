@@ -1,4 +1,6 @@
 from typing import Dict, List, Any
+
+import gym
 import numpy as np
 import torch
 
@@ -223,12 +225,10 @@ class PandaObjectAugmentationFunction(ObjectAugmentationFunction):
 
         sample_new_obj = True
         while sample_new_obj:
-            new_obj = self._sample_object(n, **kwargs)
-            # new_next_obj = new_obj
-            obj_pos_diff = next_obs[:, self.object_mask] - obs[:, self.object_mask]
-            new_next_obj = new_obj + obj_pos_diff
-            independent_obj[mask] = new_obj[mask]
-            independent_next_obj[mask] = new_next_obj[mask]
+            new_obj = self._sample_object(1, **kwargs)
+            new_next_obj = new_obj
+            independent_obj[mask] = new_obj
+            independent_next_obj[mask] = new_next_obj
 
             is_independent, next_is_independent = self._check_independence(obs, next_obs, new_obj, new_next_obj, mask)
             mask[mask] = ~(is_independent & next_is_independent)
@@ -236,9 +236,29 @@ class PandaObjectAugmentationFunction(ObjectAugmentationFunction):
 
         return independent_obj, independent_next_obj
 
+
+    # def _sample_objects(self, obs, next_obs, **kwargs):
+    #     n = obs.shape[0]
+    #
+    #     sample_new_obj = True
+    #     while sample_new_obj:
+    #         new_obj = self._sample_object(1, **kwargs)
+    #         new_next_obj = new_obj
+    #
+    #         diff = np.abs((obs[:, :3] - new_obj))
+    #         next_diff = np.abs((next_obs[:, :3] - new_next_obj))
+    #
+    #         is_independent = np.any(diff > self.aug_threshold, axis=-1)
+    #         next_is_independent = np.any(next_diff > self.aug_threshold, axis=-1)
+    #
+    #         sample_new_obj = ~(is_independent & next_is_independent)
+    #
+    #     return new_obj, new_next_obj
+
+
     def _check_independence(self, obs, next_obs, new_obj, new_next_obj, mask):
-        new_obj = new_obj[mask]
-        new_next_obj = new_next_obj[mask]
+        new_obj = new_obj
+        new_next_obj = new_next_obj
 
         diff = np.abs((obs[mask, :3] - new_obj))
         next_diff = np.abs((next_obs[mask, :3] - new_next_obj))
@@ -963,3 +983,35 @@ PANDA_AUG_FUNCTIONS = {
     'translate_object_safe': TranslateObjectSafe,
 
 }
+
+
+
+def check_valid(env, aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info):
+
+    # set env to aug_obs
+    # env = gym.make('Walker2d-v4', render_mode='human')
+
+    # env.reset()
+    qpos, qvel = aug_obs[:21+1], aug_obs[22:]
+    x = aug_info['x_position']
+    y = aug_info['y_position']
+    qpos = np.concatenate((np.array([0,0]), qpos))
+    env.set_state(qpos, qvel)
+
+    # determine ture next_obs, reward
+    next_obs_true, reward_true, terminated_true, truncated_true, info_true = env.step(aug_action)
+    print(aug_next_obs[22:23+1])
+    print(next_obs_true[22:23+1])
+    print(aug_next_obs - next_obs_true)
+    print('here', aug_reward-reward_true)
+    print(aug_reward, aug_info)
+    print(reward_true, info_true)
+    assert np.allclose(aug_next_obs, next_obs_true)
+    assert np.allclose(aug_reward, reward_true)
+
+
+if __name__ == "__main__":
+    env = gym.make('PandaPush-v3')
+    f = TranslateObject(env=env)
+
+
