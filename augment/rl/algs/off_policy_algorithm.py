@@ -159,11 +159,10 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         self.coda_n = coda_n
         self.coda_n_floor = int(np.floor(coda_n))
         self.coda_prob = coda_n - self.coda_n_floor
-        self.use_coda = self.coda_function is not None
         self.aug_buffer_size = aug_buffer_size
 
         self.use_aug = self.aug_function is not None
-        if self.use_aug or self.use_coda:
+        if self.use_aug:
             assert self._vec_normalize_env is None
             assert not self.optimize_memory_usage
             self._setup_augmented_replay_buffer()
@@ -174,12 +173,8 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
     def _setup_augmented_replay_buffer(self):
         if self.aug_buffer_size:
             aug_buffer_size = self.aug_buffer_size
-        elif self.use_coda and self.use_aug:
-            aug_buffer_size = int(self.buffer_size * (self.aug_n+self.coda_n))
-        elif self.use_aug:
+        if self.use_aug:
             aug_buffer_size = int(self.buffer_size * self.aug_n)
-        elif self.use_coda:
-            aug_buffer_size = int(self.buffer_size * self.coda_n)
 
         self.aug_replay_buffer = ReplayBuffer(
             aug_buffer_size,
@@ -192,12 +187,6 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         )
 
     def augment_transition(self, obs, next_obs, action, reward, done, info):
-        normalization_constant = 1
-        dist = None
-        if self.aug_constraint is not None:
-            dist = self.replay_buffer.marginal_hist + self.aug_constraint*self.replay_buffer.num_states
-            dist /= dist.sum()
-
         aug_n = self.aug_n_floor + int(np.random.random() < self.aug_prob)
         if aug_n < 1: return None, None, None, None, None, None
         aug_transition = self.aug_function.augment(
@@ -208,9 +197,9 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             reward,
             done,
             info,
-            p=self.replay_buffer.get_reward_density(),
-            replay_buffer=self.replay_buffer,
-            pi=self.actor
+            # p=self.replay_buffer.get_reward_density(),
+            # replay_buffer=self.replay_buffer,
+            # pi=self.actor
             # p=self.replay_buffer.state_counts/self.replay_buffer.num_states
         )
 
@@ -405,9 +394,6 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
             self._store_transition(replay_buffer, buffer_actions, new_obs, rewards, dones, infos)
             self.replay_buffer.update_success_queue(rewards)
 
-            if self.use_coda:
-                self._coda()
-
             if self.use_aug:
                 self.aug_indices.append(self.replay_buffer.size()-1)
                 self.past_infos.append(infos)
@@ -417,14 +403,15 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                     do_aug = (self.num_timesteps % self.aug_freq == 0) or dones.all()
 
                 if do_aug:
+                    # Fetch most recent transition data from observed replay buffer
                     env_indices = np.random.randint(0, high=self.n_envs, size=(len(self.aug_indices),))
                     obs = self.replay_buffer.observations[self.aug_indices, env_indices, :]
                     next_obs = self.replay_buffer.next_observations[self.aug_indices, env_indices, :]
                     actions = self.replay_buffer.actions[self.aug_indices, env_indices, :]
                     dones = self.replay_buffer.dones[self.aug_indices, env_indices]
-                    # timeouts = self.replay_buffer.timeouts[self.aug_indices, env_indices]
                     rewards = self.replay_buffer.rewards[self.aug_indices, env_indices]
 
+                    # actions are scaled before being added to the the replay buffer. So, we unscale it, augmented it, and then rescale it.
                     unscaled_actions = self.policy.unscale_action(actions)
                     aug_obs, aug_next_obs, aug_unscaled_action, aug_reward, aug_done, aug_info = self.augment_transition(
                         obs,
@@ -489,30 +476,6 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
         dones = th.concat((observed_batch.dones, aug_batch.dones))
 
         return ReplayBufferSamples(observations, actions, next_observations, dones, rewards), observed_batch, aug_batch
-
-    def _coda(self):
-        num_coda_samples_made = 0
-        coda_n = self.coda_n_floor + int(np.random.random() < self.coda_prob)
-        if self.aug_replay_buffer.size() < 10000: return
-        while num_coda_samples_made < coda_n:
-            observation0, action0, next_observation0, reward0, done0, timeout0 = self.replay_buffer.sample_array_most_recent()
-            observation1, action1, next_observation1, reward1, done1, timeout1 = self.replay_buffer.sample_array(
-                batch_size=1)
-
-            aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info = self.coda_function.augment(
-                observation0,
-                next_observation0,
-                action0,
-                observation1,
-                next_observation1,
-                reward1,
-                done1,
-                timeout1
-            )
-
-            if aug_obs is not None:  # When aug_n < 1, we only augment a fraction of transitions.
-                self.aug_replay_buffer.add(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info)
-                num_coda_samples_made += 1
 
     def _sample_action(
         self,
