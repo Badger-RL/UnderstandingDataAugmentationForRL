@@ -397,29 +397,29 @@ class TD3(OffPolicyAlgorithmAugment):
                 pi = self._update(actor_replay_data=actor_data, critic_replay_data=critic_data,
                              actor_losses=actor_losses, critic_losses=critic_losses)
 
-                if self.policy_delay <= 1:
-                    with th.no_grad():
-                        pi_obs = pi[:self.batch_size]
-                        a_obs = observed_replay_data.actions
-                        opmse_obs = ((pi_obs - a_obs) ** 2).mean()
-                        self.opmse_obs.append(opmse_obs.cpu())
-    
-                        if self.use_aug:
-                            if self.actor_data_source == 'both' and aug_replay_data is not None:
-                                pi_obs = pi[:self.batch_size]
-                                a_obs = observed_replay_data.actions
-                                opmse_obs = ((pi_obs - a_obs) ** 2).mean()
-                                self.opmse_obs.append(opmse_obs.cpu())
-
-                                pi_aug = pi[self.batch_size:]
-                                a_aug = aug_replay_data.actions
-                                opmse_aug = ((pi_aug - a_aug) ** 2).mean()
-                                self.opmse_aug.append(opmse_aug.cpu())
-                            else:
-                                pi_aug = self.actor(aug_replay_data.observations)
-                                a_aug = aug_replay_data.actions
-                                opmse_aug = ((pi_aug - a_aug) ** 2).mean()
-                                self.opmse_aug.append(opmse_aug.cpu())
+                # if self.policy_delay <= 1:
+                #     with th.no_grad():
+                #         pi_obs = pi[:self.batch_size]
+                #         a_obs = observed_replay_data.actions
+                #         opmse_obs = ((pi_obs - a_obs) ** 2).mean()
+                #         self.opmse_obs.append(opmse_obs.cpu())
+                #
+                #         if self.use_aug:
+                #             if self.actor_data_source == 'both' and aug_replay_data is not None:
+                #                 pi_obs = pi[:self.batch_size]
+                #                 a_obs = observed_replay_data.actions
+                #                 opmse_obs = ((pi_obs - a_obs) ** 2).mean()
+                #                 self.opmse_obs.append(opmse_obs.cpu())
+                #
+                #                 pi_aug = pi[self.batch_size:]
+                #                 a_aug = aug_replay_data.actions
+                #                 opmse_aug = ((pi_aug - a_aug) ** 2).mean()
+                #                 self.opmse_aug.append(opmse_aug.cpu())
+                #             else:
+                #                 pi_aug = self.actor(aug_replay_data.observations)
+                #                 a_aug = aug_replay_data.actions
+                #                 opmse_aug = ((pi_aug - a_aug) ** 2).mean()
+                #                 self.opmse_aug.append(opmse_aug.cpu())
 
 
                 # print(opmse_obs, opmse_aug)
