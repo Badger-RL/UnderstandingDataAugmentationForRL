@@ -16,7 +16,6 @@ from stable_baselines3.dqn.policies import CnnPolicy, DQNPolicy, MlpPolicy, Mult
 
 # from augment.rl.algs.buffers import ReplayBuffer
 from augment.rl.algs.off_policy_algorithm import OffPolicyAlgorithmAugment
-from augment.rl.augmentation_functions import AugmentationFunction
 
 
 class DQN(OffPolicyAlgorithmAugment):
@@ -98,7 +97,7 @@ class DQN(OffPolicyAlgorithmAugment):
         seed: Optional[int] = None,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
-        aug_function: Optional[AugmentationFunction] = None,
+        aug_function: Optional = None,
         aug_ratio: Optional[Union[float, Schedule]] = None,
         aug_n: Optional[int] = 1,
         aug_freq: Optional[Union[int, str]] = 1,
