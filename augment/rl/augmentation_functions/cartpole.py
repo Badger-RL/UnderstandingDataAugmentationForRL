@@ -5,7 +5,7 @@ from augment.rl.augmentation_functions.augmentation_function import Augmentation
 
 class CartPoleTranslate(AugmentationFunction):
 
-    def __init__(self,  noise_scale=0.9, **kwargs):
+    def __init__(self,  noise_scale=4, **kwargs):
         super().__init__()
         self.noise_scale = noise_scale
         print(locals())
@@ -47,7 +47,11 @@ class CartPoleReflect(AugmentationFunction):
         obs[:,1:] *= -1
         next_obs[:,1:] *= -1
         next_obs[:, 0] -= 2*delta_x
-        action = ~action
+
+        mask = action == 0
+        action[mask] = 1
+        action[~mask] = 0
+        # action = ~action
 
         return obs, next_obs, action, reward, done, infos
 
@@ -76,8 +80,9 @@ class CartPoleTranslateReflect(AugmentationFunction):
 
         obs[:,0:] *= -1
         next_obs[:,0:] *= -1
-        action *= -1
-
+        mask = action == 0
+        action[mask] = 1
+        action[~mask] = 0
         return obs, next_obs, action, reward, done, infos
 
 CARTPOLE_AUG_FUNCTIONS = {
