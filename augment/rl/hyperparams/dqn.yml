@@ -17,17 +17,17 @@ atari:
 
 # Almost Tuned
 CartPole-v1:
-  n_timesteps: !!float 2.5e5
+  n_timesteps: !!float 3e5
   policy: 'MlpPolicy'
   learning_rate: !!float 5e-5
-  batch_size: 64
+  batch_size: 128
   buffer_size: 100000
   learning_starts: 10000
-  gamma: 0.99
+  gamma: 0.999
   target_update_interval: 10
-  train_freq: 256
-  gradient_steps: 128
-  exploration_fraction: 0.10
+  train_freq: 1
+  gradient_steps: 1
+  exploration_fraction: 0.2
   exploration_final_eps: 0.001
   policy_kwargs: "dict(net_arch=[256, 256])"
 
