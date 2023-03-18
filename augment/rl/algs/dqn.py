@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import gym
 import numpy as np
 import torch as th
-from stable_baselines3.common.buffers import ReplayBuffer
+from augment.rl.algs.buffers import ReplayBuffer
 from torch.nn import functional as F
 
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
@@ -81,6 +81,7 @@ class DQN(OffPolicyAlgorithmAugment):
         tau: float = 1.0,
         gamma: float = 0.99,
         train_freq: Union[int, Tuple[int, str]] = 4,
+        extra_collect_info: Tuple[int, int] = (0, 0),
         gradient_steps: int = 1,
         replay_buffer_class: Optional[ReplayBuffer] = ReplayBuffer,
         replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
@@ -100,8 +101,19 @@ class DQN(OffPolicyAlgorithmAugment):
         aug_function: Optional[AugmentationFunction] = None,
         aug_ratio: Optional[Union[float, Schedule]] = None,
         aug_n: Optional[int] = 1,
+        aug_freq: Optional[Union[int, str]] = 1,
         aug_buffer: Optional[bool] = True,
+        aug_buffer_size: Optional[int] = None,
         aug_constraint: Optional[float] = 0,
+        actor_data_source: Optional[str] = 'both',
+        critic_data_source: Optional[str] = 'both',
+        # freeze_layers: Optional[List[str]] = ('both', 'both', 'both'),
+        obs_active_layer_mask: Optional[List[int]] = (),
+        aug_active_layer_mask: Optional[List[int]] = (),
+        separate_aug_critic: Optional[bool] = False,
+        coda_function: Optional = None,
+        coda_n: Optional = 1,
+        critic_clip: Optional = (-50, 0),
     ):
 
         super().__init__(
@@ -114,6 +126,7 @@ class DQN(OffPolicyAlgorithmAugment):
             tau,
             gamma,
             train_freq,
+            extra_collect_info,
             gradient_steps,
             action_noise=None,  # No action noise
             replay_buffer_class=replay_buffer_class,
@@ -122,7 +135,6 @@ class DQN(OffPolicyAlgorithmAugment):
             tensorboard_log=tensorboard_log,
             verbose=verbose,
             device=device,
-            create_eval_env=create_eval_env,
             seed=seed,
             sde_support=False,
             optimize_memory_usage=optimize_memory_usage,
@@ -132,9 +144,14 @@ class DQN(OffPolicyAlgorithmAugment):
             aug_ratio=aug_ratio,
             aug_n=aug_n,
             aug_buffer=aug_buffer,
-            aug_constraint=aug_constraint
+            aug_buffer_size=aug_buffer_size,
+            aug_constraint=aug_constraint,
+            aug_freq=aug_freq,
+            coda_function=coda_function,
+            coda_n=coda_n
         )
 
+        self.random_action_prob = 0
         self.exploration_initial_eps = exploration_initial_eps
         self.exploration_final_eps = exploration_final_eps
         self.exploration_fraction = exploration_fraction
@@ -197,24 +214,13 @@ class DQN(OffPolicyAlgorithmAugment):
         losses = []
         for _ in range(gradient_steps):
             # Sample replay buffer
-            replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)
+            replay_data, observed_replay_data, aug_replay_data = self.sample_replay_buffers()
 
-            if self.use_aug:
-                batch_size_aug = int(batch_size*self.aug_ratio(self._current_progress_remaining)*self.aug_n)
-                diff = batch_size - batch_size_aug
-                replay_data_aug = self.aug_replay_buffer.sample(batch_size_aug, env=self._vec_normalize_env)
-
-                observations = th.concat((replay_data.observations, replay_data_aug.observations))
-                actions = th.concat((replay_data.actions, replay_data_aug.actions))
-                next_observations = th.concat((replay_data.next_observations, replay_data_aug.next_observations))
-                rewards = th.concat((replay_data.rewards, replay_data_aug.rewards))
-                dones = th.concat((replay_data.dones, replay_data_aug.dones))
-            else:
-                observations = replay_data.observations
-                actions = replay_data.actions
-                next_observations = replay_data.next_observations
-                rewards = replay_data.rewards
-                dones = replay_data.dones
+            observations = replay_data.observations
+            actions = replay_data.actions
+            next_observations = replay_data.next_observations
+            rewards = replay_data.rewards
+            dones = replay_data.dones
 
             with th.no_grad():
                 # Compute the next Q-values using the target network
@@ -296,11 +302,7 @@ class DQN(OffPolicyAlgorithmAugment):
             total_timesteps=total_timesteps,
             callback=callback,
             log_interval=log_interval,
-            eval_env=eval_env,
-            eval_freq=eval_freq,
-            n_eval_episodes=n_eval_episodes,
             tb_log_name=tb_log_name,
-            eval_log_path=eval_log_path,
             reset_num_timesteps=reset_num_timesteps,
         )
 

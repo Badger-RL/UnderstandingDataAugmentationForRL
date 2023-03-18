@@ -45,11 +45,11 @@ if __name__ == '__main__':
     parser.add_argument("--use-coda", type=str, default=False)
     parser.add_argument("--coda-n", type=float, default=1)
 
-    parser.add_argument("--aug-function", type=str, default=None)
+    parser.add_argument("--aug-function", type=str, default='translate_object')
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-n", type=float, default=1)
     parser.add_argument("--aug-ratio", type=float, default=1)
-    parser.add_argument("--aug-freq", type=str, default=1)
+    parser.add_argument("--aug-freq", type=str, default='episode')
     parser.add_argument("--aug-schedule", type=str, default="constant")
     parser.add_argument("--aug-schedule-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-buffer", type=bool, default=True)
@@ -239,9 +239,14 @@ if __name__ == '__main__':
         'aug_function_kwargs': args.aug_function_kwargs
     }
     saved_action_noise_hyperparams = {
-        'noise_type': hyperparams['noise_type'],
-        'noise_std': hyperparams['noise_std']
+        'noise_type': None,
+        'noise_std': None,
     }
+    if algo != 'dqn':
+        saved_action_noise_hyperparams = {
+            'noise_type': hyperparams['noise_type'],
+            'noise_std': hyperparams['noise_std']
+        }
     preprocess_action_noise(hyperparams=hyperparams, env=env)
     # hyperparams['policy_kwargs'].update({'features_extractor_class': NeuralExtractor})
 
@@ -276,7 +281,8 @@ if __name__ == '__main__':
     saved_hyperparams.update(hyperparams)
     saved_hyperparams.update(saved_action_noise_hyperparams)
     saved_hyperparams.update(saved_aug_function_hyperparams)
-    del saved_hyperparams['action_noise']
+    if algo != 'dqn':
+        del saved_hyperparams['action_noise']
 
     with open(os.path.join(save_dir, "config.yml"), "w") as f:
         yaml.dump(saved_hyperparams, f, sort_keys=True)
@@ -294,7 +300,9 @@ if __name__ == '__main__':
                                  model_save_freq=args.model_save_freq,
                                  log_path=save_dir, best_model_save_path=best_model_save_dir)
     opmse_callback = SaveOPMSECallback(log_path=save_dir, save_freq=args.eval_freq)
-    callbacks = [eval_callback, opmse_callback]
+    # callbacks = [eval_callback, opmse_callback]
+    callbacks = [eval_callback]
+
     # if args.save_replay_buffer:
     #     hist_callback = SaveReplayDistribution(log_path=save_dir, save_freq=args.eval_freq)
     #     callbacks.append(hist_callback)

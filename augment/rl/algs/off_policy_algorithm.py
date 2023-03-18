@@ -412,7 +412,10 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                     rewards = self.replay_buffer.rewards[self.aug_indices, env_indices]
 
                     # actions are scaled before being added to the the replay buffer. So, we unscale it, augmented it, and then rescale it.
-                    unscaled_actions = self.policy.unscale_action(actions)
+                    if isinstance(self.env.action_space, gym.spaces.Box):
+                        unscaled_actions = self.policy.unscale_action(actions)
+                    else:
+                        unscaled_actions = actions
                     aug_obs, aug_next_obs, aug_unscaled_action, aug_reward, aug_done, aug_info = self.augment_transition(
                         obs,
                         next_obs,
@@ -422,7 +425,10 @@ class OffPolicyAlgorithmAugment(OffPolicyAlgorithm):
                         self.past_infos,
                     )
                     if aug_obs is not None: # When aug_n < 1, we only augment a fraction of transitions.
-                        aug_action = self.policy.scale_action(aug_unscaled_action)
+                        if isinstance(self.env.action_space, gym.spaces.Box):
+                            aug_action = self.policy.scale_action(aug_unscaled_action)
+                        else:
+                            aug_action = aug_unscaled_action
                         self.aug_replay_buffer.extend(aug_obs, aug_next_obs, aug_action, aug_reward, aug_done, aug_info)
                     self.aug_indices.clear()
                     self.past_infos.clear()

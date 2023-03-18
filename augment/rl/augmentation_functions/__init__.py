@@ -1,4 +1,5 @@
 # from augment.rl.augmentation_functions.fetch import FETCH_PUSH_AUG_FUNCTIONS, FETCH_SLIDE_AUG_FUNCTIONS, FETCH_AUG_FUNCTIONS
+from augment.rl.augmentation_functions.cartpole import CARTPOLE_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.fetch.push import FETCH_PUSH_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.goal2d import GOAL2D_AUG_FUNCTIONS
 from augment.rl.augmentation_functions.goal2dkey import GOAL2DKEY_AUG_FUNCTIONS
@@ -30,7 +31,7 @@ AUGMENTATION_FUNCTIONS = {
     'InvertedPendulum': INVERTED_PENDULUM_AUG_FUNCTIONS,
     'InvertedDoublePendulum': INVERTED_DOUBLE_PENDULUM_AUG_FUNCTIONS,
 
-    'CartPole': INVERTED_PENDULUM_AUG_FUNCTIONS,
+    'CartPole': CARTPOLE_AUG_FUNCTIONS,
     'dmc_cartpole_swingup_0': INVERTED_PENDULUM_AUG_FUNCTIONS,
     'dmc_cartpole_swingup_sparse_0': INVERTED_PENDULUM_AUG_FUNCTIONS,
     'dmc_cartpole_balance_0': INVERTED_PENDULUM_AUG_FUNCTIONS,

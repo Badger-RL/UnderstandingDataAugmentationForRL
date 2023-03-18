@@ -15,7 +15,7 @@ from augment.rl.algs.ddpg import DDPG
 # from augment.rl.algs.ppo import PPO
 from augment.rl.algs.td3 import TD3
 # from augment.rl.algs.sac import SAC
-# from augment.rl.algs.dqn import DQN
+from augment.rl.algs.dqn import DQN
 
 from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise
 from stable_baselines3.common.vec_env import VecEnv
@@ -205,3 +205,23 @@ SCHEDULES = {
     'linear': linear_schedule,
     'exponential': exponential_schedule,
 }
+
+
+id = 476
+id = 487
+id = 488
+id = 490
+
+id = 496
+id = 516
+# with np.load(f'results/PandaPush-v3/ddpg/run_{id}/opmse.npz') as f:
+#     print(f['opmse_obs'])
+#     print(f['opmse_aug'])
+#     plt.plot(f['opmse_obs'])
+#     plt.plot(f['opmse_aug'])
+#     plt.show()
+
+# with np.load(f'results/PandaPush-v3/ddpg/run_{id}/evaluations.npz') as f:
+#     print(f['successes'])
+#     plt.plot(f['successes'])
+#     plt.show()

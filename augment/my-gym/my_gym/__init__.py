@@ -22,11 +22,11 @@ ENVS_DIR = os.path.join(os.path.dirname(__file__), 'envs')
 ###########################################################################
 ### Classic control
 
-register(
-    id="CartPole-v1",
-    entry_point="my_gym.envs.cartpole:CartPoleEnv",
-    max_episode_steps=500,
-)
+# register(
+#     id="CartPole-v1",
+#     entry_point="my_gym.envs.cartpole:CartPoleEnv",
+#     max_episode_steps=500,
+# )
 
 ###########################################################################
 ### Mujoco
