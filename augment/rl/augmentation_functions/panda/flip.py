@@ -3,11 +3,11 @@ from typing import Any, List, Dict
 
 import numpy as np
 
-from augment.rl.augmentation_functions.panda.common import GoalAugmentationFunction, PANDA_AUG_FUNCTIONS, HER, \
-    ObjectAugmentationFunction, CoDA, HERMixed
+from augment.rl.augmentation_functions.panda.common import PANDA_AUG_FUNCTIONS, HER, \
+    ObjectAugmentationFunction, CoDA, HERMixed, PandaGoalAugmentationFunction
 
 
-class TranslateGoalProximal(GoalAugmentationFunction):
+class TranslateGoalProximal(PandaGoalAugmentationFunction):
 
     def __init__(self, env, p=0.5,  **kwargs):
         super().__init__(env=env, **kwargs)
@@ -50,7 +50,7 @@ class TranslateGoalProximal0(TranslateGoalProximal):
         super().__init__(env=env, p=0, **kwargs)
 
 
-class TranslateGoalDynamic(GoalAugmentationFunction):
+class TranslateGoalDynamic(PandaGoalAugmentationFunction):
 
     def __init__(self, env,  **kwargs):
         super().__init__(env=env, **kwargs)
