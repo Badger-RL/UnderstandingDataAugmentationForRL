@@ -8,7 +8,7 @@ from my_gym.envs.my_env import MyEnv
 
 
 class Goal2DEnv(MyEnv):
-    def __init__(self, delta=0.025, sparse=1, rbf_n=None, d_fourier=None, neural=False, d=1, quadrant=False, center=False):
+    def __init__(self, delta=0.025, sparse=1, rbf_n=None, d_fourier=None, neural=False, d=1, quadrant=False, center=False, fixed_goal=False):
 
         self.n = 2
         self.action_space = gym.spaces.Box(low=np.zeros(2), high=np.array([1, 2 * np.pi]), shape=(self.n,))
@@ -24,6 +24,7 @@ class Goal2DEnv(MyEnv):
         self.x_norm = None
         self.quadrant = quadrant
         self.center = center
+        self.fixed_goal = fixed_goal
         super().__init__(rbf_n=rbf_n, d_fourier=d_fourier, neural=neural)
 
     def _clip_position(self):
@@ -57,6 +58,8 @@ class Goal2DEnv(MyEnv):
         goal = np.random.uniform(low=-self.d, high=self.d, size=(self.n,))
         if self.quadrant:
             goal = np.random.uniform(low=0, high=1, size=(self.n,))
+        if self.fixed_goal:
+            goal = np.zeros(self.n)
         return goal
 
     def reset(

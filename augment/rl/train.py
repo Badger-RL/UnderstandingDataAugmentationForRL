@@ -49,7 +49,7 @@ if __name__ == '__main__':
     parser.add_argument("--aug-function-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-n", type=float, default=1)
     parser.add_argument("--aug-ratio", type=float, default=1)
-    parser.add_argument("--aug-freq", type=str, default='episode')
+    parser.add_argument("--aug-freq", type=str, default=1)
     parser.add_argument("--aug-schedule", type=str, default="constant")
     parser.add_argument("--aug-schedule-kwargs", type=str, nargs="*", action=StoreDict, default={})
     parser.add_argument("--aug-buffer", type=bool, default=True)
@@ -242,7 +242,7 @@ if __name__ == '__main__':
         'noise_type': None,
         'noise_std': None,
     }
-    if algo != 'dqn':
+    if algo in ['ddpg', 'td3']:
         saved_action_noise_hyperparams = {
             'noise_type': hyperparams['noise_type'],
             'noise_std': hyperparams['noise_std']
@@ -281,7 +281,7 @@ if __name__ == '__main__':
     saved_hyperparams.update(hyperparams)
     saved_hyperparams.update(saved_action_noise_hyperparams)
     saved_hyperparams.update(saved_aug_function_hyperparams)
-    if algo != 'dqn':
+    if algo in ['ddpg', 'td3']:
         del saved_hyperparams['action_noise']
 
     with open(os.path.join(save_dir, "config.yml"), "w") as f:
