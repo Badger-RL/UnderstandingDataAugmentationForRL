@@ -55,11 +55,12 @@ class Goal2DEnv(MyEnv):
         return self._get_obs(), reward, terminated, truncated, info
 
     def _sample_goal(self):
-        goal = np.random.uniform(low=-self.d, high=self.d, size=(self.n,))
         if self.quadrant:
             goal = np.random.uniform(low=0, high=1, size=(self.n,))
-        if self.fixed_goal:
-            goal = np.zeros(self.n)
+        elif self.fixed_goal:
+            goal = np.array([0.5, 0.5])
+        else:
+            goal = np.random.uniform(low=-self.d, high=self.d, size=(self.n,))
         return goal
 
     def reset(
@@ -76,6 +77,7 @@ class Goal2DEnv(MyEnv):
 
         dist = np.linalg.norm(self.x - self.goal)
         while dist < 0.05:
+            self.x = np.random.uniform(-1, 1, size=(self.n,))
             self.goal =self._sample_goal()
             dist = np.linalg.norm(self.x - self.goal)
 
