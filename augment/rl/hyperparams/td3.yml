@@ -1,0 +1,692 @@
+# Tuned
+MountainCarContinuous-v0:
+  n_timesteps: 300000
+  policy: 'MlpPolicy'
+  noise_type: 'ornstein-uhlenbeck'
+  noise_std: 0.5
+
+Pendulum-v1:
+  n_timesteps: 20000
+  policy: 'MlpPolicy'
+  gamma: 0.98
+  buffer_size: 200000
+  learning_starts: 10000
+  noise_type: 'normal'
+  noise_std: 0.1
+  gradient_steps: -1
+#  train_freq: [1, "episode"]
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[400, 300])"
+
+LunarLanderContinuous-v2:
+  n_timesteps: !!float 3e5
+  policy: 'MlpPolicy'
+  gamma: 0.98
+  buffer_size: 200000
+  learning_starts: 10000
+  noise_type: 'normal'
+  noise_std: 0.1
+  gradient_steps: -1
+#  train_freq: [1, "episode"]
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[400, 300])"
+
+BipedalWalker-v3:
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  gamma: 0.98
+  buffer_size: 200000
+  learning_starts: 10000
+  noise_type: 'normal'
+  noise_std: 0.1
+  gradient_steps: -1
+#  train_freq: [1, "episode"]
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[400, 300])"
+
+# To be tuned
+BipedalWalkerHardcore-v3:
+  n_timesteps: !!float 1e7
+  policy: 'MlpPolicy'
+  gamma: 0.98
+  buffer_size: 200000
+  learning_starts: 10000
+  noise_type: 'normal'
+  noise_std: 0.1
+  gradient_steps: -1
+#  train_freq: [1, "episode"]
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[400, 300])"
+
+# Tuned
+HalfCheetahBulletEnv-v0: &pybullet-defaults
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  gamma: 0.98
+  buffer_size: 200000
+  learning_starts: 10000
+  noise_type: 'normal'
+  noise_std: 0.1
+  gradient_steps: 1
+  train_freq: 1
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[400, 300])"
+
+# Tuned
+AntBulletEnv-v0:
+  <<: *pybullet-defaults
+  learning_rate: !!float 7e-4
+  policy_kwargs: "dict(net_arch=[400, 300])"
+
+# Tuned
+HopperBulletEnv-v0:
+  <<: *pybullet-defaults
+  train_freq: 64
+  gradient_steps: 64
+  batch_size: 256
+  learning_rate: !!float 7e-4
+
+# Tuned
+Walker2DBulletEnv-v0:
+  <<: *pybullet-defaults
+  batch_size: 256
+  learning_rate: !!float 7e-4
+
+# TO BE tested
+HumanoidBulletEnv-v0:
+  n_timesteps: !!float 2e6
+  policy: 'MlpPolicy'
+  gamma: 0.98
+  buffer_size: 200000
+  learning_starts: 10000
+  noise_type: 'normal'
+  noise_std: 0.1
+  gradient_steps: -1
+#  train_freq: [1, "episode"]
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[400, 300])"
+
+# Tuned
+ReacherBulletEnv-v0:
+  <<: *pybullet-defaults
+  n_timesteps: !!float 3e5
+
+
+# To be tuned
+InvertedDoublePendulumBulletEnv-v0:
+  <<: *pybullet-defaults
+  n_timesteps: !!float 1e6
+
+# To be tuned
+InvertedPendulumSwingupBulletEnv-v0:
+  <<: *pybullet-defaults
+  n_timesteps: !!float 3e5
+
+# === Mujoco Envs ===
+
+InvertedPendulum-v4: &inverted-pendulum
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  gamma: 0.9999
+  buffer_size: 200000
+  learning_starts: 10000
+  noise_type: 'normal'
+  noise_std: 0.1
+  gradient_steps: -1
+  train_freq: 256
+  learning_rate: !!float 1e-4
+  policy_kwargs: "dict(net_arch=[256, 256])"
+
+InvertedPendulumWide-v4:
+  <<: *inverted-pendulum
+
+InvertedDoublePendulum-v4:
+  gamma: 0.9999
+  <<: *inverted-pendulum
+
+InvertedDoublePendulumWide-v4:
+  <<: *inverted-pendulum
+
+HalfCheetah-v4: &mujoco-defaults
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  learning_starts: 10000
+  noise_type: 'normal'
+  noise_std: 0.1
+
+Ant-v4:
+  <<: *mujoco-defaults
+
+Hopper-v4:
+  <<: *mujoco-defaults
+
+Walker2d-v4:
+  <<: *mujoco-defaults
+
+Humanoid-v4:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 1e6
+  # SAC Hyperparams
+  train_freq: 1
+  gradient_steps: 1
+  learning_rate: !!float 3e-4
+  batch_size: 256
+
+HumanoidStandup-v4:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 1e6
+  # SAC Hyperparams
+  train_freq: 1
+  gradient_steps: 1
+  learning_rate: !!float 3e-4
+  batch_size: 256
+
+Swimmer-v4:
+  <<: *mujoco-defaults
+  gamma: 0.9999
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-4
+
+### Custom Reacher
+
+Reacher2-v4: &reacher-defaults
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  learning_rate: !!float 1e-3
+  learning_starts: 10000
+  buffer_size: !!float 1e6
+  noise_type: 'normal'
+  noise_std: 0.1
+
+Reacher-v4:
+  <<: *reacher-defaults
+
+Reacher2Sparse-v4:
+  <<: *reacher-defaults
+
+Reacher4-v4:
+  <<: *reacher-defaults
+
+Reacher4Sparse-v4:
+  <<: *reacher-defaults
+
+Reacher8-v4:
+  <<: *reacher-defaults
+
+Reacher12-v4:
+  <<: *reacher-defaults
+
+Reacher16-v4:
+  <<: *reacher-defaults
+
+Reacher20-v4:
+  <<: *reacher-defaults
+
+Reacher2Rand-v4:
+  <<: *reacher-defaults
+
+Reacher4Rand-v4:
+  <<: *reacher-defaults
+
+Reacher8Rand-v4:
+  <<: *reacher-defaults
+
+LQR-v0:
+  <<: *mujoco-defaults
+  learning_starts: 10000
+
+LQRGoal-v0:
+  <<: *mujoco-defaults
+  learning_starts: 10000
+  learning_rate: !!float 1e-3
+#  noise_type: 'ornstein-uhlenbeck'
+#  noise_std: 0.5
+
+Swimmer10-v4: &swimmer-defaults
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  gamma: 0.98
+  buffer_size: 100000
+  noise_type: 'ornstein-uhlenbeck'
+  noise_std: 0.2
+  learning_starts: 10000
+  batch_size: 64
+  learning_rate: !!float 1e-4
+  train_freq: 16
+  gradient_steps: 16
+  policy_kwargs: "dict(net_arch=[256, 256])"
+
+Swimmer20-v4:
+  <<: *swimmer-defaults
+
+CartPole-v1:
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  gamma: 0.99
+  buffer_size: 200000
+  learning_starts: 10000
+  batch_size: 128
+  noise_type: 'normal'
+  noise_std: 0.1
+  gradient_steps: 128
+  train_freq: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[64,64])"
+
+Goal2D-v0: &predator_prey
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  gamma: 0.99
+  buffer_size: 1000000
+  learning_starts: 10000
+  batch_size: 128
+  noise_type: 'normal'
+  noise_std: 0.1
+  gradient_steps: 32
+  train_freq: 64
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[64,64])"
+
+Goal2DKey-v0:
+  <<: *predator_prey
+
+Goal2DBox-v0:
+  <<: *predator_prey
+
+Goal2DBoxQuadrant-v0:
+  <<: *predator_prey
+
+Goal2DDense-v0:
+  <<: *predator_prey
+
+Goal2DBoxDense-v0:
+  <<: *predator_prey
+
+MeetUp-v0:
+  <<: *predator_prey
+
+FetchPush-v2:
+  n_timesteps: !!float 20000
+  policy: 'MultiInputPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  replay_buffer_class: HerReplayBuffer
+  replay_buffer_kwargs: "dict(
+    online_sampling=True,
+    goal_selection_strategy='future',
+    n_sampled_goal=4
+  )"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+FetchSlide-v2:
+  n_timesteps: !!float 20000
+  policy: 'MultiInputPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  replay_buffer_class: HerReplayBuffer
+  replay_buffer_kwargs: "dict(
+    online_sampling=True,
+    goal_selection_strategy='future',
+    n_sampled_goal=4
+  )"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+FetchPickAndPlace-v2:
+  n_timesteps: !!float 20000
+  policy: 'MultiInputPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  replay_buffer_class: HerReplayBuffer
+  replay_buffer_kwargs: "dict(
+    online_sampling=True,
+    goal_selection_strategy='future',
+    n_sampled_goal=4
+  )"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+FetchReach-v3:
+  n_timesteps: !!float 20000
+  policy: 'MultiInputPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  replay_buffer_class: HerReplayBuffer
+  replay_buffer_kwargs: "dict(
+    online_sampling=True,
+    goal_selection_strategy='future',
+    n_sampled_goal=4
+  )"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+#####################################################
+PandaReach-v3:
+  n_timesteps: !!float 100e3
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+PandaPush-v3:
+  n_timesteps: !!float 1e6
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  tau: 0.05
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+PandaSlide-v3:
+  n_timesteps: !!float 1e6
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  tau: 0.05
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+PandaPickAndPlace-v3:
+  n_timesteps: !!float 1e6
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  tau: 0.05
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+PandaFlip-v3:
+  n_timesteps: !!float 1e6
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  tau: 0.05
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+PandaStack-v3:
+  n_timesteps: !!float 1e6
+#  policy: 'MultiInputPolicy'
+  policy: 'MlpPolicy'
+  buffer_size: 1000000
+  batch_size: 256
+  gamma: 0.95
+  learning_rate: 0.001
+  learning_starts: 1000
+  tau: 0.05
+#  replay_buffer_class: HerReplayBuffer
+#  replay_buffer_kwargs: "dict(
+#    online_sampling=True,
+#    goal_selection_strategy='future',
+#    n_sampled_goal=4
+#  )"
+  policy_kwargs: "dict(n_critics=1, net_arch=[256,256,256])"
+  noise_type: 'normal'
+  noise_std: 0.2
+
+# === Real Robot envs
+NeckGoalEnvRelativeSparse-v2:
+  model_class: 'sac'
+  # env_wrapper:
+  #   - rl_zoo3.wrappers.HistoryWrapper:
+  #       horizon: 2
+  #   - sb3_contrib.common.wrappers.TimeFeatureWrapper
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  learning_rate: !!float 7.3e-4
+  buffer_size: 100000
+  batch_size: 256
+  ent_coef: 'auto'
+  gamma: 0.99
+  tau: 0.02
+  train_freq: [1, "episode"]
+  gradient_steps: -1
+  # 10 episodes of warm-up
+  learning_starts: 1500
+  use_sde_at_warmup: True
+  use_sde: True
+  sde_sample_freq: 64
+  policy_kwargs: "dict(log_std_init=-2, net_arch=[256, 256])"
+  n_sampled_goal: 4
+  goal_selection_strategy: 'future'
+  online_sampling: False
+
+NeckGoalEnvRelativeDense-v2:
+  model_class: 'sac'
+  env_wrapper:
+    - rl_zoo3.wrappers.HistoryWrapperObsDict:
+        horizon: 2
+  #   - sb3_contrib.common.wrappers.TimeFeatureWrapper
+  n_timesteps: !!float 1e6
+  policy: 'MlpPolicy'
+  learning_rate: !!float 7.3e-4
+  buffer_size: 200000
+  batch_size: 256
+  ent_coef: 'auto'
+  gamma: 0.99
+  tau: 0.02
+  train_freq: [1, "episode"]
+  gradient_steps: -1
+  # 10 episodes of warm-up
+  learning_starts: 1500
+  use_sde_at_warmup: True
+  use_sde: True
+  sde_sample_freq: 64
+  policy_kwargs: "dict(log_std_init=-2, net_arch=[256, 256])"
+  n_sampled_goal: 4
+  goal_selection_strategy: 'future'
+  online_sampling: False
+
+###############################
+
+dmc_swimmer_swimmer6_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_ball_in_cup_catch_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_manipulator_insert_ball_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_manipulator_bring_ball_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_manipulator_insert_peg_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_manipulator_bring_peg_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_cartpole_swingup_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_cartpole_swingup_sparse_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_cartpole_balance_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_cartpole_balance_sparse_0-v1:
+  <<: *mujoco-defaults
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  batch_size: 256
+  learning_rate: !!float 1e-3
+  policy_kwargs: "dict(net_arch=[256,256])"
+
+dmc_finger_turn_easy_0-v1:
+  <<: *mujoco-defaults
+dmc_finger_turn_hard_0-v1:
+  <<: *mujoco-defaults
+dmc_finger_turn_spin_0-v1:
+  <<: *mujoco-defaults
+
+dmc_fish_upright_0-v1:
+  <<: *mujoco-defaults
+dmc_fish_swim_0-v1:
+  <<: *mujoco-defaults
+
+
+dmc_walker_walk_0-v1:
+  <<: *mujoco-defaults
+dmc_walker_run_0-v1:
+  <<: *mujoco-defaults
+dmc_walker_stand_0-v1:
+  <<: *mujoco-defaults
+
+dmc_humanoid_walk_0-v1:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 1e6
+  # SAC Hyperparams
+  train_freq: 1
+  gradient_steps: 1
+  learning_rate: !!float 3e-4
+  batch_size: 256
+
+dmc_humanoid_run_0-v1:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 1e6
+  # SAC Hyperparams
+  train_freq: 1
+  gradient_steps: 1
+  learning_rate: !!float 3e-4
+  batch_size: 256
+
+dmc_humanoid_stand_0-v1:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 1e6
+  # SAC Hyperparams
+  train_freq: 1
+  gradient_steps: 1
+  learning_rate: !!float 3e-4
+  batch_size: 256

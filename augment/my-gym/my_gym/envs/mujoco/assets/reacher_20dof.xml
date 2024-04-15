@@ -1,0 +1,130 @@
+<mujoco model="reacher20dof">
+	<compiler angle="radian" inertiafromgeom="true"/>
+	<default>
+		<joint armature="1" damping="1" limited="true"/>
+		<geom contype="0" friction="1 0.1 0.1" rgba="0.7 0.7 0 1"/>
+	</default>
+	<option gravity="0 0 -9.81" density="0" viscosity="0.0" integrator="RK4" timestep="0.01"/>
+	<worldbody>
+		<!-- <camera name="overhead" zaxis="0 0 -1" pos="0 0 0"/> -->
+		<!-- Arena -->
+		<geom conaffinity="0" contype="0" name="ground" pos="0 0 0" rgba="1. 1. 1. 1" size="100 100 100" type="plane"/>
+		<geom conaffinity="0" fromto="-2.2 -2.2 .01 2.2 -2.2 .01" name="sideS" rgba="0 0.25 0.5 1" size=".02" type="capsule"/>
+		<geom conaffinity="0" fromto=" 2.2 -2.2 .01 2.2  2.2 .01" name="sideE" rgba="0 0.25 0.5 1" size=".02" type="capsule"/>
+		<geom conaffinity="0" fromto="-2.2  2.2 .01 2.2  2.2 .01" name="sideN" rgba="0 0.25 0.5 1" size=".02" type="capsule"/>
+		<geom conaffinity="0" fromto="-2.2 -2.2 .01 -2.2 2.2 .01" name="sideW" rgba="0 0.25 0.5 1" size=".02" type="capsule"/>
+		<!-- Arm -->
+		<geom conaffinity="0" contype="0" fromto="0 0 0 0 0 0.02" name="root" rgba="0.1796875 0.796875 0.44140625 1" size=".011" type="cylinder"/>
+		<body name="body0" pos="0 0 .01">
+			<geom fromto="0 0 0 0.1 0 0" name="link0" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+			<joint axis="0 0 1" limited="false" name="joint0" pos="0 0 0" type="hinge"/>
+			<body name="body1" pos="0.1 0 0">
+				<joint axis="0 0 1" limited="true" name="joint1" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+				<geom fromto="0 0 0 0.1 0 0" name="link1" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+				<body name="body2" pos="0.1 0 0">
+					<joint axis="0 0 1" limited="true" name="joint2" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+					<geom fromto="0 0 0 0.1 0 0" name="link2" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+					<body name="body3" pos="0.1 0 0">
+						<joint axis="0 0 1" limited="true" name="joint3" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+						<geom fromto="0 0 0 0.1 0 0" name="link3" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+						<body name="body4" pos="0.1 0 0">
+							<joint axis="0 0 1" limited="true" name="joint4" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+							<geom fromto="0 0 0 0.1 0 0" name="link4" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+							<body name="body5" pos="0.1 0 0">
+								<joint axis="0 0 1" limited="true" name="joint5" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+								<geom fromto="0 0 0 0.1 0 0" name="link5" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+								<body name="body6" pos="0.1 0 0">
+									<joint axis="0 0 1" limited="true" name="joint6" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+									<geom fromto="0 0 0 0.1 0 0" name="link6" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+									<body name="body7" pos="0.1 0 0">
+										<joint axis="0 0 1" limited="true" name="joint7" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+										<geom fromto="0 0 0 0.1 0 0" name="link7" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+										<body name="body8" pos="0.1 0 0">
+											<joint axis="0 0 1" limited="true" name="joint8" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+											<geom fromto="0 0 0 0.1 0 0" name="link8" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+											<body name="body9" pos="0.1 0 0">
+												<joint axis="0 0 1" limited="true" name="joint9" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+												<geom fromto="0 0 0 0.1 0 0" name="link9" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+												<body name="body10" pos="0.1 0 0">
+													<joint axis="0 0 1" limited="true" name="joint10" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+													<geom fromto="0 0 0 0.1 0 0" name="link10" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+													<body name="body11" pos="0.1 0 0">
+														<joint axis="0 0 1" limited="true" name="joint11" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+														<geom fromto="0 0 0 0.1 0 0" name="link11" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+														<body name="body12" pos="0.1 0 0">
+															<joint axis="0 0 1" limited="true" name="joint12" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+															<geom fromto="0 0 0 0.1 0 0" name="link12" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+															<body name="body13" pos="0.1 0 0">
+																<joint axis="0 0 1" limited="true" name="joint13" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+																<geom fromto="0 0 0 0.1 0 0" name="link13" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+																<body name="body14" pos="0.1 0 0">
+																	<joint axis="0 0 1" limited="true" name="joint14" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+																	<geom fromto="0 0 0 0.1 0 0" name="link14" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+																	<body name="body15" pos="0.1 0 0">
+																		<joint axis="0 0 1" limited="true" name="joint15" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+																		<geom fromto="0 0 0 0.1 0 0" name="link15" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+																		<body name="body16" pos="0.1 0 0">
+																			<joint axis="0 0 1" limited="true" name="joint16" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+																			<geom fromto="0 0 0 0.1 0 0" name="link16" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+																			<body name="body17" pos="0.1 0 0">
+																				<joint axis="0 0 1" limited="true" name="joint17" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+																				<geom fromto="0 0 0 0.1 0 0" name="link17" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+																				<body name="body18" pos="0.1 0 0">
+																					<joint axis="0 0 1" limited="true" name="joint18" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+																					<geom fromto="0 0 0 0.1 0 0" name="link18" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+																					<body name="body19" pos="0.1 0 0">
+																						<joint axis="0 0 1" limited="true" name="joint19" pos="0 0 0" range="-3.14 3.14" type="hinge"/>
+																						<geom fromto="0 0 0 0.1 0 0" name="link19" rgba="0.16015625 0.5 0.72265625 1" size=".01" type="capsule"/>
+																						<body name="fingertip" pos="0.11 0 0">
+																							<geom contype="0" name="fingertip" pos="0 0 0" rgba="0.94140625 0.765625 0.05859375 1" size=".01" type="sphere"/>
+																						</body>
+																					</body>
+																				</body>
+																			</body>
+																		</body>
+																	</body>
+																</body>
+															</body>
+														</body>
+													</body>
+												</body>
+											</body>
+										</body>
+									</body>
+								</body>
+							</body>
+						</body>
+					</body>
+				</body>
+			</body>
+		</body>
+		<!-- Target -->
+		<body name="target" pos="0 0 0.01">
+			<joint armature="0" axis="1 0 0" damping="0" limited="true" name="target_x" pos="0 0 0" range="-2.0 2.0" ref=".1" stiffness="0" type="slide"/>
+			<joint armature="0" axis="0 1 0" damping="0" limited="true" name="target_y" pos="0 0 0" range="-2.0 2.0" ref="-.1" stiffness="0" type="slide"/>
+			<geom conaffinity="0" contype="0" name="target" pos="0 0 0" rgba="1. 0.4 0. 1" size=".02" type="sphere"/>
+		</body>
+	</worldbody>
+	<actuator>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint0"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint1"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint2"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint3"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint4"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint5"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint6"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint7"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint8"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint9"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint10"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint11"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint12"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint13"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint14"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint15"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint16"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint17"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint18"/>
+		<motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="joint19"/>
+	</actuator>
+</mujoco>

@@ -1,4 +1,4 @@
-tari:
+atari:
   env_wrapper:
     - stable_baselines3.common.atari_wrappers.AtariWrapper
   frame_stack: 4
@@ -17,9 +17,39 @@ tari:
 
 # Almost Tuned
 CartPole-v1:
-  n_timesteps: !!float 5e4
+  n_timesteps: !!float 2.5e5
   policy: 'MlpPolicy'
-  learning_rate: !!float 2.3e-3
+  learning_rate: !!float 5e-5
+  batch_size: 64
+  buffer_size: 100000
+  learning_starts: 10000
+  gamma: 0.99
+  target_update_interval: 10
+  train_freq: 256
+  gradient_steps: 128
+  exploration_fraction: 0.10
+  exploration_final_eps: 0.001
+  policy_kwargs: "dict(net_arch=[256, 256])"
+
+InvertedDoublePendulum-v2:
+  n_timesteps: !!float 2.5e5
+  policy: 'MlpPolicy'
+  learning_rate: !!float 1e-3
+  batch_size: 64
+  buffer_size: 100000
+  learning_starts: 10000
+  gamma: 0.99
+  target_update_interval: 10
+  train_freq: 256
+  gradient_steps: 128
+  exploration_fraction: 0.50
+  exploration_final_eps: 0.01
+  policy_kwargs: "dict(net_arch=[256, 256])"
+
+InvertedPendulum-v2:
+  n_timesteps: !!float 2.5e5
+  policy: 'MlpPolicy'
+  learning_rate: !!float 1e-4
   batch_size: 64
   buffer_size: 100000
   learning_starts: 1000
@@ -27,9 +57,9 @@ CartPole-v1:
   target_update_interval: 10
   train_freq: 256
   gradient_steps: 128
-  exploration_fraction: 0.16
-  exploration_final_eps: 0.04
-  policy_kwargs: "dict(net_arch=[256, 256])"
+  exploration_fraction: 1
+  exploration_final_eps: 0.01
+  policy_kwargs: "dict(net_arch=[64, 64])"
 
 # Tuned
 MountainCar-v0:
@@ -38,7 +68,7 @@ MountainCar-v0:
   learning_rate: !!float 4e-3
   batch_size: 128
   buffer_size: 10000
-  learning_starts: 1000
+  learning_starts: 10000
   gamma: 0.98
   target_update_interval: 600
   train_freq: 16
@@ -78,3 +108,17 @@ Acrobot-v1:
   exploration_fraction: 0.12
   exploration_final_eps: 0.1
   policy_kwargs: "dict(net_arch=[256, 256])"
+
+Pong-v4:
+  policy: 'MlpPolicy'
+  n_timesteps: !!float 1e7
+  buffer_size: 100000
+  learning_rate: !!float 1e-4
+  batch_size: 32
+  learning_starts: 100000
+  target_update_interval: 1000
+  train_freq: 4
+  gradient_steps: 1
+  exploration_fraction: 0.1
+  exploration_final_eps: 0.01
+#  optimize_memory_usage: True

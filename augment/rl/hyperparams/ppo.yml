@@ -484,13 +484,13 @@ InvertedDoublePendulum-v2:
   vf_coef: 0.695929
 
 InvertedPendulum-v2:
-  n_envs: 1
+#  n_envs: 1
   policy: 'MlpPolicy'
-  n_timesteps: !!float 1e6
-  batch_size: 64
-  n_steps: 32
+  n_timesteps: !!float 2e5
+  batch_size: 128
+  n_steps: 2048
   gamma: 0.999
-  learning_rate: 0.000222425
+  learning_rate: !!float 1e-4
   ent_coef: 1.37976e-07
   clip_range: 0.4
   n_epochs: 5
